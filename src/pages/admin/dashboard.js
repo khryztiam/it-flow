@@ -17,12 +17,17 @@ import {
   FiUser,
   FiFlag,
   FiFileText,
+  FiExternalLink,
+  FiImage,
+  FiFile,
+  FiSave,
 } from 'react-icons/fi';
 
 export default function AdminDashboard() {
   const { cargando: cargandoAuth } = useAdmin();
   const montadoRef = useRef(true);
   const [todasLasTareas, setTodasLasTareas] = useState([]);
+  const [estadosDisponibles, setEstadosDisponibles] = useState([]);
   const [stats, setStats] = useState({
     totalUsuarios: 0,
     totalPlantas: 0,
@@ -35,6 +40,16 @@ export default function AdminDashboard() {
   const [expandido, setExpandido] = useState({});
   const [modalAbierto, setModalAbierto] = useState(false);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
+
+  // Estado editable del modal
+  const [modalEstadoId, setModalEstadoId] = useState('');
+  const [modalRevisado, setModalRevisado] = useState(false);
+  const [modalObservaciones, setModalObservaciones] = useState('');
+  const [modalEvidencias, setModalEvidencias] = useState([]);
+  const [modalCargandoEvidencias, setModalCargandoEvidencias] = useState(false);
+  const [modalGuardando, setModalGuardando] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [modalSuccess, setModalSuccess] = useState('');
   const [filtroUsuario, setFiltroUsuario] = useState('todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -138,15 +153,14 @@ export default function AdminDashboard() {
 
       // Filtrar y ordenar
       const ahora = new Date();
-      const tareasProcesadas = tareasConRelaciones
-        .map((tarea) => ({
-          ...tarea,
-          diasRestantes:
-            (new Date(tarea.fecha_limite) - ahora) / (1000 * 60 * 60 * 24),
-          estaVencida:
-            new Date(tarea.fecha_limite) < ahora &&
-            !esEstadoFinal(tarea.estados?.nombre),
-        }));
+      const tareasProcesadas = tareasConRelaciones.map((tarea) => ({
+        ...tarea,
+        diasRestantes:
+          (new Date(tarea.fecha_limite) - ahora) / (1000 * 60 * 60 * 24),
+        estaVencida:
+          new Date(tarea.fecha_limite) < ahora &&
+          !esEstadoFinal(tarea.estados?.nombre),
+      }));
 
       const tareasOrdenadas = [...tareasProcesadas]
         .sort((a, b) => {
@@ -178,6 +192,7 @@ export default function AdminDashboard() {
         setTareas(tareasOrdenadas);
         setTareasAgrupadas(agrupadas);
         setExpandido(estadoInicial);
+        setEstadosDisponibles(estados || []);
       }
     } catch (err) {
       console.error('Error cargando tareas:', err);
@@ -269,8 +284,12 @@ export default function AdminDashboard() {
     if (esEstadoFinal(estadoNombre)) {
       const fechaLimite = new Date(tarea.fecha_limite);
       const fechaInicio = new Date(tarea.fecha_inicio);
-      const fechaCierre = tarea.fecha_cierre ? new Date(tarea.fecha_cierre) : fechaLimite;
-      return fechaCierre <= fechaLimite ? styles.tarjetaVerde : styles.tarjetaRoja;
+      const fechaCierre = tarea.fecha_cierre
+        ? new Date(tarea.fecha_cierre)
+        : fechaLimite;
+      return fechaCierre <= fechaLimite
+        ? styles.tarjetaVerde
+        : styles.tarjetaRoja;
     }
     if (tarea.estaVencida) return styles.tarjetaRoja;
     if (tarea.diasRestantes <= 1) return styles.tarjetaAmarilla;
@@ -341,11 +360,19 @@ export default function AdminDashboard() {
       todasLasTareas.map((t) => t.prioridades?.nombre).filter(Boolean)
     ),
   ];
-  const opcionesEstados = [
-    ...new Set(todasLasTareas.map((t) => t.estados?.nombre).filter(Boolean)),
-  ];
+  const opcionesEstados = (estadosDisponibles || [])
+    .map((e) => e.nombre)
+    .filter(Boolean)
+    .sort();
 
-  const tareasFiltradas = tareas.filter((tarea) => {
+  const tareasFiltradas = todasLasTareas.filter((tarea) => {
+    // Excluir tareas completadas Y revisadas
+    if (
+      tarea.estados?.nombre?.toLowerCase().includes('complet') &&
+      tarea.revisado === true
+    ) {
+      return false;
+    }
     const usuarioId = tarea.usuarios?.id || 'sin-asignar';
     const prioridad = tarea.prioridades?.nombre || 'N/A';
     const estado = tarea.estados?.nombre || 'N/A';
@@ -378,14 +405,89 @@ export default function AdminDashboard() {
       .join('');
   };
 
-  const AbrirModal = (tarea) => {
+  const obtenerToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token;
+  };
+
+  const AbrirModal = async (tarea) => {
     setTareaSeleccionada(tarea);
+    setModalEstadoId(tarea.estado_id || '');
+    setModalRevisado(tarea.revisado || false);
+    setModalObservaciones(tarea.observaciones || '');
+    setModalEvidencias([]);
+    setModalError('');
+    setModalSuccess('');
     setModalAbierto(true);
+
+    // Cargar evidencias en paralelo
+    setModalCargandoEvidencias(true);
+    try {
+      const token = await obtenerToken();
+      const res = await fetch(`/api/admin/tareas/${tarea.id}/evidencias`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      setModalEvidencias(json.data || []);
+    } catch {
+      // silencioso, evidencias no críticas
+    } finally {
+      setModalCargandoEvidencias(false);
+    }
   };
 
   const CerrarModal = () => {
     setModalAbierto(false);
     setTareaSeleccionada(null);
+  };
+
+  const GuardarModal = async () => {
+    if (!tareaSeleccionada) return;
+    setModalGuardando(true);
+    setModalError('');
+    setModalSuccess('');
+    try {
+      const token = await obtenerToken();
+      const res = await fetch(`/api/admin/tareas/${tareaSeleccionada.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          estado_id: modalEstadoId,
+          revisado: modalRevisado,
+          observaciones: modalObservaciones,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error al guardar');
+      }
+      setModalSuccess('Cambios guardados');
+      // Actualizar la tarea en el estado local
+      const actualizar = (lista) =>
+        lista.map((t) =>
+          t.id === tareaSeleccionada.id
+            ? {
+                ...t,
+                estado_id: modalEstadoId,
+                revisado: modalRevisado,
+                observaciones: modalObservaciones,
+                estados:
+                  estadosDisponibles.find((e) => e.id === modalEstadoId) ||
+                  t.estados,
+              }
+            : t
+        );
+      setTareas((prev) => actualizar(prev));
+      setTodasLasTareas((prev) => actualizar(prev));
+      setTimeout(() => setModalSuccess(''), 2500);
+    } catch (err) {
+      setModalError(err.message);
+    } finally {
+      setModalGuardando(false);
+    }
   };
 
   const toggleAcordeon = (pais) => {
@@ -413,7 +515,9 @@ export default function AdminDashboard() {
       </section>
 
       <section className={styles.resumenSeccion}>
-        <div className={`${styles.resumenCard} ${styles.resumenCardResponsables}`}>
+        <div
+          className={`${styles.resumenCard} ${styles.resumenCardResponsables}`}
+        >
           <div className={styles.resumenCardHeader}>
             <div>
               <p className={styles.resumenEyebrow}>Carga por responsable</p>
@@ -428,7 +532,9 @@ export default function AdminDashboard() {
             {resumenResponsables.map((responsable) => (
               <div key={responsable.id} className={styles.responsableItem}>
                 <div>
-                  <p className={styles.responsableNombre}>{responsable.nombre}</p>
+                  <p className={styles.responsableNombre}>
+                    {responsable.nombre}
+                  </p>
                   <span className={styles.responsableMeta}>
                     {responsable.vencidas > 0
                       ? `${responsable.vencidas} vencidas`
@@ -555,9 +661,7 @@ export default function AdminDashboard() {
         <div className={styles.tareasHeader}>
           <div>
             <h2>LISTA DE TAREAS ASIGNADAS</h2>
-            <p>
-              Top 10 ordenado por vencimiento e impacto operativo
-            </p>
+            <p>Tareas activas ordenadas por urgencia y vencimiento</p>
           </div>
           <div className={styles.badgeTop}>
             {tareasFiltradas.length} EN VISTA
@@ -606,7 +710,8 @@ export default function AdminDashboard() {
                                 {iniciales(tarea.usuarios?.nombre_completo)}
                               </span>
                               <p className={styles.cardUsuarioNombre}>
-                                {tarea.usuarios?.nombre_completo || 'Sin asignar'}
+                                {tarea.usuarios?.nombre_completo ||
+                                  'Sin asignar'}
                               </p>
                             </div>
                           </div>
@@ -634,7 +739,9 @@ export default function AdminDashboard() {
                                     tarea.prioridades?.nombre
                                   )}
                                 >
-                                  {normalizarEtiqueta(tarea.prioridades?.nombre)}
+                                  {normalizarEtiqueta(
+                                    tarea.prioridades?.nombre
+                                  )}
                                 </span>
                               </div>
 
@@ -693,93 +800,138 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Modal de Detalles */}
+      {/* Modal de Detalles + Acciones */}
       <Modal
         abierto={modalAbierto}
         onCerrar={CerrarModal}
         titulo="Detalles de la Tarea"
-        modo="ver"
+        modo="editar"
+        onAceptar={GuardarModal}
+        cargando={modalGuardando}
       >
         {tareaSeleccionada && (
           <div className={styles.modalDetalle}>
-            <div className={styles.modalItem}>
-              <label>Región / País</label>
-              <p>{tareaSeleccionada.plantas?.paises?.nombre || 'N/A'}</p>
-            </div>
+            {modalError && (
+              <div className={styles.modalAlerta}>{modalError}</div>
+            )}
+            {modalSuccess && (
+              <div className={styles.modalAlertaOk}>{modalSuccess}</div>
+            )}
 
-            <div className={styles.modalItem}>
-              <label>Planta</label>
-              <p>{tareaSeleccionada.plantas?.nombre || 'N/A'}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Nombre de Tarea</label>
-              <p>{tareaSeleccionada.titulo}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Actividad / Descripción</label>
-              <p>{tareaSeleccionada.descripcion}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Prioridad</label>
-              <p>{normalizarEtiqueta(tareaSeleccionada.prioridades?.nombre)}</p>
-            </div>
-
+            {/* ── Info contextual (solo lectura) ── */}
             <div className={styles.modalGrid2}>
               <div className={styles.modalItem}>
-                <label>Fecha de Inicio</label>
-                <p>{formatearFecha(tareaSeleccionada.fecha_inicio)}</p>
+                <label>Asignado a</label>
+                <p>
+                  {tareaSeleccionada.usuarios?.nombre_completo || 'Sin asignar'}
+                </p>
               </div>
               <div className={styles.modalItem}>
-                <label>Fecha de Entrega</label>
-                <p>{formatearFecha(tareaSeleccionada.fecha_limite)}</p>
+                <label>Planta</label>
+                <p>{tareaSeleccionada.plantas?.nombre || 'N/A'}</p>
               </div>
             </div>
 
-            <div className={styles.modalItem}>
-              <label>Estado</label>
-              <p>{normalizarEtiqueta(tareaSeleccionada.estados?.nombre)}</p>
+            {/* ── Estado ── */}
+            <div className={styles.modalCampo}>
+              <label className={styles.modalLabel}>Estado</label>
+              <select
+                className={styles.modalSelect}
+                value={modalEstadoId}
+                onChange={(e) => setModalEstadoId(e.target.value)}
+              >
+                {estadosDisponibles.map((est) => (
+                  <option key={est.id} value={est.id}>
+                    {normalizarEtiqueta(est.nombre)}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className={styles.modalItem}>
-              <label>Avance (%)</label>
-              <p>{tareaSeleccionada.porcentaje_avance || 0}%</p>
-              <div className={styles.barraProgreso}>
-                <div
-                  className={styles.barraProgresoFill}
-                  style={{
-                    width: `${tareaSeleccionada.porcentaje_avance || 0}%`,
-                  }}
-                />
-              </div>
+            {/* ── Revisado ── */}
+            <div className={styles.modalCampo}>
+              <label className={styles.modalLabel}>Revisado por admin</label>
+              <button
+                className={`${styles.toggleRevisado} ${modalRevisado ? styles.toggleOn : styles.toggleOff}`}
+                onClick={() => setModalRevisado((v) => !v)}
+                type="button"
+              >
+                <span className={styles.toggleCircle} />
+                <span>
+                  {modalRevisado
+                    ? '✅ Marcado como revisado'
+                    : '❌ Pendiente de revisión'}
+                </span>
+              </button>
             </div>
 
-            <div className={styles.modalItem}>
-              <label>Asignado a</label>
-              <p>
-                {tareaSeleccionada.usuarios?.nombre_completo || 'Sin asignar'}
-              </p>
+            {/* ── Observaciones ── */}
+            <div className={styles.modalCampo}>
+              <label className={styles.modalLabel}>Observaciones</label>
+              <textarea
+                className={styles.modalTextarea}
+                value={modalObservaciones}
+                onChange={(e) => setModalObservaciones(e.target.value)}
+                placeholder="Agrega notas o comentarios sobre esta tarea..."
+                rows={3}
+                maxLength={1000}
+              />
+              <span className={styles.modalContador}>
+                {modalObservaciones.length}/1000
+              </span>
             </div>
 
-            <div className={styles.modalItem}>
-              <label>Evidencia / Entregable</label>
-              <p>
-                {tareaSeleccionada.evidencia?.substring(0, 100) ||
-                  'No disponible'}
-                {tareaSeleccionada.evidencia?.length > 100 ? '...' : ''}
-              </p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Observaciones</label>
-              <p>{tareaSeleccionada.observaciones || 'Ninguna'}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Revisado</label>
-              <p>{tareaSeleccionada.revisado ? '✅ Sí' : '❌ No'}</p>
+            {/* ── Evidencias ── */}
+            <div className={styles.modalCampo}>
+              <label className={styles.modalLabel}>
+                Evidencias (
+                {modalCargandoEvidencias ? '...' : modalEvidencias.length})
+              </label>
+              {modalCargandoEvidencias ? (
+                <p className={styles.modalTextoSec}>Cargando...</p>
+              ) : modalEvidencias.length === 0 ? (
+                <p className={styles.modalTextoSec}>
+                  Sin evidencias subidas aún.
+                </p>
+              ) : (
+                <div className={styles.modalEvidencias}>
+                  {modalEvidencias.map((ev) => (
+                    <div key={ev.id} className={styles.modalEvidenciaItem}>
+                      <span className={styles.modalEvidenciaIcono}>
+                        {ev.tipo_mime?.startsWith('image/') ? (
+                          <FiImage size={16} />
+                        ) : (
+                          <FiFile size={16} />
+                        )}
+                      </span>
+                      <div className={styles.modalEvidenciaDatos}>
+                        <span className={styles.modalEvidenciaNombre}>
+                          {ev.descripcion || ev.archivo_path?.split('_').pop()}
+                        </span>
+                        <span className={styles.modalEvidenciaMeta}>
+                          {ev.usuario?.nombre_completo} ·{' '}
+                          {new Date(ev.fecha_subida).toLocaleDateString(
+                            'es-ES',
+                            { day: '2-digit', month: 'short', year: 'numeric' }
+                          )}
+                          {ev.tamanio_bytes
+                            ? ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`
+                            : ''}
+                        </span>
+                      </div>
+                      <a
+                        href={ev.archivo_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.modalBtnVer}
+                        title="Ver archivo"
+                      >
+                        <FiExternalLink size={14} /> Ver
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

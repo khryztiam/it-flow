@@ -1,11 +1,19 @@
 import Layout from '@components/Layout';
 import { useUser } from '@hooks/useProtegerRuta';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@lib/supabase';
 import { useAuth } from '@context/AuthContext';
 import { formatearFecha } from '@utils/formateo';
-import { FiArrowLeft, FiSend } from 'react-icons/fi';
+import {
+  FiArrowLeft,
+  FiSend,
+  FiUpload,
+  FiTrash2,
+  FiExternalLink,
+  FiImage,
+  FiFile,
+} from 'react-icons/fi';
 import styles from '@styles/TareaDetalle.module.css';
 
 export default function TareaDetalle() {
@@ -25,10 +33,18 @@ export default function TareaDetalle() {
   const [nuevoEstado, setNuevoEstado] = useState('');
   const [nuevoAvance, setNuevoAvance] = useState('');
 
+  // Evidencias
+  const [evidencias, setEvidencias] = useState([]);
+  const [subiendoEvidencia, setSubiendoEvidencia] = useState(false);
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState(null);
+  const [descripcionEvidencia, setDescripcionEvidencia] = useState('');
+  const inputFileRef = useRef(null);
+
   useEffect(() => {
     if (!cargandoAuth && usuarioDetalles?.id && id) {
       cargarEstados();
       cargarTarea();
+      cargarEvidencias();
     }
   }, [cargandoAuth, usuarioDetalles?.id, id]);
 
@@ -115,6 +131,83 @@ export default function TareaDetalle() {
       setError(`Error al agregar comentario: ${err.message}`);
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const cargarEvidencias = async () => {
+    try {
+      const data = await callAPI(`/api/user/tareas/${id}/upload`);
+      setEvidencias(data || []);
+    } catch (err) {
+      console.error('Error cargando evidencias:', err);
+    }
+  };
+
+  const subirEvidencia = async () => {
+    if (!archivoSeleccionado) return;
+
+    const tiposPermitidos = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf',
+    ];
+    if (!tiposPermitidos.includes(archivoSeleccionado.type)) {
+      setError('Tipo de archivo no permitido. Usa JPG, PNG, GIF, WEBP o PDF.');
+      return;
+    }
+    if (archivoSeleccionado.size > 10 * 1024 * 1024) {
+      setError('El archivo supera el límite de 10 MB.');
+      return;
+    }
+
+    try {
+      setSubiendoEvidencia(true);
+      setError('');
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const result = await callAPI(
+            `/api/user/tareas/${id}/upload`,
+            'POST',
+            {
+              archivoBase64: e.target.result,
+              tipoMime: archivoSeleccionado.type,
+              nombreOriginal: archivoSeleccionado.name,
+              descripcion: descripcionEvidencia,
+            }
+          );
+          setEvidencias((prev) => [result.data, ...prev]);
+          setArchivoSeleccionado(null);
+          setDescripcionEvidencia('');
+          if (inputFileRef.current) inputFileRef.current.value = '';
+          setSuccess('Evidencia subida exitosamente');
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+          setError(`Error al subir evidencia: ${err.message}`);
+        } finally {
+          setSubiendoEvidencia(false);
+        }
+      };
+      reader.readAsDataURL(archivoSeleccionado);
+    } catch (err) {
+      setError(`Error al subir evidencia: ${err.message}`);
+      setSubiendoEvidencia(false);
+    }
+  };
+
+  const eliminarEvidencia = async (evidenciaId) => {
+    if (!confirm('¿Eliminar esta evidencia?')) return;
+    try {
+      setError('');
+      await callAPI(`/api/user/tareas/${id}/upload`, 'DELETE', { evidenciaId });
+      setEvidencias((prev) => prev.filter((e) => e.id !== evidenciaId));
+      setSuccess('Evidencia eliminada');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(`Error al eliminar evidencia: ${err.message}`);
     }
   };
 
@@ -328,6 +421,101 @@ export default function TareaDetalle() {
                 </button>
               </div>
             </div>
+            {/* Evidencias */}
+            <div className={styles.separadorLateral} />
+            <h3>📎 Evidencias</h3>
+
+            <div className={styles.formEvidencia}>
+              <div className={styles.inputFileWrapper}>
+                <input
+                  ref={inputFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                  onChange={(e) =>
+                    setArchivoSeleccionado(e.target.files[0] || null)
+                  }
+                  className={styles.inputFile}
+                  id="inputEvidencia"
+                />
+                <label htmlFor="inputEvidencia" className={styles.labelFile}>
+                  <FiUpload />
+                  {archivoSeleccionado
+                    ? archivoSeleccionado.name
+                    : 'Seleccionar archivo (JPG, PNG, PDF — máx. 10 MB)'}
+                </label>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Descripción opcional (ej: Captura de instalación)"
+                value={descripcionEvidencia}
+                onChange={(e) => setDescripcionEvidencia(e.target.value)}
+                className={styles.inputDescripcion}
+                maxLength={200}
+              />
+
+              <button
+                className={styles.btnSubir}
+                onClick={subirEvidencia}
+                disabled={!archivoSeleccionado || subiendoEvidencia}
+              >
+                {subiendoEvidencia ? (
+                  'Subiendo...'
+                ) : (
+                  <>
+                    <FiUpload /> Subir evidencia
+                  </>
+                )}
+              </button>
+            </div>
+
+            {evidencias.length === 0 ? (
+              <p className={styles.sinEvidencias}>
+                Sin evidencias cargadas aún
+              </p>
+            ) : (
+              <div className={styles.listaEvidencias}>
+                {evidencias.map((ev) => (
+                  <div key={ev.id} className={styles.evidenciaItem}>
+                    <div className={styles.evidenciaIcono}>
+                      {ev.tipo_mime?.startsWith('image/') ? (
+                        <FiImage size={20} />
+                      ) : (
+                        <FiFile size={20} />
+                      )}
+                    </div>
+                    <div className={styles.evidenciaDatos}>
+                      <span className={styles.evidenciaNombre}>
+                        {ev.descripcion || ev.archivo_path.split('_').pop()}
+                      </span>
+                      <span className={styles.evidenciaFecha}>
+                        {formatearFecha(ev.fecha_subida)}
+                        {ev.tamanio_bytes &&
+                          ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`}
+                      </span>
+                    </div>
+                    <div className={styles.evidenciaAcciones}>
+                      <a
+                        href={ev.archivo_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={styles.btnVerEvidencia}
+                        title="Ver archivo"
+                      >
+                        <FiExternalLink size={15} />
+                      </a>
+                      <button
+                        className={styles.btnEliminarEvidencia}
+                        onClick={() => eliminarEvidencia(ev.id)}
+                        title="Eliminar evidencia"
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </aside>
         </div>
       </div>
