@@ -60,8 +60,30 @@ export default function AdminDashboard() {
       cargarStats();
       cargarTareas();
     }
+
+    // --- SUSCRIPCIÓN REALTIME ---
+    let channel = null;
+    if (!cargandoAuth) {
+      channel = supabase
+        .channel('realtime-tareas-admin')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tareas',
+          },
+          (payload) => {
+            // Recargar tareas ante cualquier cambio
+            cargarTareas();
+          }
+        )
+        .subscribe();
+    }
+
     return () => {
       montadoRef.current = false;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [cargandoAuth]);
 

@@ -35,8 +35,29 @@ export default function UserDashboard() {
     if (!cargandoAuth && usuarioDetalles?.id) {
       cargarTareas();
     }
+
+    // --- SUSCRIPCIÓN REALTIME ---
+    let channel = null;
+    if (!cargandoAuth && usuarioDetalles?.id) {
+      channel = supabase
+        .channel('realtime-tareas-user')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tareas',
+          },
+          (payload) => {
+            cargarTareas();
+          }
+        )
+        .subscribe();
+    }
+
     return () => {
       montadoRef.current = false;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [cargandoAuth, usuarioDetalles?.id]);
 
