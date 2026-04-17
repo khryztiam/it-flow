@@ -1,3 +1,7 @@
+.tarjetaVerde {
+  border-left-color: #22c55e;
+  background: #f8fff9;
+}
 /* ── Hero / Header ── */
 .hero {
   background: radial-gradient(
