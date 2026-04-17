@@ -1,0 +1,100 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.titulo {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #333;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.etiqueta {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.entrada {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.entrada:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.boton {
+  padding: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.boton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.enlace {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-top: 15px;
+}
+
+.enlace a {
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.enlace a:hover {
+  text-decoration: underline;
+}
