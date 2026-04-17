@@ -23,7 +23,11 @@ export default function TareasAdmin() {
   const [modalAbierta, setModalAbierta] = useState(false);
   const [modo, setModo] = useState('crear');
   const [tareaEditando, setTareaEditando] = useState(null);
+
   const [cargandoFormulario, setCargandoFormulario] = useState(false);
+  // Estado para eliminar tarea
+  const [cargandoEliminar, setCargandoEliminar] = useState(false);
+  const [tareaEliminando, setTareaEliminando] = useState(null);
 
   // Estado modal evidencias
   const [modalEvidencias, setModalEvidencias] = useState(false);
@@ -246,6 +250,27 @@ export default function TareasAdmin() {
     },
   ];
 
+  // Acción eliminar robusta
+  const handleEliminar = async (tarea) => {
+    if (cargandoEliminar) return;
+    const confirmado = window.confirm(
+      `¿Seguro que deseas eliminar la tarea "${tarea.titulo}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) return;
+    setCargandoEliminar(true);
+    setTareaEliminando(tarea.id);
+    setError('');
+    try {
+      await callAPI(`/api/admin/tareas/${tarea.id}`, 'DELETE');
+      setTareas(tareas.filter((t) => t.id !== tarea.id));
+    } catch (err) {
+      setError(err.message || 'Error eliminando tarea');
+    } finally {
+      setCargandoEliminar(false);
+      setTareaEliminando(null);
+    }
+  };
+
   const acciones = [
     {
       label: 'Evidencias',
@@ -258,9 +283,10 @@ export default function TareasAdmin() {
       onClick: (tarea) => handleEditar(tarea),
     },
     {
-      label: 'Eliminar',
+      label: cargandoEliminar && tareaEliminando ? 'Eliminando...' : 'Eliminar',
       color: 'danger',
-      onClick: () => alert('Eliminar tarea'),
+      onClick: (tarea) => handleEliminar(tarea),
+      disabled: (tarea) => cargandoEliminar && tareaEliminando === tarea.id,
     },
   ];
 
