@@ -31,35 +31,44 @@ async function crearUsuariosPrueba() {
 
     if (errRoles) throw errRoles;
 
-    // Datos de usuarios a crear
+    // Datos de usuarios a crear (las contraseñas se pasan como env vars)
+    const defaultPass = process.env.DEFAULT_TEST_PASSWORD;
+    if (!defaultPass) {
+      console.error('❌ Error: DEFAULT_TEST_PASSWORD no configurada');
+      console.log(
+        'ℹ️  Usa: DEFAULT_TEST_PASSWORD=TuPassword123 node scripts/crearUsuariosPrueba.js'
+      );
+      process.exit(1);
+    }
+
     const usuariosPrueba = [
       {
         email: 'admin@itflowapp.com',
         nombre: 'Administrador General',
         rol: 'admin',
         planta: plantas[0]?.id,
-        password: 'Admin@123456',
+        password: defaultPass,
       },
       {
         email: 'supervisor@itflowapp.com',
         nombre: 'Supervisor Principal',
         rol: 'supervisor',
         planta: plantas[0]?.id,
-        password: 'Supervisor@123456',
+        password: defaultPass,
       },
       {
         email: 'usuario1@itflowapp.com',
         nombre: 'Usuario Uno',
         rol: 'user',
         planta: plantas[0]?.id,
-        password: 'Usuario@123456',
+        password: defaultPass,
       },
       {
         email: 'usuario2@itflowapp.com',
         nombre: 'Usuario Dos',
         rol: 'user',
         planta: plantas[1]?.id || plantas[0]?.id,
-        password: 'Usuario@123456',
+        password: defaultPass,
       },
     ];
 
