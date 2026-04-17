@@ -1,24 +1,49 @@
 import Layout from '@components/Layout';
+import Modal from '@components/Modal';
 import { useAdmin } from '@hooks/useProtegerRuta';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@lib/supabase';
 import styles from '@styles/DashboardAdmin.module.css';
+import {
+  FiUsers,
+  FiGlobe,
+  FiFilter,
+  FiCalendar,
+  FiTrendingUp,
+  FiChevronDown,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiClock,
+  FiUser,
+  FiFlag,
+  FiFileText,
+} from 'react-icons/fi';
 
 export default function AdminDashboard() {
   const { cargando: cargandoAuth } = useAdmin();
   const montadoRef = useRef(true);
+  const [todasLasTareas, setTodasLasTareas] = useState([]);
   const [stats, setStats] = useState({
     totalUsuarios: 0,
     totalPlantas: 0,
     totalPaises: 0,
     totalTareas: 0,
   });
+  const [tareas, setTareas] = useState([]);
+  const [tareasAgrupadas, setTareasAgrupadas] = useState({});
   const [cargando, setCargando] = useState(true);
+  const [expandido, setExpandido] = useState({});
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
+  const [filtroUsuario, setFiltroUsuario] = useState('todos');
+  const [filtroPrioridad, setFiltroPrioridad] = useState('todos');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
 
   useEffect(() => {
     montadoRef.current = true;
     if (!cargandoAuth) {
       cargarStats();
+      cargarTareas();
     }
     return () => {
       montadoRef.current = false;
@@ -44,6 +69,118 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error('Error cargando stats:', err);
+    }
+  };
+
+  const cargarTareas = async () => {
+    try {
+      setCargando(true);
+      // Cargar SOLO columnas específicas para evitar stack depth error
+      const { data: tareasData, error } = await supabase
+        .from('tareas')
+        .select(
+          'id,titulo,descripcion,created_at,fecha_inicio,fecha_limite,porcentaje_avance,observaciones,evidencia,revisado,estado_id,prioridad_id,asignado_a,planta_id,creado_por,supervisado_por'
+        )
+        .order('fecha_limite', { ascending: true });
+
+      if (error) throw error;
+
+      // Cargar datos relacionados en paralelo
+      const [
+        { data: plantas },
+        { data: usuarios },
+        { data: estados },
+        { data: prioridades },
+      ] = await Promise.all([
+        supabase.from('plantas').select('id, nombre, pais_id'),
+        supabase.from('usuarios').select('id, nombre_completo, email'),
+        supabase.from('estados_tarea').select('id, nombre, color_hex'),
+        supabase.from('prioridades').select('id, nombre'),
+      ]);
+
+      const { data: paises } = await supabase
+        .from('paises')
+        .select('id, nombre');
+
+      // Crear mapas para búsqueda rápida
+      const plantasMap = (plantas || []).reduce(
+        (acc, p) => ({ ...acc, [p.id]: p }),
+        {}
+      );
+      const usuariosMap = (usuarios || []).reduce(
+        (acc, u) => ({ ...acc, [u.id]: u }),
+        {}
+      );
+      const estadosMap = (estados || []).reduce(
+        (acc, e) => ({ ...acc, [e.id]: e }),
+        {}
+      );
+      const prioridadesMap = (prioridades || []).reduce(
+        (acc, p) => ({ ...acc, [p.id]: p }),
+        {}
+      );
+      const paisesMap = (paises || []).reduce(
+        (acc, p) => ({ ...acc, [p.id]: p }),
+        {}
+      );
+
+      // Combinar datos
+      const tareasConRelaciones = (tareasData || []).map((tarea) => ({
+        ...tarea,
+        usuarios: usuariosMap[tarea.asignado_a],
+        estados: estadosMap[tarea.estado_id],
+        prioridades: prioridadesMap[tarea.prioridad_id],
+        plantas: {
+          ...plantasMap[tarea.planta_id],
+          paises: paisesMap[plantasMap[tarea.planta_id]?.pais_id],
+        },
+      }));
+
+      // Filtrar y ordenar
+      const ahora = new Date();
+      const tareasProcesadas = tareasConRelaciones
+        .map((tarea) => ({
+          ...tarea,
+          diasRestantes:
+            (new Date(tarea.fecha_limite) - ahora) / (1000 * 60 * 60 * 24),
+          estaVencida:
+            new Date(tarea.fecha_limite) < ahora &&
+            !esEstadoFinal(tarea.estados?.nombre),
+        }));
+
+      const tareasOrdenadas = [...tareasProcesadas]
+        .sort((a, b) => {
+          if (a.estaVencida && !b.estaVencida) return -1;
+          if (!a.estaVencida && b.estaVencida) return 1;
+          return a.diasRestantes - b.diasRestantes;
+        })
+        .slice(0, 10);
+
+      // Agrupar por país
+      const agrupadas = {};
+      tareasOrdenadas.forEach((tarea) => {
+        const pais = tarea.plantas?.paises?.nombre || 'Sin país';
+        if (!agrupadas[pais]) {
+          agrupadas[pais] = [];
+        }
+        agrupadas[pais].push(tarea);
+      });
+
+      // Inicializar acordeón
+      const paisesArray = Object.keys(agrupadas);
+      const estadoInicial = {};
+      paisesArray.forEach((pais, idx) => {
+        estadoInicial[pais] = idx === 0;
+      });
+
+      if (montadoRef.current) {
+        setTodasLasTareas(tareasProcesadas);
+        setTareas(tareasOrdenadas);
+        setTareasAgrupadas(agrupadas);
+        setExpandido(estadoInicial);
+      }
+    } catch (err) {
+      console.error('Error cargando tareas:', err);
     } finally {
       if (montadoRef.current) {
         setCargando(false);
@@ -51,54 +188,602 @@ export default function AdminDashboard() {
     }
   };
 
+  const obtenerColorEstado = (nombreEstado) => {
+    if (!nombreEstado) return styles.badgeEstado;
+    const estado = nombreEstado.toLowerCase();
+    if (estado.includes('pendiente')) {
+      return `${styles.badgeEstado} ${styles.estadoPendiente}`;
+    }
+    if (estado.includes('proceso')) {
+      return `${styles.badgeEstado} ${styles.estadoEnProceso}`;
+    }
+    if (estado.includes('revision')) {
+      return `${styles.badgeEstado} ${styles.estadoEnRevision}`;
+    }
+    if (estado.includes('complet')) {
+      return `${styles.badgeEstado} ${styles.estadoCompletado}`;
+    }
+    if (estado.includes('detenido')) {
+      return `${styles.badgeEstado} ${styles.estadoDetenido}`;
+    }
+    return styles.badgeEstado;
+  };
+
+  const obtenerColorPrioridad = (nombrePrioridad) => {
+    if (!nombrePrioridad) return styles.badgePrioridad;
+    const prioridad = nombrePrioridad.toLowerCase();
+    if (prioridad.includes('urgente')) {
+      return `${styles.badgePrioridad} ${styles.prioridadUrgente}`;
+    }
+    if (prioridad.includes('alta')) {
+      return `${styles.badgePrioridad} ${styles.prioridadAlta}`;
+    }
+    if (prioridad.includes('media')) {
+      return `${styles.badgePrioridad} ${styles.prioridadMedia}`;
+    }
+    if (prioridad.includes('baja')) {
+      return `${styles.badgePrioridad} ${styles.prioridadBaja}`;
+    }
+    return styles.badgePrioridad;
+  };
+
+  const obtenerIconoPrioridad = (nombrePrioridad) => {
+    if (!nombrePrioridad) return '⚡';
+    if (nombrePrioridad.toLowerCase().includes('urgente')) return '🔴';
+    if (nombrePrioridad.toLowerCase().includes('alta')) return '🔴';
+    if (nombrePrioridad.toLowerCase().includes('media')) return '🟡';
+    return '🟢';
+  };
+
+  const normalizarEtiqueta = (texto) => {
+    if (!texto) return 'N/A';
+    return texto.replaceAll('_', ' ').toUpperCase();
+  };
+
+  const esEstadoFinal = (nombreEstado) => {
+    if (!nombreEstado) return false;
+    const estado = nombreEstado.toLowerCase();
+    return estado.includes('complet');
+  };
+
+  const formatearFecha = (fecha) => {
+    if (!fecha) return 'N/A';
+    return new Date(fecha).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+    });
+  };
+
+  const obtenerIconoCriticidad = (tarea) => {
+    if (tarea.estaVencida) {
+      return <FiAlertCircle />;
+    }
+    if (tarea.diasRestantes <= 3) {
+      return <FiClock />;
+    }
+    return <FiCheckCircle />;
+  };
+
+  const obtenerClaseTarjeta = (tarea) => {
+    const estadoNombre = tarea.estados?.nombre?.toLowerCase() || '';
+    if (esEstadoFinal(estadoNombre)) {
+      const fechaLimite = new Date(tarea.fecha_limite);
+      const fechaInicio = new Date(tarea.fecha_inicio);
+      const fechaCierre = tarea.fecha_cierre ? new Date(tarea.fecha_cierre) : fechaLimite;
+      return fechaCierre <= fechaLimite ? styles.tarjetaVerde : styles.tarjetaRoja;
+    }
+    if (tarea.estaVencida) return styles.tarjetaRoja;
+    if (tarea.diasRestantes <= 1) return styles.tarjetaAmarilla;
+    return '';
+  };
+
+  const resumenCritico = {
+    vencidas: todasLasTareas.filter((t) => t.estaVencida).length,
+    porVencer: todasLasTareas.filter(
+      (t) => !t.estaVencida && t.diasRestantes <= 3
+    ).length,
+  };
+
+  const resumenResponsables = Object.values(
+    todasLasTareas.reduce((acc, tarea) => {
+      const id = tarea.usuarios?.id || 'sin-asignar';
+      const nombre = tarea.usuarios?.nombre_completo || 'Sin asignar';
+
+      if (!acc[id]) {
+        acc[id] = {
+          id,
+          nombre,
+          total: 0,
+          vencidas: 0,
+        };
+      }
+
+      acc[id].total += 1;
+      if (tarea.estaVencida) {
+        acc[id].vencidas += 1;
+      }
+
+      return acc;
+    }, {})
+  ).sort((a, b) => {
+    if (b.total !== a.total) return b.total - a.total;
+    if (b.vencidas !== a.vencidas) return b.vencidas - a.vencidas;
+    return a.nombre.localeCompare(b.nombre, 'es');
+  });
+
+  const totalGeneralTareas = todasLasTareas.length;
+  const totalCompletadas = todasLasTareas.filter((t) =>
+    esEstadoFinal(t.estados?.nombre)
+  ).length;
+  const totalPendientes = todasLasTareas.filter((t) => {
+    const estado = t.estados?.nombre?.toLowerCase() || '';
+    return estado.includes('pendiente');
+  }).length;
+  const porcentajeCompletado = totalGeneralTareas
+    ? Math.round((totalCompletadas / totalGeneralTareas) * 100)
+    : 0;
+  const porcentajePendiente = totalGeneralTareas
+    ? Math.round((totalPendientes / totalGeneralTareas) * 100)
+    : 0;
+  const responsableMasVencidas = resumenResponsables.find(
+    (responsable) => responsable.vencidas > 0
+  );
+
+  const opcionesUsuarios = [
+    ...new Map(
+      todasLasTareas
+        .filter((t) => t.usuarios?.id)
+        .map((t) => [t.usuarios.id, t.usuarios.nombre_completo])
+    ).entries(),
+  ];
+  const opcionesPrioridades = [
+    ...new Set(
+      todasLasTareas.map((t) => t.prioridades?.nombre).filter(Boolean)
+    ),
+  ];
+  const opcionesEstados = [
+    ...new Set(todasLasTareas.map((t) => t.estados?.nombre).filter(Boolean)),
+  ];
+
+  const tareasFiltradas = tareas.filter((tarea) => {
+    const usuarioId = tarea.usuarios?.id || 'sin-asignar';
+    const prioridad = tarea.prioridades?.nombre || 'N/A';
+    const estado = tarea.estados?.nombre || 'N/A';
+
+    const cumpleUsuario =
+      filtroUsuario === 'todos' || usuarioId === filtroUsuario;
+    const cumplePrioridad =
+      filtroPrioridad === 'todos' || prioridad === filtroPrioridad;
+    const cumpleEstado = filtroEstado === 'todos' || estado === filtroEstado;
+
+    return cumpleUsuario && cumplePrioridad && cumpleEstado;
+  });
+
+  const tareasAgrupadasFiltradas = {};
+  tareasFiltradas.forEach((tarea) => {
+    const pais = tarea.plantas?.paises?.nombre || 'Sin país';
+    if (!tareasAgrupadasFiltradas[pais]) {
+      tareasAgrupadasFiltradas[pais] = [];
+    }
+    tareasAgrupadasFiltradas[pais].push(tarea);
+  });
+
+  const iniciales = (nombre = '') => {
+    if (!nombre) return 'SN';
+    return nombre
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase())
+      .join('');
+  };
+
+  const AbrirModal = (tarea) => {
+    setTareaSeleccionada(tarea);
+    setModalAbierto(true);
+  };
+
+  const CerrarModal = () => {
+    setModalAbierto(false);
+    setTareaSeleccionada(null);
+  };
+
+  const toggleAcordeon = (pais) => {
+    setExpandido((prev) => ({
+      ...prev,
+      [pais]: !prev[pais],
+    }));
+  };
+
   if (cargandoAuth || cargando) {
     return <Layout titulo="Dashboard">Cargando...</Layout>;
   }
 
   return (
-    <Layout titulo="Dashboard">
-      <div className={styles.grid}>
-        <div className={styles.card}>
-          <div className={styles.icono}>👥</div>
-          <div className={styles.contenido}>
-            <p className={styles.label}>Total de Usuarios</p>
-            <p className={styles.numero}>{stats.totalUsuarios}</p>
+    <Layout titulo="Panel de Control" ocultarHeader>
+      <section className={styles.hero}>
+        <div>
+          <p className={styles.heroKicker}>Monitoreo Operativo</p>
+          <h1 className={styles.heroTitulo}>Tablero de Tareas por Región</h1>
+          <p className={styles.heroSubtitulo}>
+            Vista priorizada por urgencia, ordenada por vencimiento y organizada
+            por país para una revisión ejecutiva rápida.
+          </p>
+        </div>
+      </section>
+
+      <section className={styles.resumenSeccion}>
+        <div className={`${styles.resumenCard} ${styles.resumenCardResponsables}`}>
+          <div className={styles.resumenCardHeader}>
+            <div>
+              <p className={styles.resumenEyebrow}>Carga por responsable</p>
+              <h3>¿Cuántas tareas tiene cada persona asignadas?</h3>
+            </div>
+            <span className={styles.resumenBadge}>
+              {resumenResponsables.length} responsables
+            </span>
+          </div>
+
+          <div className={styles.responsablesLista}>
+            {resumenResponsables.map((responsable) => (
+              <div key={responsable.id} className={styles.responsableItem}>
+                <div>
+                  <p className={styles.responsableNombre}>{responsable.nombre}</p>
+                  <span className={styles.responsableMeta}>
+                    {responsable.vencidas > 0
+                      ? `${responsable.vencidas} vencidas`
+                      : 'Sin vencidas'}
+                  </span>
+                </div>
+                <strong className={styles.responsableTotal}>
+                  {responsable.total}
+                </strong>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className={styles.card}>
-          <div className={styles.icono}>🏭</div>
-          <div className={styles.contenido}>
-            <p className={styles.label}>Total de Plantas</p>
-            <p className={styles.numero}>{stats.totalPlantas}</p>
+        <div className={styles.resumenCard}>
+          <div className={styles.resumenCardHeader}>
+            <div>
+              <p className={styles.resumenEyebrow}>Estado global</p>
+              <h3>¿Qué porcentaje del total está completado vs pendiente?</h3>
+            </div>
+          </div>
+
+          <div className={styles.resumenEstadosGrid}>
+            <div className={styles.estadoResumenItem}>
+              <span className={styles.metaLabel}>Completado</span>
+              <strong className={styles.estadoResumenValor}>
+                {porcentajeCompletado}%
+              </strong>
+              <span className={styles.estadoResumenMeta}>
+                {totalCompletadas} de {totalGeneralTareas}
+              </span>
+            </div>
+
+            <div className={styles.estadoResumenItem}>
+              <span className={styles.metaLabel}>Pendiente</span>
+              <strong className={styles.estadoResumenValor}>
+                {porcentajePendiente}%
+              </strong>
+              <span className={styles.estadoResumenMeta}>
+                {totalPendientes} de {totalGeneralTareas}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className={styles.card}>
-          <div className={styles.icono}>🌍</div>
-          <div className={styles.contenido}>
-            <p className={styles.label}>Total de Países</p>
-            <p className={styles.numero}>{stats.totalPaises}</p>
+        <div className={styles.resumenCard}>
+          <div className={styles.resumenCardHeader}>
+            <div>
+              <p className={styles.resumenEyebrow}>Riesgo actual</p>
+              <h3>¿Quién tiene más tareas vencidas actualmente?</h3>
+            </div>
+          </div>
+
+          {responsableMasVencidas ? (
+            <div className={styles.resumenDestacado}>
+              <span className={styles.avatarResumen}>
+                {iniciales(responsableMasVencidas.nombre)}
+              </span>
+              <div>
+                <p className={styles.resumenDestacadoNombre}>
+                  {responsableMasVencidas.nombre}
+                </p>
+                <span className={styles.resumenDestacadoMeta}>
+                  {responsableMasVencidas.vencidas} tareas vencidas activas
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.resumenVacio}>
+              No hay tareas vencidas asignadas en este momento
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={styles.filtrosSeccion}>
+        <div className={styles.filtroTitulo}>
+          <FiFilter />
+          <span>FILTROS OPERATIVOS</span>
+        </div>
+        <div className={styles.filtrosGrid}>
+          <select
+            className={styles.filtroControl}
+            value={filtroUsuario}
+            onChange={(e) => setFiltroUsuario(e.target.value)}
+          >
+            <option value="todos">TODOS LOS USUARIOS</option>
+            {opcionesUsuarios.map(([id, nombre]) => (
+              <option key={id} value={id}>
+                {nombre}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={styles.filtroControl}
+            value={filtroPrioridad}
+            onChange={(e) => setFiltroPrioridad(e.target.value)}
+          >
+            <option value="todos">TODAS LAS PRIORIDADES</option>
+            {opcionesPrioridades.map((prioridad) => (
+              <option key={prioridad} value={prioridad}>
+                {normalizarEtiqueta(prioridad)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className={styles.filtroControl}
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+          >
+            <option value="todos">TODOS LOS ESTADOS</option>
+            {opcionesEstados.map((estado) => (
+              <option key={estado} value={estado}>
+                {normalizarEtiqueta(estado)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
+
+      <div className={styles.tareasSeccion}>
+        <div className={styles.tareasHeader}>
+          <div>
+            <h2>LISTA DE TAREAS ASIGNADAS</h2>
+            <p>
+              Top 10 ordenado por vencimiento e impacto operativo
+            </p>
+          </div>
+          <div className={styles.badgeTop}>
+            {tareasFiltradas.length} EN VISTA
           </div>
         </div>
 
-        <div className={styles.card}>
-          <div className={styles.icono}>✅</div>
-          <div className={styles.contenido}>
-            <p className={styles.label}>Total de Tareas</p>
-            <p className={styles.numero}>{stats.totalTareas}</p>
+        {Object.keys(tareasAgrupadasFiltradas).length === 0 ? (
+          <div className={styles.vacio}>
+            <p>No hay tareas para mostrar</p>
           </div>
-        </div>
+        ) : (
+          <div className={styles.acordeon}>
+            {Object.entries(tareasAgrupadasFiltradas).map(
+              ([pais, tareasDelPais]) => (
+                <div key={pais} className={styles.acordeonItem}>
+                  <button
+                    className={`${styles.acordeonBoton} ${
+                      expandido[pais] ? styles.activo : ''
+                    }`}
+                    onClick={() => toggleAcordeon(pais)}
+                  >
+                    <span className={styles.regionTitulo}>
+                      <FiGlobe /> {pais}
+                      <strong>{tareasDelPais.length}</strong>
+                    </span>
+                    <span className={styles.acordeonToggle}>
+                      <FiChevronDown />
+                    </span>
+                  </button>
+
+                  {expandido[pais] && (
+                    <div className={styles.acordeonContenido}>
+                      {tareasDelPais.map((tarea) => (
+                        <div
+                          key={tarea.id}
+                          className={`${styles.tarjetaTarea} ${obtenerClaseTarjeta(tarea)}`}
+                          onClick={() => AbrirModal(tarea)}
+                        >
+                          {/* Fila 1: Título + Usuario */}
+                          <div className={styles.cardFila1}>
+                            <h4 className={styles.tarjetaTitulo}>
+                              {tarea.titulo}
+                            </h4>
+                            <div className={styles.cardUsuario}>
+                              <span className={styles.avatarMini}>
+                                {iniciales(tarea.usuarios?.nombre_completo)}
+                              </span>
+                              <p className={styles.cardUsuarioNombre}>
+                                {tarea.usuarios?.nombre_completo || 'Sin asignar'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Cuerpo 3 columnas */}
+                          <div className={styles.cardCuerpo}>
+                            {/* Descripción */}
+                            <div className={styles.cardColDesc}>
+                              <span className={styles.metaLabel}>
+                                <FiFileText /> Descripción
+                              </span>
+                              <p className={styles.tareaResumen}>
+                                {tarea.descripcion || 'Sin descripción'}
+                              </p>
+                            </div>
+
+                            {/* Prioridad + Estado */}
+                            <div className={styles.cardColStatus}>
+                              <div className={styles.metaItem}>
+                                <span className={styles.metaLabel}>
+                                  <FiFlag /> Prioridad
+                                </span>
+                                <span
+                                  className={obtenerColorPrioridad(
+                                    tarea.prioridades?.nombre
+                                  )}
+                                >
+                                  {normalizarEtiqueta(tarea.prioridades?.nombre)}
+                                </span>
+                              </div>
+
+                              <div className={styles.metaItem}>
+                                <span className={styles.metaLabel}>
+                                  <FiCheckCircle /> Estado
+                                </span>
+                                <span
+                                  className={obtenerColorEstado(
+                                    tarea.estados?.nombre
+                                  )}
+                                >
+                                  {normalizarEtiqueta(tarea.estados?.nombre)}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Fechas + Progreso */}
+                            <div className={styles.cardColFechas}>
+                              <div className={styles.metaItem}>
+                                <span className={styles.metaLabel}>
+                                  <FiCalendar /> F. Inicio / F. Fin
+                                </span>
+                                <span className={styles.tarjetaValor}>
+                                  {formatearFecha(tarea.fecha_inicio)} →{' '}
+                                  {formatearFecha(tarea.fecha_limite)}
+                                </span>
+                              </div>
+
+                              <div className={styles.metaItem}>
+                                <span className={styles.metaLabel}>
+                                  <FiTrendingUp /> Progreso
+                                </span>
+                                <div className={styles.barraProgreso}>
+                                  <div
+                                    className={styles.barraProgresoFill}
+                                    style={{
+                                      width: `${tarea.porcentaje_avance || 0}%`,
+                                    }}
+                                  />
+                                </div>
+                                <span className={styles.barraProgresoTexto}>
+                                  {tarea.porcentaje_avance || 0}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        )}
       </div>
 
-      <div className={styles.seccion}>
-        <h3>Acciones Rápidas</h3>
-        <div className={styles.botones}>
-          <a href="/admin/gestion" className={styles.enlace}>
-            Gestionar Configuración
-          </a>
-        </div>
-      </div>
+      {/* Modal de Detalles */}
+      <Modal
+        abierto={modalAbierto}
+        onCerrar={CerrarModal}
+        titulo="Detalles de la Tarea"
+        modo="ver"
+      >
+        {tareaSeleccionada && (
+          <div className={styles.modalDetalle}>
+            <div className={styles.modalItem}>
+              <label>Región / País</label>
+              <p>{tareaSeleccionada.plantas?.paises?.nombre || 'N/A'}</p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Planta</label>
+              <p>{tareaSeleccionada.plantas?.nombre || 'N/A'}</p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Nombre de Tarea</label>
+              <p>{tareaSeleccionada.titulo}</p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Actividad / Descripción</label>
+              <p>{tareaSeleccionada.descripcion}</p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Prioridad</label>
+              <p>{normalizarEtiqueta(tareaSeleccionada.prioridades?.nombre)}</p>
+            </div>
+
+            <div className={styles.modalGrid2}>
+              <div className={styles.modalItem}>
+                <label>Fecha de Inicio</label>
+                <p>{formatearFecha(tareaSeleccionada.fecha_inicio)}</p>
+              </div>
+              <div className={styles.modalItem}>
+                <label>Fecha de Entrega</label>
+                <p>{formatearFecha(tareaSeleccionada.fecha_limite)}</p>
+              </div>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Estado</label>
+              <p>{normalizarEtiqueta(tareaSeleccionada.estados?.nombre)}</p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Avance (%)</label>
+              <p>{tareaSeleccionada.porcentaje_avance || 0}%</p>
+              <div className={styles.barraProgreso}>
+                <div
+                  className={styles.barraProgresoFill}
+                  style={{
+                    width: `${tareaSeleccionada.porcentaje_avance || 0}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Asignado a</label>
+              <p>
+                {tareaSeleccionada.usuarios?.nombre_completo || 'Sin asignar'}
+              </p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Evidencia / Entregable</label>
+              <p>
+                {tareaSeleccionada.evidencia?.substring(0, 100) ||
+                  'No disponible'}
+                {tareaSeleccionada.evidencia?.length > 100 ? '...' : ''}
+              </p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Observaciones</label>
+              <p>{tareaSeleccionada.observaciones || 'Ninguna'}</p>
+            </div>
+
+            <div className={styles.modalItem}>
+              <label>Revisado</label>
+              <p>{tareaSeleccionada.revisado ? '✅ Sí' : '❌ No'}</p>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Layout>
   );
 }
