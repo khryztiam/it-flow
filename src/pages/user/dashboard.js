@@ -132,10 +132,17 @@ export default function UserDashboard() {
     return '';
   };
 
-  // Stats calculadas (excluyendo finalizadas del total visible)
-  const tareasActivas = todasLasTareas.filter(
-    (t) => !esEstadoFinal(t.estado?.nombre)
-  );
+  // Stats calculadas (excluyendo finalizadas + revisadas)
+  const tareasActivas = todasLasTareas.filter((tarea) => {
+    // Excluir solo si: completado AND revisado=true
+    if (
+      tarea.estado?.nombre?.toLowerCase().includes('complet') &&
+      tarea.revisado === true
+    ) {
+      return false;
+    }
+    return true;
+  });
   const stats = {
     total: tareasActivas.length,
     enProceso: tareasActivas.filter((t) =>

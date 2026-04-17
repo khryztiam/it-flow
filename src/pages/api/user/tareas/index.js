@@ -35,6 +35,7 @@ export default async function handler(req, res) {
         fecha_cierre,
         planta_id,
         planta:plantas(id, nombre),
+        revisado,
         creado_por,
         creado_por_user:usuarios!creado_por(id, nombre_completo),
         created_at,

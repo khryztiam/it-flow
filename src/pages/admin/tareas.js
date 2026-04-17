@@ -6,6 +6,7 @@ import Modal from '@components/Modal';
 import FormularioMulti from '@components/FormularioMulti';
 import { supabase } from '@lib/supabase';
 import { formatearFecha } from '@utils/formateo';
+import { FiExternalLink, FiImage, FiFile, FiPaperclip } from 'react-icons/fi';
 import styles from '@styles/TareasAdmin.module.css';
 
 export default function TareasAdmin() {
@@ -23,6 +24,12 @@ export default function TareasAdmin() {
   const [modo, setModo] = useState('crear');
   const [tareaEditando, setTareaEditando] = useState(null);
   const [cargandoFormulario, setCargandoFormulario] = useState(false);
+
+  // Estado modal evidencias
+  const [modalEvidencias, setModalEvidencias] = useState(false);
+  const [evidenciasTarea, setEvidenciasTarea] = useState([]);
+  const [cargandoEvidencias, setCargandoEvidencias] = useState(false);
+  const [tituloTareaEvidencias, setTituloTareaEvidencias] = useState('');
   const [valores, setValores] = useState({
     titulo: '',
     descripcion: '',
@@ -125,6 +132,21 @@ export default function TareasAdmin() {
     setModalAbierta(true);
   };
 
+  const handleVerEvidencias = async (tarea) => {
+    setTituloTareaEvidencias(tarea.titulo);
+    setEvidenciasTarea([]);
+    setModalEvidencias(true);
+    setCargandoEvidencias(true);
+    try {
+      const data = await callAPI(`/api/admin/tareas/${tarea.id}/evidencias`);
+      setEvidenciasTarea(data.data || []);
+    } catch (err) {
+      setError(`Error al cargar evidencias: ${err.message}`);
+    } finally {
+      setCargandoEvidencias(false);
+    }
+  };
+
   const handleEditar = (tarea) => {
     setModo('editar');
     setTareaEditando(tarea);
@@ -225,6 +247,11 @@ export default function TareasAdmin() {
   ];
 
   const acciones = [
+    {
+      label: 'Evidencias',
+      color: 'info',
+      onClick: (tarea) => handleVerEvidencias(tarea),
+    },
     {
       label: 'Editar',
       color: 'info',
@@ -361,6 +388,56 @@ export default function TareasAdmin() {
           }
           cargando={cargandoFormulario}
         />
+      </Modal>
+
+      {/* Modal Evidencias */}
+      <Modal
+        abierto={modalEvidencias}
+        onCerrar={() => setModalEvidencias(false)}
+        titulo={`📎 Evidencias — ${tituloTareaEvidencias}`}
+        modo="ver"
+      >
+        {cargandoEvidencias ? (
+          <p className={styles.textoSecundario}>Cargando evidencias...</p>
+        ) : evidenciasTarea.length === 0 ? (
+          <p className={styles.textoSecundario}>
+            Este usuario aún no ha subido evidencias para esta tarea.
+          </p>
+        ) : (
+          <div className={styles.listaEvidencias}>
+            {evidenciasTarea.map((ev) => (
+              <div key={ev.id} className={styles.evidenciaItem}>
+                <div className={styles.evidenciaIcono}>
+                  {ev.tipo_mime?.startsWith('image/') ? (
+                    <FiImage size={20} />
+                  ) : (
+                    <FiFile size={20} />
+                  )}
+                </div>
+                <div className={styles.evidenciaDatos}>
+                  <span className={styles.evidenciaNombre}>
+                    {ev.descripcion || ev.archivo_path.split('_').pop()}
+                  </span>
+                  <span className={styles.evidenciaFecha}>
+                    {ev.usuario?.nombre_completo} ·{' '}
+                    {formatearFecha(ev.fecha_subida)}
+                    {ev.tamanio_bytes &&
+                      ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`}
+                  </span>
+                </div>
+                <a
+                  href={ev.archivo_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={styles.btnVerEvidencia}
+                  title="Ver archivo"
+                >
+                  <FiExternalLink size={15} />
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
     </Layout>
   );

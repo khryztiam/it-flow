@@ -248,9 +248,9 @@
 
 .cardCuerpo {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(130px, 0.75fr) minmax(
+  grid-template-columns: minmax(0, 2.3fr) minmax(130px, 0.65fr) minmax(
       180px,
-      0.95fr
+      0.85fr
     );
   gap: 0;
   align-items: stretch;
@@ -283,13 +283,13 @@
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 12px;
   color: #334155;
   font-size: 13px;
-  line-height: 1.4;
-  min-height: 54px;
+  line-height: 1.5;
+  min-height: 100px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
