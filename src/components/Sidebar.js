@@ -108,11 +108,15 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
 
   return (
     <aside className={styles.sidebar}>
-      {/* Logo */}
+      {/* Branding */}
       <div className={styles.logoArea}>
-        <div className={styles.logo}>⚡</div>
-        <h1 className={styles.appNombre}>ITFlow</h1>
-        <p className={styles.rolLabel}>{obtenerTextoRol(rol)}</p>
+        <div className={styles.brandRow}>
+          <div className={styles.logo}>⚡</div>
+          <h1 className={styles.appNombre}>
+            <span className={styles.brandIt}>IT</span>
+            <span className={styles.brandFlow}>Flow</span>
+          </h1>
+        </div>
       </div>
 
       {/* Menú */}
@@ -152,7 +156,7 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
             <p className={styles.usuarioNombre}>
               {usuarioDetalles?.nombre_completo}
             </p>
-            <p className={styles.usuarioEmail}>{usuarioDetalles?.email}</p>
+            <span className={styles.rolBadge}>{obtenerTextoRol(rol)}</span>
           </div>
           <button
             onClick={onLogout}

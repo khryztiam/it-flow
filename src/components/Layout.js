@@ -3,7 +3,7 @@ import { useAuth } from '@context/AuthContext';
 import styles from '@styles/Layout.module.css';
 import Sidebar from './Sidebar';
 
-export default function Layout({ children, titulo }) {
+export default function Layout({ children, titulo, ocultarHeader = false }) {
   const router = useRouter();
   const { usuarioDetalles, logout } = useAuth();
 
@@ -22,9 +22,11 @@ export default function Layout({ children, titulo }) {
 
       {/* MAIN CONTENT */}
       <div className={styles.main}>
-        <header className={styles.header}>
-          <h2 className={styles.titulo}>{titulo || 'Dashboard'}</h2>
-        </header>
+        {!ocultarHeader && (
+          <header className={styles.header}>
+            <h2 className={styles.titulo}>{titulo || 'Dashboard'}</h2>
+          </header>
+        )}
 
         <main className={styles.contenido}>{children}</main>
       </div>
