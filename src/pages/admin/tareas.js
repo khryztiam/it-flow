@@ -5,8 +5,20 @@ import TablaGenerica from '@components/TablaGenerica';
 import Modal from '@components/Modal';
 import FormularioMulti from '@components/FormularioMulti';
 import { supabase } from '@lib/supabase';
-import { formatearFecha } from '@utils/formateo';
-import { FiExternalLink, FiImage, FiFile, FiPaperclip } from 'react-icons/fi';
+import {
+  formatearFecha,
+  obtenerTextoEstado,
+  obtenerTextoPrioridad,
+} from '@utils/formateo';
+import {
+  FiCalendar,
+  FiDownload,
+  FiExternalLink,
+  FiFile,
+  FiFilter,
+  FiImage,
+  FiPlus,
+} from 'react-icons/fi';
 import styles from '@styles/TareasAdmin.module.css';
 
 export default function TareasAdmin() {
@@ -20,6 +32,12 @@ export default function TareasAdmin() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [filtroPlanta, setFiltroPlanta] = useState('todas');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroResponsable, setFiltroResponsable] = useState('todos');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [filtroPrioridad, setFiltroPrioridad] = useState('todas');
   const [modalAbierta, setModalAbierta] = useState(false);
   const [modo, setModo] = useState('crear');
   const [tareaEditando, setTareaEditando] = useState(null);
@@ -54,6 +72,15 @@ export default function TareasAdmin() {
       montadoRef.current = false;
     };
   }, [cargandoAuth]);
+
+  const resumirResponsable = (nombre) => {
+    if (!nombre) return 'Sin asignar';
+
+    const partes = nombre.split(' ').filter(Boolean);
+    if (partes.length <= 2) return partes.join(' ');
+
+    return `${partes[0]} ${partes[1]}`;
+  };
 
   // Obtener token del usuario actual
   const obtenerToken = async () => {
@@ -97,7 +124,7 @@ export default function TareasAdmin() {
           callAPI('/api/admin/tareas'),
           supabase
             .from('usuarios')
-            .select('id, nombre_completo, planta:plantas(nombre)')
+            .select('id, nombre_completo, rol:roles(nombre), planta:plantas(nombre)')
             .eq('estado', 'activo'),
         ]);
 
@@ -115,10 +142,123 @@ export default function TareasAdmin() {
     }
   };
 
-  const tareasFiltradas =
-    filtroPlanta === 'todas'
-      ? tareas
-      : tareas.filter((t) => t.planta_id === filtroPlanta);
+  const tareasFiltradas = tareas.filter((tarea) => {
+    const cumplePlanta =
+      filtroPlanta === 'todas' || tarea.planta_id === filtroPlanta;
+    const cumpleResponsable =
+      filtroResponsable === 'todos' || tarea.asignado_a === filtroResponsable;
+    const cumpleEstado =
+      filtroEstado === 'todos' || tarea.estado_id === filtroEstado;
+    const cumplePrioridad =
+      filtroPrioridad === 'todas' || tarea.prioridad_id === filtroPrioridad;
+
+    const fechaTarea = tarea.fecha_limite
+      ? tarea.fecha_limite.split('T')[0]
+      : null;
+    const cumpleFechaDesde =
+      !fechaDesde || !fechaTarea || fechaTarea >= fechaDesde;
+    const cumpleFechaHasta =
+      !fechaHasta || !fechaTarea || fechaTarea <= fechaHasta;
+    const terminoBusqueda = busqueda.trim().toLowerCase();
+    const cumpleBusqueda =
+      !terminoBusqueda ||
+      tarea.titulo?.toLowerCase().includes(terminoBusqueda) ||
+      tarea.descripcion?.toLowerCase().includes(terminoBusqueda);
+
+    return (
+      cumplePlanta &&
+      cumpleResponsable &&
+      cumpleEstado &&
+      cumplePrioridad &&
+      cumpleFechaDesde &&
+      cumpleFechaHasta &&
+      cumpleBusqueda
+    );
+  });
+
+  const opcionesResponsables = usuarios
+    .filter((usuario) => usuario.rol?.nombre !== 'admin')
+    .map((usuario) => ({
+      id: usuario.id,
+      label: resumirResponsable(usuario.nombre_completo).toUpperCase(),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+  const opcionesEstados = estados
+    .map((estado) => ({
+      id: estado.id,
+      label: obtenerTextoEstado(estado.nombre).toUpperCase(),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+  const opcionesPrioridades = prioridades
+    .map((prioridad) => ({
+      id: prioridad.id,
+      label: obtenerTextoPrioridad(prioridad.nombre).toUpperCase(),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+  const limpiarFiltros = () => {
+    setFiltroPlanta('todas');
+    setFechaDesde('');
+    setFechaHasta('');
+    setBusqueda('');
+    setFiltroResponsable('todos');
+    setFiltroEstado('todos');
+    setFiltroPrioridad('todas');
+  };
+
+  const escaparCSV = (valor) => {
+    if (valor === null || valor === undefined) return '';
+    const texto = String(valor).replace(/"/g, '""');
+    return `"${texto}"`;
+  };
+
+  const exportarTareas = () => {
+    if (!tareasFiltradas.length) return;
+
+    const encabezados = [
+      'Titulo',
+      'Descripcion',
+      'Planta',
+      'Prioridad',
+      'Asignado a',
+      'Estado',
+      'Fecha inicio',
+      'Fecha limite',
+      'Avance',
+    ];
+
+    const filas = tareasFiltradas.map((tarea) => [
+      tarea.titulo,
+      tarea.descripcion || '',
+      tarea.planta?.nombre || '',
+      tarea.prioridad?.nombre || '',
+      tarea.asignado_a_user?.nombre_completo || 'Sin asignar',
+      tarea.estado?.nombre || '',
+      tarea.fecha_inicio ? formatearFecha(tarea.fecha_inicio) : '',
+      tarea.fecha_limite ? formatearFecha(tarea.fecha_limite) : '',
+      `${tarea.porcentaje_avance || 0}%`,
+    ]);
+
+    const contenido = [encabezados, ...filas]
+      .map((fila) => fila.map(escaparCSV).join(','))
+      .join('\n');
+
+    const blob = new Blob([`\uFEFF${contenido}`], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const fecha = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `tareas-admin-${fecha}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const handleNuevaTarea = () => {
     setModo('crear');
@@ -215,7 +355,12 @@ export default function TareasAdmin() {
   };
 
   const columnasTabla = [
-    { key: 'titulo', label: 'Título', ancho: '25%' },
+    {
+      key: 'titulo',
+      label: 'Título',
+      ancho: '25%',
+      sortable: true,
+    },
     {
       key: 'planta',
       label: 'Planta',
@@ -226,27 +371,36 @@ export default function TareasAdmin() {
       key: 'prioridad',
       label: 'Prioridad',
       ancho: '12%',
-      render: (val) => val?.nombre || '-',
+      sortable: true,
+      render: (val) => obtenerTextoPrioridad(val?.nombre) || '-',
+      sortValue: (val) => obtenerTextoPrioridad(val?.nombre) || '',
     },
     {
       key: 'asignado_a_user',
       label: 'Asignado a',
       ancho: '18%',
-      render: (val) => val?.nombre_completo || 'Sin asignar',
+      sortable: true,
+      render: (val) => resumirResponsable(val?.nombre_completo),
+      sortValue: (val) => resumirResponsable(val?.nombre_completo),
     },
     {
       key: 'fecha_limite',
       label: 'Fecha Límite',
       ancho: '14%',
+      sortable: true,
       render: (val) => formatearFecha(val),
     },
     {
       key: 'estado',
       label: 'Estado',
       ancho: '12%',
+      sortable: true,
       render: (val) => (
-        <span className={styles[`estado-${val?.nombre}`]}>{val?.nombre}</span>
+        <span className={styles[`estado-${val?.nombre}`]}>
+          {obtenerTextoEstado(val?.nombre)}
+        </span>
       ),
+      sortValue: (val) => obtenerTextoEstado(val?.nombre) || '',
     },
   ];
 
@@ -295,36 +449,157 @@ export default function TareasAdmin() {
   }
 
   return (
-    <Layout titulo="Todas las Tareas (Admin)">
-      <div className={styles.contenedor}>
-        {error && <div className={styles.error}>{error}</div>}
-
-        <div className={styles.encabezado}>
-          <div className={styles.titulo}>
-            <h3>Gestión Global de Tareas</h3>
-            <p className={styles.subtitulo}>
-              {tareasFiltradas.length} de {tareas.length} tareas
-            </p>
-          </div>
-          <button className={styles.botonNuevo} onClick={handleNuevaTarea}>
-            + Nueva Tarea
-          </button>
+    <Layout titulo="Todas las Tareas (Admin)" ocultarHeader>
+      <section className={styles.hero}>
+        <div>
+          <p className={styles.heroKicker}>OPERACION GLOBAL</p>
+          <h1 className={styles.heroTitulo}>Gestion de tareas</h1>
+          <p className={styles.heroSubtitulo}>
+            Administra, filtra y exporta el portafolio operativo desde una vista
+            central con foco en seguimiento y control.
+          </p>
         </div>
 
-        <div className={styles.filtros}>
+        <div className={styles.heroActions}>
+          <div className={styles.heroStat}>
+            <div className={styles.heroStatInline}>
+              <span className={styles.heroStatLabel}>TAREAS EN VISTA</span>
+              <strong>{tareasFiltradas.length}</strong>
+            </div>
+          </div>
+
+          <div className={styles.actionGroup}>
+            <button
+              className={styles.botonSecundario}
+              onClick={exportarTareas}
+              disabled={!tareasFiltradas.length}
+            >
+              <FiDownload />
+              Exportar
+            </button>
+            <button className={styles.botonNuevo} onClick={handleNuevaTarea}>
+              <FiPlus />
+              Nueva tarea
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div className={styles.filtrosPanel}>
+        <div className={styles.filtrosHeader}>
+          <FiFilter />
+          <span>FILTROS DE TRABAJO</span>
+        </div>
+
+        <div className={styles.filtrosFilaPrincipal}>
           <select
             className={styles.select}
             value={filtroPlanta}
             onChange={(e) => setFiltroPlanta(e.target.value)}
           >
-            <option value="todas">📋 Todas las Plantas</option>
+            <option value="todas">TODAS LAS PLANTAS</option>
             {plantas.map((p) => (
               <option key={p.id} value={p.id}>
-                🏭 {p.nombre}
+                {p.nombre.toUpperCase()}
               </option>
             ))}
           </select>
+
+          <label className={styles.campoFecha}>
+            <span>
+              <FiCalendar />
+              DESDE
+            </span>
+            <input
+              className={styles.inputFecha}
+              type="date"
+              value={fechaDesde}
+              onChange={(e) => setFechaDesde(e.target.value)}
+            />
+          </label>
+
+          <label className={styles.campoFecha}>
+            <span>
+              <FiCalendar />
+              HASTA
+            </span>
+            <input
+              className={styles.inputFecha}
+              type="date"
+              value={fechaHasta}
+              onChange={(e) => setFechaHasta(e.target.value)}
+            />
+          </label>
+
+          <button className={styles.botonFiltro} onClick={limpiarFiltros}>
+            LIMPIAR FILTROS
+          </button>
         </div>
+
+        <div className={styles.filtrosFilaSecundaria}>
+          <label className={styles.campoTexto}>
+            <span>BUSCAR TAREA</span>
+            <input
+              className={styles.inputTexto}
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="TITULO O DESCRIPCION"
+            />
+          </label>
+
+          <label className={styles.campoSelect}>
+            <span>RESPONSABLE</span>
+            <select
+              className={styles.select}
+              value={filtroResponsable}
+              onChange={(e) => setFiltroResponsable(e.target.value)}
+            >
+              <option value="todos">TODOS</option>
+              {opcionesResponsables.map((responsable) => (
+                <option key={responsable.id} value={responsable.id}>
+                  {responsable.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.campoSelect}>
+            <span>ESTADO</span>
+            <select
+              className={styles.select}
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+            >
+              <option value="todos">TODOS</option>
+              {opcionesEstados.map((estado) => (
+                <option key={estado.id} value={estado.id}>
+                  {estado.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.campoSelect}>
+            <span>PRIORIDAD</span>
+            <select
+              className={styles.select}
+              value={filtroPrioridad}
+              onChange={(e) => setFiltroPrioridad(e.target.value)}
+            >
+              <option value="todas">TODAS</option>
+              {opcionesPrioridades.map((prioridad) => (
+                <option key={prioridad.id} value={prioridad.id}>
+                  {prioridad.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className={styles.contenedor}>
+        {error && <div className={styles.error}>{error}</div>}
 
         <TablaGenerica
           columnas={columnasTabla}

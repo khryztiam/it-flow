@@ -2,10 +2,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FiLogOut, FiChevronRight } from 'react-icons/fi';
 import {
-  FiBarChart2,
+  FiGrid,
   FiSettings,
   FiCheckSquare,
   FiShare2,
+  FiPieChart,
 } from 'react-icons/fi';
 import styles from '@styles/Layout.module.css';
 import { obtenerTextoRol } from '@utils/formateo';
@@ -13,6 +14,15 @@ import { obtenerTextoRol } from '@utils/formateo';
 export default function Sidebar({ usuarioDetalles, onLogout }) {
   const router = useRouter();
   const rol = usuarioDetalles?.rol?.nombre;
+
+  const obtenerClaseAcento = (ruta) => {
+    if (ruta.includes('/dashboard')) return styles.accentSky;
+    if (ruta.includes('/estadisticas')) return styles.accentTeal;
+    if (ruta.includes('/gestion')) return styles.accentAmber;
+    if (ruta.includes('/tareas')) return styles.accentBlue;
+    if (ruta.includes('/asignaciones')) return styles.accentViolet;
+    return '';
+  };
 
   // Definir menús por rol
   const getMenuPorRol = () => {
@@ -26,7 +36,12 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
                 {
                   label: 'Dashboard Global',
                   ruta: '/admin/dashboard',
-                  icono: FiBarChart2,
+                  icono: FiGrid,
+                },
+                {
+                  label: 'Estadísticas',
+                  ruta: '/admin/estadisticas',
+                  icono: FiPieChart,
                 },
                 {
                   label: 'Gestión',
@@ -62,7 +77,7 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
                 {
                   label: 'Dashboard',
                   ruta: '/supervisor/dashboard',
-                  icono: FiBarChart2,
+                  icono: FiGrid,
                 },
                 {
                   label: 'Mis Tareas',
@@ -89,7 +104,7 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
                 {
                   label: 'Dashboard',
                   ruta: '/user/dashboard',
-                  icono: FiBarChart2,
+                  icono: FiGrid,
                 },
                 {
                   label: 'Mis Tareas',
@@ -129,15 +144,16 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
               return (
                 <Link key={item.ruta} href={item.ruta} legacyBehavior>
                   <a
-                    className={`${styles.navItem} ${
+                    className={`${styles.navItem} ${obtenerClaseAcento(
+                      item.ruta
+                    )} ${
                       isActivo(item.ruta) ? styles.activo : ''
                     }`}
+                    aria-current={isActivo(item.ruta) ? 'page' : undefined}
                   >
                     <IconComponent className={styles.icono} />
                     <span className={styles.label}>{item.label}</span>
-                    {isActivo(item.ruta) && (
-                      <FiChevronRight className={styles.indicador} />
-                    )}
+                    <FiChevronRight className={styles.indicador} />
                   </a>
                 </Link>
               );

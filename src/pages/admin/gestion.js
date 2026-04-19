@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/router';
 import Layout from '@components/Layout';
 import TablaGenerica from '@components/TablaGenerica';
 import Modal from '@components/Modal';
 import FormularioMulti from '@components/FormularioMulti';
 import { useAdmin } from '@hooks/useProtegerRuta';
 import { supabase } from '@lib/supabase';
-import { formatearFechaHora, obtenerTextoPrioridad } from '@utils/formateo';
+import { FiGlobe, FiSettings, FiShield, FiUsers } from 'react-icons/fi';
 import styles from '@styles/GestionAdmin.module.css';
 
 export default function GestionAdmin() {
-  const router = useRouter();
   const { cargando: cargandoAuth } = useAdmin();
   const montadoRef = useRef(true);
 
@@ -122,6 +120,28 @@ export default function GestionAdmin() {
     setValores({ ...valores, [field]: value });
   };
 
+  const obtenerMensajeError = (err, accion = 'guardar') => {
+    const mensaje = err?.message || '';
+
+    if (
+      mensaje.includes('tareas_planta_id_fkey') &&
+      mensaje.includes('table "tareas"')
+    ) {
+      return 'No se puede eliminar la planta porque tiene tareas asociadas.';
+    }
+
+    if (
+      mensaje.includes('plantas_pais_id_fkey') &&
+      mensaje.includes('table "plantas"')
+    ) {
+      return 'No se puede eliminar el país porque tiene plantas asociadas.';
+    }
+
+    return accion === 'eliminar'
+      ? 'No fue posible eliminar el registro.'
+      : 'No fue posible guardar los cambios.';
+  };
+
   const handleEliminar = async (registro, tipo = 'usuarios') => {
     if (!confirm(`¿Eliminar ${tipo.slice(0, -1).toLowerCase()}?`)) return;
 
@@ -137,9 +157,10 @@ export default function GestionAdmin() {
             : `/api/admin/paises/${registro.id}`;
 
       await callAPI(endpoint, 'DELETE');
+      setModalAbierta(false);
       cargarDatos();
     } catch (err) {
-      setError(err.message || 'Error eliminando registro');
+      setError(obtenerMensajeError(err, 'eliminar'));
     } finally {
       setCargandoFormulario(false);
     }
@@ -199,7 +220,7 @@ export default function GestionAdmin() {
       setModalAbierta(false);
       cargarDatos();
     } catch (err) {
-      setError(err.message || 'Error guardando datos');
+      setError(obtenerMensajeError(err, 'guardar'));
     } finally {
       setCargandoFormulario(false);
     }
@@ -210,19 +231,58 @@ export default function GestionAdmin() {
   }
 
   return (
-    <Layout titulo="Gestión de Configuración">
+    <Layout titulo="Gestión de Configuración" ocultarHeader>
+      <section className={styles.hero}>
+        <div>
+          <p className={styles.heroKicker}>Configuracion administrativa</p>
+          <h1 className={styles.heroTitulo}>Gestion de catalogos y usuarios</h1>
+          <p className={styles.heroSubtitulo}>
+            Administra la estructura base de la operacion para mantener
+            usuarios, plantas y paises alineados con el flujo de trabajo.
+          </p>
+        </div>
+
+        <div className={styles.heroHighlights}>
+          <div className={styles.highlightBox}>
+            <FiUsers />
+            <div>
+              <strong>{usuarios.length}</strong>
+              <span>usuarios</span>
+            </div>
+          </div>
+          <div className={styles.highlightBox}>
+            <FiSettings />
+            <div>
+              <strong>{plantas.length}</strong>
+              <span>plantas</span>
+            </div>
+          </div>
+          <div className={styles.highlightBox}>
+            <FiGlobe />
+            <div>
+              <strong>{paises.length}</strong>
+              <span>paises</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {error && <div className={styles.errorGlobal}>{error}</div>}
 
       <div className={styles.contenido}>
         {/* MAIN - Usuarios */}
         <div className={styles.main}>
           <div className={styles.encabezado}>
-            <h3>👥 Usuarios</h3>
+            <div>
+              <p className={styles.eyebrow}>Directorio principal</p>
+              <h3>Usuarios</h3>
+            </div>
             <button
               onClick={() => handleNuevo('usuarios')}
               className={styles.btnNuevo}
             >
-              + Agregar Usuario
+              <FiShield />
+              Agregar usuario
             </button>
           </div>
 
@@ -272,7 +332,7 @@ export default function GestionAdmin() {
           {/* Plantas */}
           <div className={styles.seccion}>
             <h4 className={styles.seccionTitulo}>
-              🏭 Plantas ({plantas.length})
+              🏭 Plantas
             </h4>
             <div className={styles.seccionContenido}>
               {plantas.length === 0 ? (
@@ -314,28 +374,6 @@ export default function GestionAdmin() {
                         {planta.pais?.nombre || '-'}
                       </div>
                     </div>
-                    <button
-                      className={styles.btnEditar}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditar(planta, 'plantas');
-                      }}
-                      title="Editar"
-                      style={{ alignSelf: 'flex-end', marginTop: '2px' }}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className={styles.btnEditar}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEliminar(planta, 'plantas');
-                      }}
-                      title="Eliminar"
-                      style={{ alignSelf: 'flex-end', marginTop: '2px' }}
-                    >
-                      🗑️
-                    </button>
                   </div>
                 ))
               )}
@@ -351,7 +389,7 @@ export default function GestionAdmin() {
           {/* Países */}
           <div className={styles.seccion}>
             <h4 className={styles.seccionTitulo}>
-              🌍 Países ({paises.length})
+              🌍 Países
             </h4>
             <div className={styles.seccionContenido}>
               {paises.length === 0 ? (
@@ -385,28 +423,6 @@ export default function GestionAdmin() {
                         {pais.nombre}
                       </div>
                     </div>
-                    <button
-                      className={styles.btnEditar}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditar(pais, 'paises');
-                      }}
-                      title="Editar"
-                      style={{ alignSelf: 'flex-end' }}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      className={styles.btnEditar}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEliminar(pais, 'paises');
-                      }}
-                      title="Eliminar"
-                      style={{ alignSelf: 'flex-end' }}
-                    >
-                      🗑️
-                    </button>
                   </div>
                 ))
               )}
@@ -443,6 +459,13 @@ export default function GestionAdmin() {
               }`
         }
         onAceptar={handleGuardar}
+        onEliminar={
+          modoFormulario === 'editar' &&
+          registroSeleccionado &&
+          (tipoFormulario === 'paises' || tipoFormulario === 'plantas')
+            ? () => handleEliminar(registroSeleccionado, tipoFormulario)
+            : null
+        }
         cargando={cargandoFormulario}
         modo={modoFormulario}
       >
