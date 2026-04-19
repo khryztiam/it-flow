@@ -60,7 +60,12 @@ export default function AsignacionesAdmin() {
         .select('id, nombre');
 
       if (plantasErr) throw plantasErr;
-      setPlantas(plantasData || []);
+      setPlantas(
+        (plantasData || []).map((p) => ({
+          ...p,
+          nombre: p.nombre.toUpperCase(),
+        }))
+      );
 
       // Cargar tareas sin asignar de todas las plantas
       const { data: tareasData, error: tareasErr } = await supabase
@@ -124,15 +129,33 @@ export default function AsignacionesAdmin() {
   }
 
   return (
-    <Layout titulo="Gestión Global de Asignaciones (Admin)">
+    <Layout titulo="Gestión Global de Asignaciones (Admin)" ocultarHeader>
+      <section className={styles.hero}>
+        <div>
+          <p className={styles.heroKicker}>Operacion global</p>
+          <h1 className={styles.heroTitulo}>Asignacion centralizada</h1>
+          <p className={styles.heroSubtitulo}>
+            Distribuye tareas pendientes entre responsables activos con una
+            vista unificada por planta para mantener el flujo operativo en
+            movimiento.
+          </p>
+        </div>
+      </section>
+
       <div className={styles.contenedor}>
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
 
         <div className={styles.encabezado}>
           <div className={styles.titulo}>
-            <h3>Tareas sin Asignar - Todas las Plantas</h3>
-            <p className={styles.contador}>{tareasFiltradas.length} tareas</p>
+            <p className={styles.eyebrow}>Bandeja de asignacion</p>
+            <h3>Tareas</h3>
+            <p className={styles.contador}>
+              {filtroPlanta === 'todas'
+                ? 'Todas las plantas'
+                : 'Filtrado por planta seleccionada'}{' '}
+              · {tareasFiltradas.length} tareas en vista
+            </p>
           </div>
         </div>
 
