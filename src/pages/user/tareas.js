@@ -6,7 +6,8 @@ import TablaGenerica from '@components/TablaGenerica';
 import { supabase } from '@lib/supabase';
 import { useAuth } from '@context/AuthContext';
 import { formatearFecha } from '@utils/formateo';
-import styles from '@styles/TareasUser.module.css';
+import { FiFilter } from 'react-icons/fi';
+import styles from '../../styles/TareasUser.module.css';
 
 export default function TareasUser() {
   const { cargando: cargandoAuth } = useUser();
@@ -22,7 +23,6 @@ export default function TareasUser() {
     }
   }, [cargandoAuth, usuarioDetalles?.id]);
 
-  // Obtener token del usuario actual
   const obtenerToken = async () => {
     const { data, error } = await supabase.auth.getSession();
     if (error || !data?.session?.access_token) {
@@ -71,7 +71,7 @@ export default function TareasUser() {
   const columnasTabla = [
     {
       key: 'titulo',
-      label: 'Título',
+      label: 'Titulo',
       ancho: '30%',
       render: (val) => val || '-',
     },
@@ -87,9 +87,6 @@ export default function TareasUser() {
       ancho: '15%',
       render: (val) => {
         const porcentaje = val || 0;
-        let colorClass = 'rojo'; // < 30%
-        if (porcentaje >= 30 && porcentaje < 70) colorClass = 'naranja';
-        if (porcentaje >= 70) colorClass = 'verde';
 
         return (
           <div className={styles.barra}>
@@ -114,7 +111,7 @@ export default function TareasUser() {
     },
     {
       key: 'fecha_limite',
-      label: 'Fecha Límite',
+      label: 'Fecha limite',
       ancho: '20%',
       render: (val) => formatearFecha(val),
     },
@@ -149,35 +146,49 @@ export default function TareasUser() {
   }
 
   return (
-    <Layout titulo="Mis Tareas Asignadas">
-      <div className={styles.contenedor}>
-        <div className={styles.encabezado}>
-          <div>
-            <h3>Tareas Asignadas</h3>
-            <p className={styles.contador}>
-              {tareasFiltradas.length} de {tareas.length} tareas
-            </p>
-          </div>
+    <Layout titulo="Mis Tareas Asignadas" ocultarHeader>
+      <section className={styles.hero}>
+        <div className={styles.heroInfo}>
+          <p className={styles.heroKicker}>Mis Tareas</p>
+          <h1 className={styles.heroTitulo}>Tareas asignadas</h1>
+          <p className={styles.heroSubtitulo}>
+            Consulta tu listado de trabajo y filtra rapidamente por estado para
+            enfocarte en lo pendiente.
+          </p>
+        </div>
+
+        <div className={styles.heroFilterCard}>
+          <label htmlFor="filtro-estado" className={styles.heroFilterLabel}>
+            <FiFilter />
+            <span>Estado</span>
+          </label>
           <select
-            className={styles.filtro}
+            id="filtro-estado"
+            className={styles.heroSelect}
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}
           >
-            <option value="todas">📋 Todas</option>
-            <option value="pending">⏳ Pendientes</option>
-            <option value="en_proceso">⚙️ En Proceso</option>
-            <option value="en_revision">👀 En Revisión</option>
-            <option value="completado">✅ Completadas</option>
-            <option value="detenido">❌ Detenidas</option>
+            <option value="todas">Todas</option>
+            <option value="pending">Pendientes</option>
+            <option value="en_proceso">En proceso</option>
+            <option value="en_revision">En revision</option>
+            <option value="completado">Completadas</option>
+            <option value="detenido">Detenidas</option>
           </select>
         </div>
+      </section>
+
+      <div className={styles.contenedor}>
+        <p className={styles.contador}>
+          {tareasFiltradas.length} de {tareas.length} tareas
+        </p>
 
         <TablaGenerica
           columnas={columnasTabla}
           datos={tareasFiltradas}
           acciones={acciones}
           cargando={cargando}
-          vacio={tareasFiltradas.length === 0 ? '✨ No hay tareas' : ''}
+          vacio={tareasFiltradas.length === 0 ? 'No hay tareas' : ''}
         />
       </div>
     </Layout>

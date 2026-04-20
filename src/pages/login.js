@@ -3,8 +3,87 @@ import { useRouter } from 'next/router';
 import { useAuth } from '@context/AuthContext';
 import styles from '@styles/Login.module.css';
 import { FiUser, FiLock } from 'react-icons/fi';
+import packageInfo from '../../package.json';
 
 const DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || '@itflowapp.com';
+const APP_VERSION = `v${packageInfo.version}`;
+
+function LoginBrandMark() {
+  return (
+    <svg
+      width="92"
+      height="92"
+      viewBox="0 0 92 92"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={styles.logoSvg}
+    >
+      <defs>
+        <linearGradient
+          id="loginBrandGradient"
+          x1="20"
+          y1="14"
+          x2="76"
+          y2="78"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#1E3A8A" />
+          <stop offset="1" stopColor="#3B82F6" />
+        </linearGradient>
+      </defs>
+
+      <rect x="2" y="2" width="88" height="88" rx="24" fill="#EEF2FF" />
+      <rect
+        x="18"
+        y="20"
+        width="10"
+        height="52"
+        rx="5"
+        fill="url(#loginBrandGradient)"
+      />
+      <rect
+        x="18"
+        y="20"
+        width="42"
+        height="10"
+        rx="5"
+        fill="url(#loginBrandGradient)"
+      />
+      <rect
+        x="40"
+        y="20"
+        width="10"
+        height="52"
+        rx="5"
+        fill="url(#loginBrandGradient)"
+      />
+      <rect
+        x="52"
+        y="20"
+        width="24"
+        height="10"
+        rx="5"
+        fill="url(#loginBrandGradient)"
+      />
+      <rect
+        x="52"
+        y="39"
+        width="20"
+        height="10"
+        rx="5"
+        fill="url(#loginBrandGradient)"
+      />
+      <path
+        d="M63 63L69.5 69.5L82 55"
+        stroke="#22C55E"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export default function Login() {
   const router = useRouter();
@@ -15,7 +94,6 @@ export default function Login() {
 
   const { login, usuarioDetalles, cargando: cargandoAuth } = useAuth();
 
-  // Redirect cuando los detalles estén cargados y login exitoso
   useEffect(() => {
     if (usuarioDetalles && !cargandoAuth) {
       const rol = usuarioDetalles?.rol?.nombre;
@@ -37,9 +115,8 @@ export default function Login() {
     try {
       const email = username + DOMAIN;
       await login(email, pass);
-      // El useEffect detectará cambios en usuarioDetalles y redirigirá
     } catch (err) {
-      setError(err.message || 'Usuario o contraseña incorrectos');
+      setError(err.message || 'Usuario o contrasena incorrectos');
       setCargando(false);
     }
   };
@@ -47,16 +124,18 @@ export default function Login() {
   return (
     <div className={styles.contenedor}>
       <div className={styles.card}>
-        {/* Logo/Icono */}
         <div className={styles.logoArea}>
-          <div className={styles.logo}>⚡</div>
-          <h1 className={styles.nombre}>ITFlow</h1>
-          <p className={styles.subtitulo}>Iniciar Sesión</p>
+          <div className={styles.logoBadge}>
+            <LoginBrandMark />
+          </div>
+          <h1 className={styles.nombre}>
+            <span className={styles.nombreIt}>IT</span>
+            <span className={styles.nombreFlow}>Flow</span>
+          </h1>
+          <p className={styles.subtitulo}>Inicia sesion para continuar</p>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={manejarEnvio} className={styles.formulario}>
-          {/* Campo Usuario */}
           <div className={styles.grupo}>
             <div className={styles.inputConIcono}>
               <FiUser className={styles.icono} />
@@ -73,7 +152,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Campo Contraseña */}
           <div className={styles.grupo}>
             <div className={styles.inputConIcono}>
               <FiLock className={styles.icono} />
@@ -81,7 +159,7 @@ export default function Login() {
                 type="password"
                 value={pass}
                 onChange={(e) => setPass(e.target.value)}
-                placeholder="••••••••"
+                placeholder="contrasena"
                 className={styles.entrada}
                 required
                 disabled={cargando}
@@ -89,19 +167,17 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Mensaje de Error */}
           {error && (
             <div className={`${styles.mensaje} ${styles.error}`}>{error}</div>
           )}
 
-          {/* Botón Enviar */}
           <button type="submit" className={styles.boton} disabled={cargando}>
             {cargando ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
-        {/* Footer */}
+
         <div className={styles.footer}>
-          <p>ITFlow v1.0</p>
+          <p>ITFlow {APP_VERSION}</p>
         </div>
       </div>
     </div>

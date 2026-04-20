@@ -11,6 +11,83 @@ import {
 import styles from '@styles/Layout.module.css';
 import { obtenerTextoRol } from '@utils/formateo';
 
+function SidebarBrandMark() {
+  return (
+    <svg
+      width="38"
+      height="38"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={styles.logoSvg}
+    >
+      <defs>
+        <linearGradient
+          id="sidebarBrandGradient"
+          x1="13"
+          y1="10"
+          x2="53"
+          y2="54"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#1E3A8A" />
+          <stop offset="1" stopColor="#3B82F6" />
+        </linearGradient>
+      </defs>
+
+      <rect x="2" y="2" width="60" height="60" rx="18" fill="#EEF2FF" />
+      <rect
+        x="12"
+        y="14"
+        width="7"
+        height="36"
+        rx="3.5"
+        fill="url(#sidebarBrandGradient)"
+      />
+      <rect
+        x="12"
+        y="14"
+        width="28"
+        height="7"
+        rx="3.5"
+        fill="url(#sidebarBrandGradient)"
+      />
+      <rect
+        x="27"
+        y="14"
+        width="7"
+        height="36"
+        rx="3.5"
+        fill="url(#sidebarBrandGradient)"
+      />
+      <rect
+        x="35"
+        y="14"
+        width="16"
+        height="7"
+        rx="3.5"
+        fill="url(#sidebarBrandGradient)"
+      />
+      <rect
+        x="35"
+        y="27"
+        width="13"
+        height="7"
+        rx="3.5"
+        fill="url(#sidebarBrandGradient)"
+      />
+      <path
+        d="M43 43L47.5 47.5L56 37.5"
+        stroke="#22C55E"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Sidebar({ usuarioDetalles, onLogout }) {
   const router = useRouter();
   const rol = usuarioDetalles?.rol?.nombre;
@@ -24,14 +101,13 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
     return '';
   };
 
-  // Definir menús por rol
   const getMenuPorRol = () => {
     switch (rol) {
       case 'admin':
         return {
           secciones: [
             {
-              titulo: 'ADMINISTRACIÓN',
+              titulo: 'ADMINISTRACION',
               items: [
                 {
                   label: 'Dashboard Global',
@@ -39,19 +115,19 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
                   icono: FiGrid,
                 },
                 {
-                  label: 'Estadísticas',
+                  label: 'Estadisticas',
                   ruta: '/admin/estadisticas',
                   icono: FiPieChart,
                 },
                 {
-                  label: 'Gestión',
+                  label: 'Gestion',
                   ruta: '/admin/gestion',
                   icono: FiSettings,
                 },
               ],
             },
             {
-              titulo: 'OPERACIONES (TODO)',
+              titulo: 'OPERACIONES',
               items: [
                 {
                   label: 'Todas las Tareas',
@@ -123,10 +199,11 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
 
   return (
     <aside className={styles.sidebar}>
-      {/* Branding */}
       <div className={styles.logoArea}>
         <div className={styles.brandRow}>
-          <div className={styles.logo}>⚡</div>
+          <div className={styles.logo}>
+            <SidebarBrandMark />
+          </div>
           <h1 className={styles.appNombre}>
             <span className={styles.brandIt}>IT</span>
             <span className={styles.brandFlow}>Flow</span>
@@ -134,7 +211,6 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
         </div>
       </div>
 
-      {/* Menú */}
       <nav className={styles.nav}>
         {menu.secciones.map((seccion, idx) => (
           <div key={idx} className={styles.seccion}>
@@ -146,9 +222,7 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
                   <a
                     className={`${styles.navItem} ${obtenerClaseAcento(
                       item.ruta
-                    )} ${
-                      isActivo(item.ruta) ? styles.activo : ''
-                    }`}
+                    )} ${isActivo(item.ruta) ? styles.activo : ''}`}
                     aria-current={isActivo(item.ruta) ? 'page' : undefined}
                   >
                     <IconComponent className={styles.icono} />
@@ -162,7 +236,6 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
         ))}
       </nav>
 
-      {/* Footer con usuario */}
       <div className={styles.footer}>
         <div className={styles.usuarioArea}>
           <div className={styles.avatar}>
@@ -177,7 +250,7 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
           <button
             onClick={onLogout}
             className={styles.btnLogout}
-            title="Cerrar sesión"
+            title="Cerrar sesion"
           >
             <FiLogOut />
           </button>
