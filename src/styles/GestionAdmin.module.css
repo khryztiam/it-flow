@@ -7,7 +7,7 @@
   padding: 24px;
   color: #f8fafc;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 20px;
   align-items: flex-start;
   flex-wrap: wrap;
@@ -47,10 +47,11 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  flex: 0 1 420px;
+  flex: 1 1 420px;
   width: min(100%, 420px);
   min-width: 320px;
   margin-left: auto;
+  align-self: flex-start;
 }
 
 .highlightBox {
@@ -62,6 +63,7 @@
   border-radius: 14px;
   padding: 12px 14px;
   backdrop-filter: blur(8px);
+  min-height: 76px;
 }
 
 .highlightBox svg {
@@ -246,14 +248,23 @@
 /* Responsive */
 @media (max-width: 1200px) {
   .hero {
-    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero > :first-child {
+    flex: 1 1 420px;
   }
 
   .heroHighlights {
+    flex: 1 1 100%;
     width: 100%;
     min-width: 0;
     max-width: none;
     margin-left: 0;
+  }
+
+  .highlightBox {
+    min-height: 88px;
   }
 
   .contenido {
@@ -274,7 +285,21 @@
 
 @media (max-width: 900px) {
   .heroHighlights {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .highlightBox {
+    min-height: 76px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 20px;
+  }
+
+  .heroHighlights {
+    grid-template-columns: 1fr;
   }
 }
 
