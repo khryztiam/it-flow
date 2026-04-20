@@ -4,7 +4,9 @@
 
 **Tipo:** Aplicación SaaS de gestión de tareas multirrol.  
 **Stack:** Next.js 16, React 19, Supabase, CSS Modules  
-**Última actualización:** 17 de abril de 2026
+**Última actualización:** 19 de abril de 2026
+
+**Historial de cambios:** ver [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
@@ -343,4 +345,4 @@ Para reportar bugs o sugerencias, contacta al equipo de desarrollo.
 
 ---
 
-**Creado:** 2024 | **Última actualización:** 17/04/2026
+**Creado:** 2024 | **Última actualización:** 19/04/2026
