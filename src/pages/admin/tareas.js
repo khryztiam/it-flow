@@ -17,6 +17,7 @@ import {
   FiFile,
   FiFilter,
   FiImage,
+  FiMessageSquare,
   FiPlus,
 } from 'react-icons/fi';
 import styles from '@styles/TareasAdmin.module.css';
@@ -52,6 +53,10 @@ export default function TareasAdmin() {
   const [evidenciasTarea, setEvidenciasTarea] = useState([]);
   const [cargandoEvidencias, setCargandoEvidencias] = useState(false);
   const [tituloTareaEvidencias, setTituloTareaEvidencias] = useState('');
+  const [modalComentarios, setModalComentarios] = useState(false);
+  const [comentariosTarea, setComentariosTarea] = useState([]);
+  const [cargandoComentarios, setCargandoComentarios] = useState(false);
+  const [tituloTareaComentarios, setTituloTareaComentarios] = useState('');
   const [valores, setValores] = useState({
     titulo: '',
     descripcion: '',
@@ -291,6 +296,26 @@ export default function TareasAdmin() {
     }
   };
 
+  const handleVerComentarios = async (tarea) => {
+    setTituloTareaComentarios(tarea.titulo);
+    setComentariosTarea([]);
+    setModalComentarios(true);
+    setCargandoComentarios(true);
+    try {
+      const data = await callAPI(`/api/admin/tareas/${tarea.id}`);
+      const comentariosOrdenados = [...(data.comentarios || [])].sort(
+        (a, b) =>
+          new Date(b.fecha_creacion || b.created_at) -
+          new Date(a.fecha_creacion || a.created_at)
+      );
+      setComentariosTarea(comentariosOrdenados);
+    } catch (err) {
+      setError(`Error al cargar comentarios: ${err.message}`);
+    } finally {
+      setCargandoComentarios(false);
+    }
+  };
+
   const handleEditar = (tarea) => {
     setModo('editar');
     setTareaEditando(tarea);
@@ -426,6 +451,11 @@ export default function TareasAdmin() {
   };
 
   const acciones = [
+    {
+      label: 'Comentarios',
+      color: 'info',
+      onClick: (tarea) => handleVerComentarios(tarea),
+    },
     {
       label: 'Evidencias',
       color: 'info',
@@ -735,6 +765,39 @@ export default function TareasAdmin() {
                 >
                   <FiExternalLink size={15} />
                 </a>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal Comentarios */}
+      <Modal
+        abierto={modalComentarios}
+        onCerrar={() => setModalComentarios(false)}
+        titulo={`💬 Comentarios — ${tituloTareaComentarios}`}
+        modo="ver"
+      >
+        {cargandoComentarios ? (
+          <p className={styles.textoSecundario}>Cargando comentarios...</p>
+        ) : comentariosTarea.length === 0 ? (
+          <p className={styles.textoSecundario}>
+            Esta tarea no tiene comentarios todavía.
+          </p>
+        ) : (
+          <div className={styles.listaComentarios}>
+            {comentariosTarea.map((com) => (
+              <div key={com.id} className={styles.comentarioItem}>
+                <div className={styles.comentarioCabecera}>
+                  <span className={styles.comentarioAutor}>
+                    <FiMessageSquare size={14} />
+                    {com.usuario?.nombre_completo || 'Usuario'}
+                  </span>
+                  <span className={styles.comentarioFecha}>
+                    {formatearFecha(com.fecha_creacion || com.created_at)}
+                  </span>
+                </div>
+                <p>{com.contenido || '-'}</p>
               </div>
             ))}
           </div>

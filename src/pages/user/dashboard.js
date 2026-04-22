@@ -22,6 +22,7 @@ export default function UserDashboard() {
   const { usuarioDetalles } = useAuth();
   const router = useRouter();
   const montadoRef = useRef(true);
+  const cargarAlertaRef = useRef(null);
   const [todasLasTareas, setTodasLasTareas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -29,6 +30,38 @@ export default function UserDashboard() {
   const [filtroPrioridad, setFiltroPrioridad] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [filtroFecha, setFiltroFecha] = useState('todos');
+  const [alertaUsuario, setAlertaUsuario] = useState(null);
+  const [confirmandoAlerta, setConfirmandoAlerta] = useState(false);
+
+  const cargarAlertaUsuario = async () => {
+    if (!usuarioDetalles?.id) return;
+    const { data, error } = await supabase
+      .from('alertas_usuario')
+      .select('id, mensaje, activa, enviada_at')
+      .eq('usuario_id', usuarioDetalles.id)
+      .eq('activa', true)
+      .order('enviada_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!montadoRef.current) return;
+
+    if (error) {
+      console.error('Error cargando alerta usuario:', error);
+      setAlertaUsuario(null);
+      return;
+    }
+
+    if (data?.activa) {
+      setAlertaUsuario(data);
+    } else {
+      setAlertaUsuario(null);
+    }
+  };
+
+  useEffect(() => {
+    cargarAlertaRef.current = cargarAlertaUsuario;
+  });
 
   useEffect(() => {
     montadoRef.current = true;
@@ -60,6 +93,55 @@ export default function UserDashboard() {
       if (channel) supabase.removeChannel(channel);
     };
   }, [cargandoAuth, usuarioDetalles?.id]);
+
+  // Cargar alerta activa para el usuario
+  useEffect(() => {
+    if (cargandoAuth || !usuarioDetalles?.id) return;
+    cargarAlertaUsuario();
+  }, [cargandoAuth, usuarioDetalles?.id]);
+
+  useEffect(() => {
+    if (cargandoAuth || !usuarioDetalles?.id) return;
+
+    const channelAlertas = supabase
+      .channel(`realtime-alertas-user-${usuarioDetalles.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'alertas_usuario',
+          filter: `usuario_id=eq.${usuarioDetalles.id}`,
+        },
+        () => {
+          if (cargarAlertaRef.current) {
+            cargarAlertaRef.current();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelAlertas);
+    };
+  }, [cargandoAuth, usuarioDetalles?.id]);
+
+  const confirmarAlerta = async () => {
+    if (!alertaUsuario?.id || !usuarioDetalles?.id) return;
+    setConfirmandoAlerta(true);
+    try {
+      const { error } = await supabase.rpc('confirmar_alerta_usuario', {
+        p_alerta_id: alertaUsuario.id,
+        p_usuario_id: usuarioDetalles.id,
+      });
+      if (error) throw error;
+      setAlertaUsuario(null);
+    } catch (err) {
+      alert('Error al confirmar alerta: ' + err.message);
+    } finally {
+      setConfirmandoAlerta(false);
+    }
+  };
 
   const obtenerToken = async () => {
     const { data, error } = await supabase.auth.getSession();
@@ -268,6 +350,25 @@ export default function UserDashboard() {
           </div>
         </div>
       </section>
+
+      {/* Banner de alerta individual */}
+      {alertaUsuario && (
+        <div className={styles.bannerAlertaUsuario}>
+          <FiAlertCircle
+            style={{ marginRight: 8, fontSize: 22, color: '#eab308' }}
+          />
+          <div className={styles.bannerAlertaMensaje}>
+            {alertaUsuario.mensaje}
+          </div>
+          <button
+            className={styles.bannerAlertaBtn}
+            onClick={confirmarAlerta}
+            disabled={confirmandoAlerta}
+          >
+            OK / Enterado
+          </button>
+        </div>
+      )}
 
       {/* Filtros operativos */}
       <section className={styles.filtrosSeccion}>

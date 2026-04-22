@@ -1,7 +1,7 @@
 import Layout from '@components/Layout';
 import Modal from '@components/Modal';
 import { useAdmin } from '@hooks/useProtegerRuta';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@lib/supabase';
 import styles from '@styles/DashboardAdmin.module.css';
 import {
@@ -26,6 +26,9 @@ import {
 export default function AdminDashboard() {
   const { cargando: cargandoAuth } = useAdmin();
   const montadoRef = useRef(true);
+  const responsablesIdsRef = useRef([]);
+  const cierreAlertaTimerRef = useRef(null);
+  const cargarAlertasActivasRef = useRef(null);
   const [todasLasTareas, setTodasLasTareas] = useState([]);
   const [estadosDisponibles, setEstadosDisponibles] = useState([]);
   const [stats, setStats] = useState({
@@ -38,15 +41,61 @@ export default function AdminDashboard() {
   const [tareasAgrupadas, setTareasAgrupadas] = useState({});
   const [cargando, setCargando] = useState(true);
   const [expandido, setExpandido] = useState({});
-  const [modalAbierto, setModalAbierto] = useState(false);
+  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+  const [modalAlertaAbierto, setModalAlertaAbierto] = useState(false);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
+  const [responsableSeleccionado, setResponsableSeleccionado] = useState(null);
+  const [mensajeAlerta, setMensajeAlerta] = useState(
+    'Por favor, revisa tus tareas asignadas.'
+  );
+  const [enviandoAlerta, setEnviandoAlerta] = useState(false);
+  const [alertaEnviadaOk, setAlertaEnviadaOk] = useState(false);
+  const [alertasActivas, setAlertasActivas] = useState({});
+
+  // Cargar alertas activas por usuario
+  const cargarAlertasActivas = async (usuariosIds = []) => {
+    if (usuariosIds.length === 0) {
+      setAlertasActivas({});
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('vw_alertas_usuario_estado')
+      .select(
+        'id, usuario_id, mensaje, activa, enviada_at, estado_visual_admin, admin_resuelta_visible_hasta, mostrar_en_admin'
+      )
+      .in('usuario_id', usuariosIds)
+      .eq('mostrar_en_admin', true)
+      .order('activa', { ascending: false })
+      .order('enviada_at', { ascending: false });
+
+    if (!error && data) {
+      const map = {};
+      data.forEach((a) => {
+        // Respetar el primer registro por usuario (ya viene ordenado: activa primero, luego más reciente)
+        if (!map[a.usuario_id]) {
+          map[a.usuario_id] = a;
+        }
+      });
+      setAlertasActivas(map);
+    } else if (error) {
+      console.error('Error cargando alertas activas:', error);
+    }
+  };
+
+  useEffect(() => {
+    cargarAlertasActivasRef.current = cargarAlertasActivas;
+  });
 
   // Estado editable del modal
   const [modalEstadoId, setModalEstadoId] = useState('');
   const [modalRevisado, setModalRevisado] = useState(false);
   const [modalObservaciones, setModalObservaciones] = useState('');
   const [modalEvidencias, setModalEvidencias] = useState([]);
+  const [modalComentarios, setModalComentarios] = useState([]);
   const [modalCargandoEvidencias, setModalCargandoEvidencias] = useState(false);
+  const [modalCargandoComentarios, setModalCargandoComentarios] =
+    useState(false);
   const [modalGuardando, setModalGuardando] = useState(false);
   const [modalError, setModalError] = useState('');
   const [modalSuccess, setModalSuccess] = useState('');
@@ -83,6 +132,9 @@ export default function AdminDashboard() {
 
     return () => {
       montadoRef.current = false;
+      if (cierreAlertaTimerRef.current) {
+        clearTimeout(cierreAlertaTimerRef.current);
+      }
       if (channel) supabase.removeChannel(channel);
     };
   }, [cargandoAuth]);
@@ -291,6 +343,17 @@ export default function AdminDashboard() {
     });
   };
 
+  const formatearFechaHora = (fecha) => {
+    if (!fecha) return 'N/A';
+    return new Date(fecha).toLocaleString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const obtenerIconoCriticidad = (tarea) => {
     if (tarea.estaVencida) {
       return <FiAlertCircle />;
@@ -325,32 +388,69 @@ export default function AdminDashboard() {
     ).length,
   };
 
-  const resumenResponsables = Object.values(
-    todasLasTareas.reduce((acc, tarea) => {
-      const id = tarea.usuarios?.id || 'sin-asignar';
-      const nombre = tarea.usuarios?.nombre_completo || 'Sin asignar';
+  const resumenResponsables = useMemo(
+    () =>
+      Object.values(
+        todasLasTareas.reduce((acc, tarea) => {
+          const id = tarea.usuarios?.id || 'sin-asignar';
+          const nombre = tarea.usuarios?.nombre_completo || 'Sin asignar';
 
-      if (!acc[id]) {
-        acc[id] = {
-          id,
-          nombre,
-          total: 0,
-          vencidas: 0,
-        };
-      }
+          if (!acc[id]) {
+            acc[id] = {
+              id,
+              nombre,
+              total: 0,
+              vencidas: 0,
+            };
+          }
 
-      acc[id].total += 1;
-      if (tarea.estaVencida) {
-        acc[id].vencidas += 1;
-      }
+          acc[id].total += 1;
+          if (tarea.estaVencida) {
+            acc[id].vencidas += 1;
+          }
 
-      return acc;
-    }, {})
-  ).sort((a, b) => {
-    if (b.total !== a.total) return b.total - a.total;
-    if (b.vencidas !== a.vencidas) return b.vencidas - a.vencidas;
-    return a.nombre.localeCompare(b.nombre, 'es');
-  });
+          return acc;
+        }, {})
+      ).sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        if (b.vencidas !== a.vencidas) return b.vencidas - a.vencidas;
+        return a.nombre.localeCompare(b.nombre, 'es');
+      }),
+    [todasLasTareas]
+  );
+
+  useEffect(() => {
+    const usuariosIds = resumenResponsables
+      .map((r) => r.id)
+      .filter((id) => id !== 'sin-asignar');
+    responsablesIdsRef.current = usuariosIds;
+    cargarAlertasActivas(usuariosIds);
+  }, [resumenResponsables]);
+
+  useEffect(() => {
+    if (cargandoAuth) return;
+
+    const channelAlertas = supabase
+      .channel('realtime-alertas-admin')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'alertas_usuario',
+        },
+        () => {
+          if (cargarAlertasActivasRef.current) {
+            cargarAlertasActivasRef.current(responsablesIdsRef.current);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelAlertas);
+    };
+  }, [cargandoAuth]);
 
   const totalGeneralTareas = todasLasTareas.length;
   const totalCompletadas = todasLasTareas.filter((t) =>
@@ -438,28 +538,49 @@ export default function AdminDashboard() {
     setModalRevisado(tarea.revisado || false);
     setModalObservaciones(tarea.observaciones || '');
     setModalEvidencias([]);
+    setModalComentarios([]);
     setModalError('');
     setModalSuccess('');
-    setModalAbierto(true);
+    setModalDetalleAbierto(true);
 
-    // Cargar evidencias en paralelo
+    // Cargar evidencias + comentarios del detalle en paralelo
     setModalCargandoEvidencias(true);
+    setModalCargandoComentarios(true);
     try {
       const token = await obtenerToken();
-      const res = await fetch(`/api/admin/tareas/${tarea.id}/evidencias`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      setModalEvidencias(json.data || []);
+      const [resEvidencias, resDetalle] = await Promise.all([
+        fetch(`/api/admin/tareas/${tarea.id}/evidencias`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`/api/admin/tareas/${tarea.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      if (resEvidencias.ok) {
+        const evidenciasJson = await resEvidencias.json();
+        setModalEvidencias(evidenciasJson.data || []);
+      }
+
+      if (resDetalle.ok) {
+        const detalleJson = await resDetalle.json();
+        const comentariosOrdenados = [...(detalleJson.comentarios || [])].sort(
+          (a, b) =>
+            new Date(b.fecha_creacion || b.created_at) -
+            new Date(a.fecha_creacion || a.created_at)
+        );
+        setModalComentarios(comentariosOrdenados);
+      }
     } catch {
-      // silencioso, evidencias no críticas
+      // silencioso, datos no críticos para abrir el modal
     } finally {
       setModalCargandoEvidencias(false);
+      setModalCargandoComentarios(false);
     }
   };
 
   const CerrarModal = () => {
-    setModalAbierto(false);
+    setModalDetalleAbierto(false);
     setTareaSeleccionada(null);
   };
 
@@ -519,6 +640,38 @@ export default function AdminDashboard() {
     }));
   };
 
+  const enviarAlertaResponsable = async () => {
+    if (!responsableSeleccionado?.id) return;
+    if (!mensajeAlerta.trim()) {
+      alert('Escribe un mensaje de alerta antes de enviar.');
+      return;
+    }
+
+    setEnviandoAlerta(true);
+    try {
+      const user = await supabase.auth.getUser();
+      const { error } = await supabase.rpc('crear_alerta_usuario', {
+        p_usuario_id: responsableSeleccionado.id,
+        p_creado_por: user.data.user.id,
+        p_mensaje: mensajeAlerta.trim(),
+      });
+      if (error) throw error;
+      setAlertaEnviadaOk(true);
+      cierreAlertaTimerRef.current = setTimeout(() => {
+        setModalAlertaAbierto(false);
+        setAlertaEnviadaOk(false);
+        const usuariosIds = resumenResponsables
+          .map((r) => r.id)
+          .filter((id) => id !== 'sin-asignar');
+        cargarAlertasActivas(usuariosIds);
+      }, 800);
+    } catch (err) {
+      alert('Error al enviar alerta: ' + err.message);
+    } finally {
+      setEnviandoAlerta(false);
+    }
+  };
+
   if (cargandoAuth || cargando) {
     return <Layout titulo="Dashboard">Cargando...</Layout>;
   }
@@ -551,23 +704,135 @@ export default function AdminDashboard() {
           </div>
 
           <div className={styles.responsablesLista}>
-            {resumenResponsables.map((responsable) => (
-              <div key={responsable.id} className={styles.responsableItem}>
-                <div>
-                  <p className={styles.responsableNombre}>
-                    {responsable.nombre}
-                  </p>
-                  <span className={styles.responsableMeta}>
-                    {responsable.vencidas > 0
-                      ? `${responsable.vencidas} vencidas`
-                      : 'Sin vencidas'}
+            {resumenResponsables.map((responsable) => {
+              const alerta = alertasActivas?.[responsable.id];
+              let estadoAlerta = null;
+              if (alerta) {
+                if (alerta.activa) estadoAlerta = 'pendiente';
+                else if (
+                  alerta.estado_visual_admin === 'confirmada_visible_admin'
+                )
+                  estadoAlerta = 'confirmada';
+              }
+              return (
+                <div
+                  key={responsable.id}
+                  className={
+                    styles.responsableItem +
+                    ' ' +
+                    (estadoAlerta ? styles[`alerta_${estadoAlerta}`] : '')
+                  }
+                  tabIndex={responsable.id !== 'sin-asignar' ? 0 : -1}
+                  role="button"
+                  style={{
+                    cursor:
+                      responsable.id !== 'sin-asignar' ? 'pointer' : 'default',
+                  }}
+                  onClick={() => {
+                    if (responsable.id !== 'sin-asignar') {
+                      if (cierreAlertaTimerRef.current) {
+                        clearTimeout(cierreAlertaTimerRef.current);
+                      }
+                      setResponsableSeleccionado(responsable);
+                      setAlertaEnviadaOk(false);
+                      setModalAlertaAbierto(true);
+                      setMensajeAlerta(
+                        'Por favor, revisa tus tareas asignadas.'
+                      );
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && responsable.id !== 'sin-asignar') {
+                      if (cierreAlertaTimerRef.current) {
+                        clearTimeout(cierreAlertaTimerRef.current);
+                      }
+                      setResponsableSeleccionado(responsable);
+                      setAlertaEnviadaOk(false);
+                      setModalAlertaAbierto(true);
+                      setMensajeAlerta(
+                        'Por favor, revisa tus tareas asignadas.'
+                      );
+                    }
+                  }}
+                >
+                  <div>
+                    <p className={styles.responsableNombre}>
+                      {responsable.nombre}
+                    </p>
+                    <span className={styles.responsableMeta}>
+                      {responsable.vencidas > 0
+                        ? `${responsable.vencidas} vencidas`
+                        : 'Sin vencidas'}
+                    </span>
+                  </div>
+                  <strong className={styles.responsableTotal}>
+                    {responsable.total}
+                  </strong>
+                  {estadoAlerta === 'pendiente' && (
+                    <span
+                      className={styles.alertaBadge}
+                      title="Alerta pendiente"
+                    >
+                      <FiAlertCircle color="#eab308" />
+                    </span>
+                  )}
+                  {estadoAlerta === 'confirmada' && (
+                    <span
+                      className={styles.alertaBadge}
+                      title="Alerta confirmada"
+                    >
+                      <FiCheckCircle color="#22c55e" />
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            {/* Modal de confirmación de alerta */}
+            <Modal
+              abierto={modalAlertaAbierto}
+              onCerrar={() => {
+                setModalAlertaAbierto(false);
+                setAlertaEnviadaOk(false);
+              }}
+              titulo="Enviar alerta a responsable"
+              modo={alertaEnviadaOk ? 'ver' : 'editar'}
+              onAceptar={enviarAlertaResponsable}
+              cargando={enviandoAlerta}
+              textoAceptar="Enviar alerta"
+            >
+              <div className={styles.modalDetalle}>
+                {alertaEnviadaOk && (
+                  <div className={styles.modalAlertaOk}>
+                    Alerta enviada correctamente. Cerrando...
+                  </div>
+                )}
+                <div className={styles.modalItem}>
+                  <label>Usuario seleccionado</label>
+                  <p>{responsableSeleccionado?.nombre || 'Sin usuario'}</p>
+                </div>
+
+                <div className={styles.modalCampo}>
+                  <label className={styles.modalLabel}>Mensaje de alerta</label>
+                  <textarea
+                    className={styles.modalTextarea}
+                    value={mensajeAlerta}
+                    onChange={(e) => setMensajeAlerta(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    disabled={enviandoAlerta || alertaEnviadaOk}
+                    placeholder="Escribe una alerta clara y accionable para el responsable..."
+                  />
+                  <span className={styles.modalContador}>
+                    {mensajeAlerta.length}/500
                   </span>
                 </div>
-                <strong className={styles.responsableTotal}>
-                  {responsable.total}
-                </strong>
+
+                <p className={styles.modalTextoSec}>
+                  El usuario verá esta alerta como banner en su dashboard hasta
+                  que confirme "OK / Enterado".
+                </p>
               </div>
-            ))}
+            </Modal>
           </div>
         </div>
 
@@ -824,12 +1089,13 @@ export default function AdminDashboard() {
 
       {/* Modal de Detalles + Acciones */}
       <Modal
-        abierto={modalAbierto}
+        abierto={modalDetalleAbierto}
         onCerrar={CerrarModal}
         titulo="Detalles de la Tarea"
         modo="editar"
         onAceptar={GuardarModal}
         cargando={modalGuardando}
+        tamano="lg"
       >
         {tareaSeleccionada && (
           <div className={styles.modalDetalle}>
@@ -840,120 +1106,165 @@ export default function AdminDashboard() {
               <div className={styles.modalAlertaOk}>{modalSuccess}</div>
             )}
 
-            {/* ── Info contextual (solo lectura) ── */}
-            <div className={styles.modalGrid2}>
-              <div className={styles.modalItem}>
-                <label>Asignado a</label>
-                <p>
-                  {tareaSeleccionada.usuarios?.nombre_completo || 'Sin asignar'}
-                </p>
-              </div>
-              <div className={styles.modalItem}>
-                <label>Planta</label>
-                <p>{tareaSeleccionada.plantas?.nombre || 'N/A'}</p>
-              </div>
-            </div>
-
-            {/* ── Estado ── */}
-            <div className={styles.modalCampo}>
-              <label className={styles.modalLabel}>Estado</label>
-              <select
-                className={styles.modalSelect}
-                value={modalEstadoId}
-                onChange={(e) => setModalEstadoId(e.target.value)}
-              >
-                {estadosDisponibles.map((est) => (
-                  <option key={est.id} value={est.id}>
-                    {normalizarEtiqueta(est.nombre)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* ── Revisado ── */}
-            <div className={styles.modalCampo}>
-              <label className={styles.modalLabel}>Revisado por admin</label>
-              <button
-                className={`${styles.toggleRevisado} ${modalRevisado ? styles.toggleOn : styles.toggleOff}`}
-                onClick={() => setModalRevisado((v) => !v)}
-                type="button"
-              >
-                <span className={styles.toggleCircle} />
-                <span>
-                  {modalRevisado
-                    ? '✅ Marcado como revisado'
-                    : '❌ Pendiente de revisión'}
-                </span>
-              </button>
-            </div>
-
-            {/* ── Observaciones ── */}
-            <div className={styles.modalCampo}>
-              <label className={styles.modalLabel}>Observaciones</label>
-              <textarea
-                className={styles.modalTextarea}
-                value={modalObservaciones}
-                onChange={(e) => setModalObservaciones(e.target.value)}
-                placeholder="Agrega notas o comentarios sobre esta tarea..."
-                rows={3}
-                maxLength={1000}
-              />
-              <span className={styles.modalContador}>
-                {modalObservaciones.length}/1000
-              </span>
-            </div>
-
-            {/* ── Evidencias ── */}
-            <div className={styles.modalCampo}>
-              <label className={styles.modalLabel}>
-                Evidencias (
-                {modalCargandoEvidencias ? '...' : modalEvidencias.length})
-              </label>
-              {modalCargandoEvidencias ? (
-                <p className={styles.modalTextoSec}>Cargando...</p>
-              ) : modalEvidencias.length === 0 ? (
-                <p className={styles.modalTextoSec}>
-                  Sin evidencias subidas aún.
-                </p>
-              ) : (
-                <div className={styles.modalEvidencias}>
-                  {modalEvidencias.map((ev) => (
-                    <div key={ev.id} className={styles.modalEvidenciaItem}>
-                      <span className={styles.modalEvidenciaIcono}>
-                        {ev.tipo_mime?.startsWith('image/') ? (
-                          <FiImage size={16} />
-                        ) : (
-                          <FiFile size={16} />
-                        )}
-                      </span>
-                      <div className={styles.modalEvidenciaDatos}>
-                        <span className={styles.modalEvidenciaNombre}>
-                          {ev.descripcion || ev.archivo_path?.split('_').pop()}
-                        </span>
-                        <span className={styles.modalEvidenciaMeta}>
-                          {ev.usuario?.nombre_completo} ·{' '}
-                          {new Date(ev.fecha_subida).toLocaleDateString(
-                            'es-ES',
-                            { day: '2-digit', month: 'short', year: 'numeric' }
-                          )}
-                          {ev.tamanio_bytes
-                            ? ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`
-                            : ''}
-                        </span>
-                      </div>
-                      <a
-                        href={ev.archivo_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.modalBtnVer}
-                        title="Ver archivo"
-                      >
-                        <FiExternalLink size={14} /> Ver
-                      </a>
-                    </div>
-                  ))}
+            <div className={styles.modalSplit}>
+              <div className={styles.modalPrincipal}>
+                {/* ── Info contextual (solo lectura) ── */}
+                <div className={styles.modalGrid2}>
+                  <div className={styles.modalItem}>
+                    <label>Asignado a</label>
+                    <p>
+                      {tareaSeleccionada.usuarios?.nombre_completo ||
+                        'Sin asignar'}
+                    </p>
+                  </div>
+                  <div className={styles.modalItem}>
+                    <label>Planta</label>
+                    <p>{tareaSeleccionada.plantas?.nombre || 'N/A'}</p>
+                  </div>
                 </div>
-              )}
+
+                {/* ── Estado ── */}
+                <div className={styles.modalCampo}>
+                  <label className={styles.modalLabel}>Estado</label>
+                  <select
+                    className={styles.modalSelect}
+                    value={modalEstadoId}
+                    onChange={(e) => setModalEstadoId(e.target.value)}
+                  >
+                    {estadosDisponibles.map((est) => (
+                      <option key={est.id} value={est.id}>
+                        {normalizarEtiqueta(est.nombre)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* ── Revisado ── */}
+                <div className={styles.modalCampo}>
+                  <label className={styles.modalLabel}>Revisado por admin</label>
+                  <button
+                    className={`${styles.toggleRevisado} ${modalRevisado ? styles.toggleOn : styles.toggleOff}`}
+                    onClick={() => setModalRevisado((v) => !v)}
+                    type="button"
+                  >
+                    <span className={styles.toggleCircle} />
+                    <span>
+                      {modalRevisado
+                        ? '✅ Marcado como revisado'
+                        : '❌ Pendiente de revisión'}
+                    </span>
+                  </button>
+                </div>
+
+                {/* ── Observaciones ── */}
+                <div className={styles.modalCampo}>
+                  <label className={styles.modalLabel}>Observaciones</label>
+                  <textarea
+                    className={styles.modalTextarea}
+                    value={modalObservaciones}
+                    onChange={(e) => setModalObservaciones(e.target.value)}
+                    placeholder="Agrega notas o comentarios sobre esta tarea..."
+                    rows={3}
+                    maxLength={1000}
+                  />
+                  <span className={styles.modalContador}>
+                    {modalObservaciones.length}/1000
+                  </span>
+                </div>
+
+                {/* ── Evidencias ── */}
+                <div className={styles.modalCampo}>
+                  <label className={styles.modalLabel}>
+                    Evidencias (
+                    {modalCargandoEvidencias ? '...' : modalEvidencias.length})
+                  </label>
+                  {modalCargandoEvidencias ? (
+                    <p className={styles.modalTextoSec}>Cargando...</p>
+                  ) : modalEvidencias.length === 0 ? (
+                    <p className={styles.modalTextoSec}>
+                      Sin evidencias subidas aún.
+                    </p>
+                  ) : (
+                    <div className={styles.modalEvidencias}>
+                      {modalEvidencias.map((ev) => (
+                        <div key={ev.id} className={styles.modalEvidenciaItem}>
+                          <span className={styles.modalEvidenciaIcono}>
+                            {ev.tipo_mime?.startsWith('image/') ? (
+                              <FiImage size={16} />
+                            ) : (
+                              <FiFile size={16} />
+                            )}
+                          </span>
+                          <div className={styles.modalEvidenciaDatos}>
+                            <span className={styles.modalEvidenciaNombre}>
+                              {ev.descripcion ||
+                                ev.archivo_path?.split('_').pop()}
+                            </span>
+                            <span className={styles.modalEvidenciaMeta}>
+                              {ev.usuario?.nombre_completo} ·{' '}
+                              {new Date(ev.fecha_subida).toLocaleDateString(
+                                'es-ES',
+                                {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }
+                              )}
+                              {ev.tamanio_bytes
+                                ? ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`
+                                : ''}
+                            </span>
+                          </div>
+                          <a
+                            href={ev.archivo_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={styles.modalBtnVer}
+                            title="Ver archivo"
+                          >
+                            <FiExternalLink size={14} /> Ver
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <aside className={styles.modalAsideComentarios}>
+                <div className={styles.modalAsideHeader}>
+                  <h4>Comentarios de la tarea</h4>
+                  <span>
+                    {modalCargandoComentarios ? '...' : modalComentarios.length}
+                  </span>
+                </div>
+
+                {modalCargandoComentarios ? (
+                  <p className={styles.modalTextoSec}>Cargando comentarios...</p>
+                ) : modalComentarios.length === 0 ? (
+                  <p className={styles.modalTextoSec}>
+                    Sin comentarios registrados.
+                  </p>
+                ) : (
+                  <div className={styles.modalComentariosLista}>
+                    {modalComentarios.map((com) => (
+                      <div key={com.id} className={styles.modalComentarioItem}>
+                        <div className={styles.modalComentarioCabecera}>
+                          <strong>
+                            {com.usuario?.nombre_completo || 'Usuario'}
+                          </strong>
+                          <span>
+                            {formatearFechaHora(
+                              com.fecha_creacion || com.created_at
+                            )}
+                          </span>
+                        </div>
+                        <p>{com.contenido || '-'}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </aside>
             </div>
           </div>
         )}

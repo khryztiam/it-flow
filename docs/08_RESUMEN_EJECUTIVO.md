@@ -1,6 +1,6 @@
 # 📊 ITFlow — Resumen ejecutivo para stakeholders
 
-**Versión:** 2.1 | **Fecha:** Abril 2026 | **Público:** Directivos, project managers, stakeholders
+**Versión:** 2.2 | **Fecha:** Abril 2026 | **Público:** Directivos, project managers, stakeholders
 
 ---
 
@@ -35,8 +35,9 @@ Después: Sistema único de verdad para tareas.
 
 ```
 Admin:      → Ve todas las tareas del sistema
-            → Detecta cuellos de botella
-            → Genera reportes
+            → Detecta cuellos de botella y riesgo
+            → Opera desde dashboard, estadísticas, gestión y asignaciones
+            → Exporta cortes operativos en CSV
 
 User:       → Ve solo sus tareas asignadas
             → Actualiza progreso
@@ -61,7 +62,8 @@ Después: Dashboard muestra en 10 segundos:
          ├─ 48 tareas activas
          ├─ 31% completadas
          ├─ 3 tareas vencidas
-         └─ Quién tiene sobrecarga
+         ├─ Quién tiene sobrecarga
+         └─ Qué plantas o responsables concentran mayor riesgo
 ```
 
 ### Reducción de overhead administrativo
@@ -73,7 +75,7 @@ Antes:  Manager envía email/Slack: "¿Cómo va la tarea X?"
         
 Después: User actualiza en ITFlow
          Manager ve cambio automáticamente
-         Reporting automático al final de semana
+         Manager puede filtrar, exportar y revisar evidencia sin salir del sistema
 
 Ahorro: ~5-10 horas/mes por manager
 ```
@@ -338,10 +340,10 @@ Feature request fulfillment: (baseline) → > 80% ✅
 ### Admin (1 hora)
 
 ```
-├─ Cómo crear tareas
-├─ Monitoreo de dashboard
-├─ Reasignación de carga
-├─ Generación de reportes
+├─ Cómo crear y editar tareas
+├─ Monitoreo de dashboard y estadísticas
+├─ Reasignación de carga y bandeja de asignaciones
+├─ Exportación CSV y revisión de evidencias
 └─ Troubleshooting básico
 ```
 
@@ -433,6 +435,7 @@ R: Mismo sistema. Costo hosting se mantiene < $200/mes.
 ```
 ITFlow es FUNCIONAL hoy.
 Piloto exitoso con 10-20 usuarios.
+Suite administrativa fortalecida con analítica, asignación centralizada y gestión consolidada.
 Listo para escalar con mejoras.
 ```
 

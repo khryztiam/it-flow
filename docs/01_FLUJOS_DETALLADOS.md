@@ -1,6 +1,6 @@
 # 📊 ITFlow — Documentación detallada de flujos
 
-**Versión:** 2.1 | **Fecha:** Abril 2026 | **Arquitecto de Software**
+**Versión:** 2.3 | **Fecha:** Abril 2026 | **Arquitecto de Software**
 
 ---
 
@@ -71,44 +71,51 @@
 ```
 ADMIN puede:
 ├─ Ver todas las tareas del sistema (sin filtro)
+├─ Analizar KPIs globales y riesgo operativo
 ├─ Crear nuevas tareas
-├─ Asignar tareas a cualquier usuario
-├─ Editar tareas (excepto que estén completadas)
+├─ Asignar tareas a cualquier usuario o resolver backlog sin asignar
+├─ Editar tareas desde la consola operativa
+├─ Revisar comentarios en modal de detalle de tarea (/admin/dashboard)
+├─ Abrir comentarios por tarea desde botón dedicado en tabla (/admin/tareas)
+├─ Enviar alertas puntuales a usuarios desde /admin/dashboard
+├─ Ver estado visual de lectura de alertas (pendiente/confirmada visible)
 ├─ Ver todas las plantas y países
 ├─ Gestionar usuarios (crear, editar, eliminar)
-├─ Generar reportes globales
+├─ Exportar cortes CSV desde el panel de tareas
 └─ Ver evidencias cargadas por usuarios
 ```
 
-#### Dashboard Admin: "Tablero de Tareas por Región"
+#### Mapa actual del módulo Admin
 
 ```
-Usuario accede /admin/dashboard
+Usuario accede al sidebar admin
 │
-├─ Sección 1: CARGA POR RESPONSABLE
-│  ├─ Gráfico de barras (Chart.js/Recharts)
-│  ├─ X-axis: Nombre del usuario
-│  ├─ Y-axis: Cantidad de tareas activas
-│  ├─ Objetivo: Detectar desbalance de carga
-│  └─ Interacción: Click en barra → filtra tareas de ese usuario
+├─ /admin/dashboard
+│  ├─ Vista global por carga, estado y riesgo
+│  ├─ Agrupa tareas para lectura operativa rápida
+│  └─ Permite bajar al detalle del portafolio
 │
-├─ Sección 2: ESTADO GLOBAL
-│  ├─ Gráfico de dona (Recharts)
-│  ├─ Segmentos:
-│  │  ├─ Pendientes (rojo)
-│  │  ├─ En Proceso (amarillo)
-│  │  └─ Completadas (verde)
-│  └─ Porcentaje de avance general
+├─ /admin/estadisticas
+│  ├─ KPIs: tareas en vista, avance promedio, por vencer, cobertura de revisión
+│  ├─ Charts: prioridad, estado, riesgo temporal, responsables, plantas
+│  └─ Filtros de lectura por planta y responsable
 │
-├─ Sección 3: RIESGO ACTUAL
-│  ├─ Tabla con tareas vencidas
-│  ├─ Columnas: Usuario, Tarea, Días vencida, Prioridad
-│  ├─ Color de fila según severidad
-│  └─ Botón: Escalar tarea o reasignar
+├─ /admin/gestion
+│  ├─ Tabla principal de usuarios
+│  ├─ Sidebar de plantas
+│  └─ Sidebar de países
 │
-└─ Acciones flotantes:
-   ├─ Botón "+ Nueva tarea" → Modal FormularioMulti
-   └─ Botón "Reportes" → Export a PDF/Excel
+├─ /admin/tareas
+│  ├─ CRUD de tareas
+│  ├─ Filtros de trabajo y búsqueda
+│  ├─ Exportación CSV
+│  ├─ Revisión de evidencias
+│  └─ Botón "Comentarios" por fila
+│
+└─ /admin/asignaciones
+   ├─ Bandeja de tareas sin asignar
+   ├─ Filtro por planta
+   └─ Asignación inmediata a usuarios activos
 ```
 
 #### Flujo: Crear tarea
@@ -120,36 +127,34 @@ Admin en /admin/tareas → Botón "+ Nueva tarea"
 │  ├─ Campos:
 │  │  ├─ Título (required)
 │  │  ├─ Descripción (textarea)
-│  │  ├─ Fecha inicio (datetime)
-│  │  ├─ Fecha límite (datetime)
+│  │  ├─ Fecha inicio (date)
+│  │  ├─ Fecha límite (date)
+│  │  ├─ Estado (dropdown)
 │  │  ├─ Prioridad (dropdown: baja/media/alta/urgente)
-│  │  ├─ Planta (dropdown + dependencia)
-│  │  ├─ Usuario asignado (dropdown + filtro por planta)
-│  │  └─ Observaciones iniciales
+│  │  ├─ Planta (dropdown)
+│  │  └─ Usuario asignado (dropdown opcional)
 │  │
 │  └─ Validación en cliente:
 │     ├─ Título no vacío
 │     ├─ Fecha límite > fecha inicio
-│     └─ Usuario asignado existe
+│     └─ Campos requeridos completos
 │
-├─ Submit → POST /api/admin/asignar
+├─ Submit → POST /api/admin/tareas
 │  └─ Headers: Authorization: Bearer {JWT}
 │
 ├─ Backend valida:
 │  ├─ JWT válido y corresponde a Admin
-│  ├─ Usuario destino existe y está activo
-│  ├─ Usuario destino pertenece a planta válida
+│  ├─ Si hay responsable: usuario destino existe y está activo
 │  └─ Todos los campos obligatorios presentes
 │
 ├─ Insert en tabla tareas:
 │  ├─ id: generado por BD
-│  ├─ titulo, descripcion, observaciones
+│  ├─ titulo, descripcion
 │  ├─ fecha_inicio, fecha_limite
-│  ├─ estado_id: 1 (Pendiente)
+│  ├─ estado_id: seleccionado
 │  ├─ prioridad_id: seleccionado
-│  ├─ asignado_a: usuario_id
+│  ├─ asignado_a: usuario_id | null
 │  ├─ creado_por: admin_id
-│  ├─ supervisado_por: supervisor_de_planta (si aplica)
 │  ├─ planta_id: seleccionado
 │  ├─ porcentaje_avance: 0
 │  ├─ created_at, updated_at: NOW()
@@ -165,16 +170,43 @@ Admin en /admin/tareas → Botón "+ Nueva tarea"
 ```
 Admin ve tarea con riesgo → Menú de acciones
 │
-├─ Click "Reasignar"
-├─ Modal: Seleccionar nuevo usuario
+├─ Opción A: /admin/tareas → editar campo asignado_a
+├─ Opción B: /admin/asignaciones → POST /api/admin/asignar
 ├─ Validaciones:
-│  ├─ Usuario exists
-│  └─ Pertenece a misma planta o está permitido cambio entre plantas
-│
-├─ PUT /api/admin/tareas/{id}
-│  └─ { asignado_a: new_user_id }
+│  ├─ Usuario existe y está activo
+│  └─ Tarea sigue disponible para asignación
 │
 └─ Update successful → Notificación + recarga
+```
+
+#### Flujo: Alerta admin → user (banner + confirmación)
+
+```
+Admin en /admin/dashboard → Selecciona responsable
+│
+├─ Click "Enviar alerta"
+│  ├─ Modal de alerta
+│  ├─ Campo mensaje (1-500 chars)
+│  └─ Submit
+│
+├─ RPC: public.crear_alerta_usuario(p_usuario_id, p_creado_por, p_mensaje)
+│  ├─ Inserta alerta activa
+│  └─ Si ya existe activa para ese user, la reemplaza (upsert)
+│
+├─ User en /user/dashboard
+│  ├─ Escucha realtime sobre tabla alertas_usuario
+│  ├─ Muestra banner con mensaje
+│  └─ Click "OK / Enterado"
+│
+├─ RPC: public.confirmar_alerta_usuario(p_alerta_id, p_usuario_id)
+│  ├─ Marca alerta como inactiva
+│  ├─ Registra confirmada_at / confirmada_por
+│  └─ Mantiene admin_resuelta_visible_hasta por 12 horas
+│
+└─ Admin visualiza estado temporal en dashboard:
+   ├─ pendiente
+   ├─ confirmada_visible_admin
+   └─ cerrada
 ```
 
 ---
@@ -222,6 +254,8 @@ USER puede:
 ├─ Actualizar estado de sus tareas
 ├─ Actualizar porcentaje de avance
 ├─ Cargar evidencias (archivos: JPG, PNG, PDF)
+├─ Recibir alertas individuales en banner del dashboard
+├─ Confirmar lectura de alerta con acción "OK / Enterado"
 ├─ Dejar comentarios en tareas
 ├─ NO crear tareas
 ├─ NO asignar tareas
@@ -269,6 +303,8 @@ Usuario accede /user/dashboard
 │     └─ Por estado
 │
 └─ Acciones:
+   ├─ Banner de alerta individual (si existe alerta activa)
+   ├─ Confirmación de lectura de alerta
    └─ Click en tarea → /user/tarea/{id}
 ```
 
@@ -495,13 +531,20 @@ USER → /api/user/tareas
 ```
 Dashboard Admin/User escucha cambios en tiempo real:
 │
-├─ Canal: supabase.channel('realtime-tareas')
-├─ Tabla: tareas
-├─ Eventos: INSERT, UPDATE, DELETE
+├─ TAREAS
+│  ├─ Canales: realtime-tareas-admin, realtime-tareas-user
+│  ├─ Tabla: tareas
+│  └─ Eventos: INSERT, UPDATE, DELETE
+│
+├─ ALERTAS USUARIO
+│  ├─ Admin: realtime-alertas-admin (tabla alertas_usuario)
+│  ├─ User: realtime-alertas-user-{usuario_id} (filtro por usuario_id)
+│  ├─ Eventos: INSERT, UPDATE, DELETE
+│  └─ Requiere publicación en supabase_realtime para alertas_usuario
 │
 └─ Callback:
    ├─ Detecta cambio
-   ├─ Recarga lista de tareas (GET)
+   ├─ Recarga lista de tareas o alertas (GET/consulta directa)
    ├─ Actualiza UI sin full page reload
    └─ Notificación visual opcional
 ```
@@ -538,13 +581,25 @@ TAREAS
 ├─ created_at (datetime)
 └─ updated_at (datetime)
 
-COMENTARIOS (opcional, no implementado)
+COMENTARIOS_TAREA
 ├─ id (UUID, PK)
 ├─ tarea_id (FK → tareas)
 ├─ usuario_id (FK → usuarios)
 ├─ contenido (text)
 ├─ created_at (datetime)
 └─ updated_at (datetime)
+
+ALERTAS_USUARIO
+├─ id (UUID, PK)
+├─ usuario_id (FK → usuarios)
+├─ creado_por (FK → usuarios)
+├─ mensaje (1-500)
+├─ activa (boolean)
+├─ enviada_at (datetime)
+├─ confirmada_at (datetime, nullable)
+├─ confirmada_por (FK → usuarios, nullable)
+├─ admin_resuelta_visible_hasta (datetime, nullable)
+└─ created_at / updated_at
 
 ESTADOS_TAREA
 ├─ id (PK)
@@ -642,32 +697,27 @@ Request a API protegida (ejemplo: POST /api/admin/asignar)
 ## 📊 Flujos de reportería (Admin)
 
 ```
-Admin en /admin/dashboard
+Admin combina /admin/dashboard + /admin/estadisticas + /admin/tareas
 │
-├─ Gráfico 1: Carga por responsable
+├─ Dashboard global (/admin/dashboard)
 │  ├─ Query: SELECT COUNT(*) FROM tareas
-│  │         GROUP BY asignado_a
-│  │         WHERE estado != 'completado'
-│  │         AND planta_id = usuario.planta_id
-│  └─ Visualización: Recharts BarChart
+│  │         + joins de responsables / plantas / países
+│  └─ Visualización: tarjetas y bloques operativos
 │
-├─ Gráfico 2: Estado global
-│  ├─ Query: SELECT COUNT(*) FROM tareas
-│  │         GROUP BY estado_id
-│  │         WHERE created_at >= hoy
-│  └─ Visualización: Recharts PieChart
+├─ Estadísticas (/admin/estadisticas)
+│  ├─ Query base: SELECT tareas + catálogos relacionados
+│  ├─ Métricas derivadas: avance, vencidas, por vencer, evidencia, revisión
+│  └─ Visualización: PieChart, BarChart, rankings y KPIs
 │
-├─ Tabla 3: Riesgo (tareas vencidas)
-│  ├─ Query: SELECT * FROM tareas
-│  │         WHERE fecha_limite < NOW()
-│  │         AND estado != 'completado'
-│  │         ORDER BY fecha_limite
-│  └─ Visualización: Tabla con color de alerta
+├─ Exportación (/admin/tareas)
+│  ├─ Fuente: tareas filtradas en memoria
+│  ├─ Formato: CSV UTF-8
+│  └─ Uso: compartir cortes operativos o análisis rápido
 │
-└─ Exportación (futura):
-   ├─ Botón: "Descargar PDF"
-   ├─ Botón: "Descargar Excel"
-   └─ Usos: Reportes ejecutivos, análisis histórico
+└─ Lectura de riesgo
+   ├─ Responsable con más vencidas
+   ├─ Buckets de vencimiento
+   └─ Cobertura de revisión / evidencia
 ```
 
 ---
@@ -677,10 +727,11 @@ Admin en /admin/dashboard
 | Flujo | Inicio | Fin | Duración esperada | Roles |
 |-------|--------|-----|-------------------|-------|
 | Login | /login | /dashboard | < 2 seg | Todos |
-| Crear tarea | Admin/dashboard | BD | < 1 seg | Admin, Supervisor |
+| Crear tarea | Admin/tareas | BD | < 1 seg | Admin, Supervisor |
 | Actualizar tarea | User/tarea/[id] | BD | < 1 seg | User |
 | Cargar evidencia | User/tarea/[id] | Storage | < 5 seg (según tamaño) | User |
 | Reasignar tarea | Admin/tareas | BD | < 1 seg | Admin |
+| Ver estadísticas admin | Admin/estadisticas | KPIs y charts | < 2 seg | Admin |
 | Ver dashboard | / | Estadísticas | < 2 seg | Todos |
 
 ---

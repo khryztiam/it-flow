@@ -4,7 +4,7 @@
 
 **Tipo:** Aplicación SaaS de gestión de tareas multirrol.  
 **Stack:** Next.js 16, React 19, Supabase, CSS Modules  
-**Última actualización:** 19 de abril de 2026
+**Última actualización:** 22 de abril de 2026
 
 **Historial de cambios:** ver [CHANGELOG.md](./CHANGELOG.md)
 
@@ -17,6 +17,8 @@
 ✅ **Dashboards personalizados** — Cada rol ve vistas únicas  
 ✅ **Asignación de tareas** — Supervisores asignan a usuarios específicos  
 ✅ **Seguimiento en tiempo real** — Estados, prioridades, porcentaje de avance  
+✅ **Alertas admin → user en realtime** — Banner individual con confirmación "OK / Enterado"  
+✅ **Trazabilidad de alertas** — El admin ve confirmación temporal tras lectura del usuario  
 ✅ **Gestión multiplantas** — Soporte para múltiples ubicaciones y países  
 ✅ **Reportes administrativos** — Estadísticas globales para admins
 
@@ -114,6 +116,7 @@ src/
 - **Acceso:** Sistema completo
 - **Dashboard:** "Tablero de Tareas por Región" — Carga por responsable, Estado global %, Riesgo actual
 - **Tareas:** Ver todas, crear, editar, cambiar estado
+- **Alertas:** Enviar alerta directa por usuario desde dashboard y ver estado de lectura
 - **Filtros:** Por usuario, prioridad, estado, planta
 - **Monitoreo:** Detectar desbalance de carga de trabajo
 
@@ -122,6 +125,7 @@ src/
 - **Acceso:** Solo sus tareas asignadas
 - **Dashboard:** "Mis Tareas" — Activas, En proceso, Vencidas, % Avance
 - **Tareas:** Ver solo asignadas, actualizar estado y avance
+- **Alertas:** Recibir banner individual en dashboard y confirmar lectura
 - **Evidencias:** Cargar archivos (JPG, PNG, PDF máx 10 MB)
 - **Comentarios:** Sistema de comunicación en cada tarea
 
@@ -181,6 +185,17 @@ ESTADOS_TAREA
 PRIORIDADES
 ├── id (PK)
 └── nombre (baja/media/alta/urgente)
+
+ALERTAS_USUARIO
+├── id (PK)
+├── usuario_id (FK) → USUARIOS (destinatario)
+├── creado_por (FK) → USUARIOS (admin)
+├── mensaje (1-500 chars)
+├── activa (true hasta confirmación user)
+├── enviada_at
+├── confirmada_at
+├── confirmada_por (FK) → USUARIOS
+└── admin_resuelta_visible_hasta (visibilidad temporal para admin)
 ```
 
 ---
@@ -272,7 +287,12 @@ Acceso a panel completo: /admin/tareas
 ├─ Ver todas las tareas del sistema
 ├─ Crear nuevas tareas
 ├─ Editar detalles y cambiar estado
-└─ Ver evidencias cargadas por usuarios
+├─ Ver evidencias cargadas por usuarios
+└─ Abrir modal de comentarios desde botón "Comentarios"
+↓
+Dashboard /admin/dashboard
+├─ Enviar alerta individual a responsable
+└─ Ver estado visual: pendiente / confirmada visible
 ```
 
 ### 3️⃣ Dashboard USER ("Mis Tareas")
@@ -289,7 +309,11 @@ Click en tarea → "Detalle de Tarea"
 ├─ Actualizar estado
 ├─ Actualizar % avance (slider)
 ├─ Agregar comentarios
-└─ Cargar evidencia (archivos)
+├─ Cargar evidencia (archivos)
+↓
+Si hay alerta activa:
+├─ Muestra banner en /user/dashboard
+└─ User confirma con "OK / Enterado"
 ```
 
 ---
@@ -345,4 +369,4 @@ Para reportar bugs o sugerencias, contacta al equipo de desarrollo.
 
 ---
 
-**Creado:** 2024 | **Última actualización:** 19/04/2026
+**Creado:** 2024 | **Última actualización:** 22/04/2026

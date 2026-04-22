@@ -1,3 +1,38 @@
+/* Banner de alerta individual */
+.bannerAlertaUsuario {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fef9c3;
+  border: 2px solid #eab308;
+  color: #92400e;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 2px 12px rgba(234, 179, 8, 0.08);
+}
+.bannerAlertaMensaje {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+}
+.bannerAlertaBtn {
+  background: #eab308;
+  color: #222;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.bannerAlertaBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 .tarjetaVerde {
   border-left-color: #22c55e;
   background: #f8fff9;

@@ -1,6 +1,6 @@
 # 👨‍💼 ITFlow — Guía de uso para ADMINISTRADOR
 
-**Versión:** 2.1 | **Fecha:** Abril 2026 | **Público:** Administradores del sistema
+**Versión:** 2.3 | **Fecha:** Abril 2026 | **Público:** Administradores del sistema
 
 ---
 
@@ -8,9 +8,12 @@
 
 Como **ADMIN**, tienes acceso total al sistema. Tu responsabilidad es:
 - Monitorear todas las tareas del sistema (global)
+- Analizar carga, vencimientos y calidad del seguimiento
 - Crear y asignar tareas a cualquier usuario
 - Detectar cuellos de botella y redistribuir carga
-- Generar reportes de desempeño
+- Enviar alertas puntuales a usuarios desde el dashboard
+- Confirmar visualmente cuándo un usuario ya leyó una alerta
+- Exportar cortes operativos en CSV
 - Gestionar usuarios y configuración general
 
 **Permisos:** ✅ Ver todo | ✅ Crear todo | ✅ Editar todo | ✅ Eliminar (con cuidado)
@@ -56,6 +59,10 @@ URL: /admin/dashboard
 ```
 
 El dashboard muestra **3 secciones principales**:
+
+Además, al abrir una tarea desde el dashboard, el modal de detalle ahora incluye:
+- Evidencias cargadas por el usuario
+- Comentarios de la tarea (historial en panel lateral)
 
 ### Sección 1️⃣: CARGA POR RESPONSABLE
 
@@ -157,28 +164,166 @@ Completada:   25%
 
 ---
 
+## 🧭 Mapa del módulo admin
+
+Desde el menú lateral del rol `admin` tienes 5 vistas principales:
+
+```
+ADMINISTRACIÓN
+├─ /admin/dashboard     → Vista global operativa
+├─ /admin/estadisticas  → Analítica y KPIs del portafolio
+└─ /admin/gestion       → Usuarios, plantas y países
+
+OPERACIONES
+├─ /admin/tareas        → CRUD, filtros, evidencias y exportación CSV
+└─ /admin/asignaciones  → Bandeja de tareas sin asignar
+```
+
+**Recomendación de uso diario:**
+
+```
+1. Empieza en /admin/dashboard para detectar focos rápidos
+2. Profundiza en /admin/estadisticas para validar tendencia y calidad
+3. Ejecuta acciones en /admin/tareas o /admin/asignaciones
+4. Usa /admin/gestion cuando necesites mantener catálogos o usuarios
+```
+
+---
+
+## 📈 Estadísticas administrativas
+
+### Acceso
+
+```
+URL: /admin/estadisticas
+o Click en menú lateral → "Estadísticas"
+```
+
+### Qué encontrarás
+
+La vista de estadísticas está orientada a análisis, no a edición directa.
+
+```
+FILTROS DE LECTURA
+├─ Planta
+└─ Responsable
+
+KPIs
+├─ Tareas en vista
+├─ Avance promedio
+├─ Por vencer en 7 días
+└─ Cobertura de revisión
+
+PANELS
+├─ Estado actual del portafolio
+├─ Calidad de seguimiento
+└─ Responsable con más vencidas
+
+GRÁFICOS
+├─ Distribución por prioridad
+├─ Distribución por estado
+├─ Mapa de riesgo temporal
+├─ Ranking por responsables
+├─ Ranking por plantas
+└─ Calendario por fecha límite
+```
+
+### Cuándo usar esta pantalla
+
+```
+Úsala cuando necesites:
+├─ medir cumplimiento del portafolio;
+├─ identificar responsables con carga vencida;
+├─ revisar cobertura de evidencia y revisión;
+└─ preparar una lectura ejecutiva semanal.
+```
+
+---
+
 ## 📋 Panel de tareas
 
 ### Acceso
 
 ```
 URL: /admin/tareas
-o Click en menú lateral → "Tareas"
+o Click en menú lateral → "Todas las Tareas"
 ```
 
 ### Vista general
 
-**Grid de tareas** con columnas:
+**Tabla central** con columnas:
 
 | Columna | Qué contiene | Interactivo |
 |---------|-------------|-------------|
-| Título | Nombre de la tarea | Click → Abre detalle |
-| Usuario | Quién está asignada | - |
+| Título | Nombre de la tarea | Ordenable |
+| Planta | Ubicación de la tarea | - |
 | Prioridad | Baja/Media/Alta/Urgente | Badge color |
-| Estado | Pendiente/En Proceso/Completada | Dropdown para cambiar |
-| % Avance | Barra 0-100% | - |
+| Asignado a | Responsable actual | - |
 | Fecha límite | Cuándo vence | Rojo si vencida |
-| Acciones | Botones | Ver, Editar, Eliminar |
+| Estado | Estado actual | Badge color |
+| Acciones | Botones | Comentarios, Evidencias, Editar, Eliminar |
+
+Además, la pantalla incluye:
+
+```
+FILTROS DE TRABAJO
+├─ Planta
+├─ Fecha desde
+├─ Fecha hasta
+├─ Búsqueda por título o descripción
+├─ Responsable
+├─ Estado
+├─ Prioridad
+└─ Botón "Limpiar filtros"
+
+ACCIONES RÁPIDAS
+├─ "Nueva tarea"
+└─ "Exportar" → genera CSV con el resultado filtrado
+```
+
+### Ver comentarios de una tarea
+
+**Desde la tabla de `/admin/tareas`:**
+
+```
+1. Ubica la tarea
+2. Click en botón "Comentarios"
+3. Se abre modal con historial de comentarios (más recientes primero)
+4. Revisa autor, fecha y contenido
+```
+
+**Nota:** Esta vista es de lectura, útil para auditoría y seguimiento.
+
+---
+
+## 🔔 Alertas a responsables (nuevo flujo realtime)
+
+### Dónde se usa
+
+```
+URL: /admin/dashboard
+```
+
+### Flujo operativo
+
+```
+1. Identifica un responsable en el dashboard
+2. Click en enviar alerta
+3. Escribe mensaje claro (hasta 500 caracteres)
+4. Envía
+5. El usuario recibe banner inmediato en /user/dashboard
+6. Cuando el usuario confirma "OK / Enterado":
+   ├─ la alerta deja de mostrarse al user
+   └─ el admin ve estado "confirmada" por una ventana temporal (~12h)
+```
+
+### Qué estados verás como admin
+
+```
+pendiente                 → alerta activa sin confirmar
+confirmada_visible_admin  → user confirmó, aún visible para seguimiento
+cerrada                   → terminó la ventana de visibilidad
+```
 
 ### Crear nueva tarea
 
@@ -198,10 +343,10 @@ Título*                  "Instalar actualizaciones Windows"
 Descripción              "En servidor producción, revisar antes"
 Fecha inicio*            2026-04-20
 Fecha límite*            2026-04-25
+Estado*                  [dropdown] → Selecciona "Pendiente"
 Prioridad*               [dropdown] → Selecciona "Alta"
 Planta*                  [dropdown] → "Santa Tecla - SV"
-Usuario asignado*        [dropdown] → "Juan Pérez"
-Observaciones            "No reiniciar en horario laboral"
+Usuario asignado         [dropdown] → "Juan Pérez" (opcional)
 
 *: Campos obligatorios
 ```
@@ -217,9 +362,7 @@ Si OK: Envía a servidor
 ↓
 Servidor valida (JWT, permisos, datos)
 ↓
-Si OK: Insert en BD
-↓
-Notificación: "✓ Tarea creada exitosamente"
+Si OK: Insert en BD vía /api/admin/tareas
 ↓
 Se cierra modal
 ↓
@@ -229,12 +372,6 @@ Tarea aparece en lista
 **Si falla:**
 
 ```
-Error: "Usuario no existe"
-→ Verifica que el usuario está activo
-
-Error: "Fecha límite no puede ser pasada"
-→ Usa fecha futura
-
 Error: "Todos los campos obligatorios"
 → Revisa que no dejaste vacíos
 ```
@@ -243,27 +380,13 @@ Error: "Todos los campos obligatorios"
 
 ### Editar tarea existente
 
-**Opción 1: Desde la tabla**
+**Desde la tabla**
 
 ```
-1. Busca tarea en lista
-2. Click en fila → Abre detalle
-3. Botón "Editar"
-4. Modifica campos necesarios
+1. Busca la tarea en la tabla
+2. Click en botón "Editar"
+3. Modifica campos necesarios
 5. Click "Guardar cambios"
-```
-
-**Opción 2: Cambio rápido de estado**
-
-```
-En la tabla, columna "Estado":
-├─ Click dropdown
-├─ Selecciona nuevo estado
-│  ├─ Pendiente
-│  ├─ En Proceso
-│  ├─ Completada
-│  └─ Pausada
-└─ Auto-save (sin click adicional)
 ```
 
 **Campos editables por Admin:**
@@ -275,50 +398,55 @@ En la tabla, columna "Estado":
 ✅ Prioridad
 ✅ Asignado a (reasignar)
 ✅ Estado
-✅ Observaciones
+✅ Fecha inicio
 ✅ Planta
-❌ Creado por (inmutable, auditoría)
-❌ Fecha creación (inmutable)
 ```
 
 ---
 
 ### Reasignar tarea
 
-**Escenario:** Juan tiene demasiadas tareas, necesitas reasignar a María.
+Existen **2 formas** de distribuir trabajo:
 
-**Paso 1: Abre tarea de Juan**
-
-```
-URL: /admin/tareas → Busca tarea
-```
-
-**Paso 2: Click "Editar"**
+**A. Desde `/admin/tareas`**
 
 ```
-Se abre formulario con datos actuales
+1. Filtra por responsable o planta
+2. Click en "Editar"
+3. Cambia el campo "Asignar a"
+4. Guarda cambios
 ```
 
-**Paso 3: Cambia campo "Usuario asignado"**
+**B. Desde `/admin/asignaciones`**
 
 ```
-[Dropdown actual: Juan Pérez ▼]
-Click en dropdown
-Selecciona: María García
+1. Abre la bandeja de tareas sin responsable
+2. Filtra por planta si hace falta
+3. Usa el selector "Asignar a"
+4. La tarea sale de la bandeja al quedar asignada
 ```
 
-**Paso 4: Guarda cambios**
+### Bandeja de asignaciones
+
+**Acceso:** `/admin/asignaciones`
+
+La pantalla muestra solo tareas con `asignado_a = null`.
 
 ```
-Click: "Guardar"
-↓
-Sistema valida
-↓
-Insert en tabla tareas (actualiza asignado_a)
-↓
-Notificación: "✓ Tarea reasignada"
-↓
-María recibe notificación (si implementado)
+Cada tarjeta enseña:
+├─ Título
+├─ Planta
+├─ Prioridad
+├─ Descripción
+└─ Fecha límite
+```
+
+**Úsala cuando:**
+
+```
+├─ creaste tareas sin responsable;
+├─ importaste backlog operativo;
+└─ quieres limpiar rápidamente pendientes de asignación.
 ```
 
 ---
@@ -329,21 +457,34 @@ María recibe notificación (si implementado)
 
 ```
 URL: /admin/gestion
-o Click en menú → "Gestión" → "Usuarios"
+o Click en menú lateral → "Gestión"
 ```
 
 ### Vista de usuarios
 
-**Tabla con columnas:**
+La pantalla combina una **tabla principal de usuarios** y una **barra lateral** para catálogos.
+
+**Tabla principal de usuarios:**
 
 | Columna | Contenido |
 |---------|-----------|
 | Nombre | Nombre completo |
-| Email | email@empresa.com |
 | Rol | Admin/Supervisor/User |
 | Planta | Ubicación |
 | Estado | Activo/Inactivo |
-| Acciones | Editar, Activar/Desactivar, Eliminar |
+| Acciones | Editar, Eliminar |
+
+**Sidebar de catálogos:**
+
+```
+PLANTAS
+├─ Lista resumida
+└─ Botón "+ Agregar Planta"
+
+PAÍSES
+├─ Lista resumida
+└─ Botón "+ Agregar País"
+```
 
 ### Crear usuario
 
@@ -359,13 +500,22 @@ Se abre modal de formulario
 CAMPO              EJEMPLO
 ────────────────────────────────────────
 Nombre completo*   Juan Pérez García
-Email*             juan.perez@empresa.com
+Usuario*           juan.perez
 Rol*               [dropdown] User
 Planta*            [dropdown] Santa Tecla
-Contraseña*        (sistema genera una temporal)
-Estado*            Activo
+Contraseña*        Temporal segura definida por admin
 
 *: Requeridos
+```
+
+**Nota importante:**
+
+```
+El email se construye automáticamente como:
+{username}{NEXT_PUBLIC_APP_DOMAIN}
+
+Si no existe variable de entorno, el sistema usa:
+@itflowapp.com
 ```
 
 **Paso 3: Crear**
@@ -379,9 +529,7 @@ Insert en tabla usuarios
 ↓
 Supabase crea cuenta de auth
 ↓
-Contraseña temporal enviada por email
-↓
-Usuario debe cambiarla en primer login
+Cuenta lista para iniciar sesión
 ```
 
 ### Cambiar rol de usuario
@@ -415,24 +563,6 @@ Update en BD
 Próximo login del usuario → Nuevo dashboard
 ```
 
-### Desactivar usuario
-
-**Caso:** Usuario se va de vacaciones/renuncia temporalmente.
-
-**Paso 1: Abre usuario en tabla**
-
-**Paso 2: Click "Desactivar"**
-
-```
-Estado cambia: Activo → Inactivo
-↓
-Usuario NO puede hacer login
-↓
-Sus tareas siguen en BD (historial)
-↓
-Si reactivas: Recupera acceso
-```
-
 ### Eliminar usuario
 
 **⚠️ CUIDADO: Acción irreversible**
@@ -461,7 +591,7 @@ Usuario + todas sus tareas se eliminan permanentemente
 
 ### Plantas
 
-**Acceso:** `/admin/gestion` → Tab "Plantas"
+**Acceso:** `/admin/gestion` → bloque lateral "Plantas"
 
 **Qué es:** Una planta es una ubicación física (oficina, datacenter, etc.)
 
@@ -485,7 +615,7 @@ Click en planta → "Editar"
 
 ### Países
 
-**Acceso:** `/admin/gestion` → Tab "Países"
+**Acceso:** `/admin/gestion` → bloque lateral "Países"
 
 **Crear país:**
 
@@ -495,7 +625,13 @@ Click "+ Nuevo país"
 └─ Click "Crear"
 ```
 
-**Nota:** Raramente necesitarás crear países (probablemente todos existan ya).
+**Restricciones actuales:**
+
+```
+Si intentas eliminar:
+├─ una planta con tareas asociadas → el sistema lo bloquea;
+└─ un país con plantas asociadas → el sistema lo bloquea.
+```
 
 ---
 
@@ -503,41 +639,26 @@ Click "+ Nuevo país"
 
 ### Generar reporte
 
-**Paso 1: En dashboard o panel de tareas**
+Hoy la exportación disponible en la UI es **CSV** desde `/admin/tareas`.
 
 ```
-Botón: "Descargar reporte"
+Paso 1: Ajusta filtros de trabajo
+Paso 2: Click en "Exportar"
+Paso 3: Descarga archivo `tareas-admin-YYYY-MM-DD.csv`
 ```
 
-**Paso 2: Selecciona opciones**
+**El archivo incluye:**
 
 ```
-Formato:
-├─ PDF (para imprimir)
-└─ Excel (para analizar)
-
-Rango de fechas:
-├─ Última semana
-├─ Último mes
-└─ Personalizado (ej: 15 mar - 30 abr)
-
-Incluir:
-☑ Tareas completadas
-☑ Tareas en proceso
-☑ Tareas vencidas
-☑ Comentarios
-```
-
-**Paso 3: Descargar**
-
-```
-Click: "Generar reporte"
-↓
-Servidor construye documento
-↓
-Download automático
-↓
-Archivo: itflow_reporte_2026-04-20.pdf
+├─ título
+├─ descripción
+├─ planta
+├─ prioridad
+├─ asignado a
+├─ estado
+├─ fecha inicio
+├─ fecha límite
+└─ avance
 ```
 
 ---
@@ -546,10 +667,10 @@ Archivo: itflow_reporte_2026-04-20.pdf
 
 ### En panel de tareas
 
-**Filtro por usuario:**
+**Filtro por responsable:**
 
 ```
-Dropdown: "Todos los usuarios"
+Dropdown: "Todos"
 Selecciona: Juan Pérez
 ↓
 Muestra solo tareas de Juan
@@ -558,17 +679,19 @@ Muestra solo tareas de Juan
 **Filtro por prioridad:**
 
 ```
-Checkbox: ☐ Baja ☐ Media ☑ Alta ☑ Urgente
+Dropdown: "Todas"
+Selecciona: Alta
 ↓
-Muestra solo tareas Alta+Urgente
+Muestra solo tareas de prioridad alta
 ```
 
 **Filtro por estado:**
 
 ```
-Checkbox: ☑ Pendiente ☑ En Proceso ☐ Completada
+Dropdown: "Todos"
+Selecciona: En Proceso
 ↓
-Muestra tareas activas (no completadas)
+Muestra solo tareas de ese estado
 ```
 
 **Filtro por planta:**
@@ -587,6 +710,15 @@ Campo "Buscar":
 Escribes: "instalar"
 ↓
 Filtra tareas con "instalar" en título o descripción
+```
+
+**Filtros por fecha:**
+
+```
+DESDE: 2026-04-01
+HASTA: 2026-04-30
+↓
+Acota la lista por fecha límite
 ```
 
 ---
@@ -805,5 +937,5 @@ Abre issue en GitHub: github.com/empresa/itflow/issues
 
 ---
 
-**Última actualización:** Abril 2026  
+**Última actualización:** 22/04/2026  
 **Próxima revisión:** Q3 2026

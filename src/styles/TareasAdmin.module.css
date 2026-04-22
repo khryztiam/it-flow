@@ -488,6 +488,54 @@
   background: #dbeafe;
 }
 
+/* ── Comentarios modal ─────────────────────────────────── */
+
+.listaComentarios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.comentarioItem {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+}
+
+.comentarioCabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.comentarioAutor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.comentarioFecha {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.comentarioItem p {
+  margin: 0.55rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 768px) {
   .hero {
     flex-direction: column;

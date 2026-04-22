@@ -1,12 +1,12 @@
 # 📚 ITFlow — Índice maestro de documentación
 
-**Versión:** 2.1 | **Fecha:** Abril 2026 | **Arquitecto de Software**
+**Versión:** 2.2 | **Fecha:** Abril 2026 | **Arquitecto de Software**
 
 ---
 
 ## 📋 Contenido generado
 
-Se ha completado un análisis exhaustivo de la arquitectura, flujos, riesgos y operación de ITFlow. El paquete de documentación contiene **8 documentos principales** totalizando **120+ páginas**.
+Se ha completado un análisis exhaustivo de la arquitectura, flujos, riesgos y operación de ITFlow. El paquete de documentación contiene **10 documentos principales** totalizando **120+ páginas**.
 
 ---
 
@@ -48,6 +48,7 @@ Tiempo:   30-40 minutos
 Contenido:
 ├─ Flujo de autenticación (login → dashboard)
 ├─ Flujos de usuario por rol (Admin, Supervisor, User)
+├─ Mapa actualizado del módulo admin
 ├─ Ciclo de vida de tareas (5 estados)
 ├─ Flujos de datos (queries, subscripciones realtime)
 ├─ Validación en 3 capas (cliente, API, BD)
@@ -126,12 +127,13 @@ Tiempo:   Referencia (20-30 min para leer todo)
 Contenido:
 ├─ Descripción del rol
 ├─ Cómo iniciar sesión (cambiar contraseña)
-├─ Dashboard: 3 secciones (Carga, Estado global, Riesgo)
-├─ Panel de tareas: CRUD completo
-├─ Reasignación de tareas
-├─ Gestión de usuarios (crear, cambiar rol, desactivar)
+├─ Dashboard + mapa del módulo admin
+├─ Estadísticas administrativas
+├─ Panel de tareas: CRUD, filtros, evidencias y exportación CSV
+├─ Asignaciones centralizadas
+├─ Gestión de usuarios
 ├─ Gestión de plantas y países
-├─ Reportes y exportación
+├─ Reportes y exportación disponible en UI
 ├─ Filtros avanzados
 ├─ Identificación de tareas en riesgo
 ├─ Consideraciones de seguridad
@@ -141,9 +143,23 @@ Contenido:
 
 Secciones más usadas:
 ├─ Dashboard (diario)
+├─ Estadísticas (semanal)
 ├─ Panel de tareas (3x/semana)
-├─ Reasignación (según necesidad)
-└─ Reportes (semanal/mensual)
+└─ Asignaciones (según necesidad)
+```
+
+**10_EVALUACION_TECNICA_PROFUNDA.md** (16 pgs)
+
+```
+Para:     Tech leads, QA, stakeholders técnicos
+Tiempo:   30-40 minutos
+Contenido:
+├─ Estado funcional observado del producto
+├─ Smoke tests ejecutados
+├─ Hallazgos de arquitectura y deuda técnica
+├─ Riesgos de operación
+├─ Observaciones por módulo
+└─ Recomendaciones accionables
 ```
 
 **04_GUIA_USER.md** (35 pgs)
@@ -331,7 +347,7 @@ Archivos de referencia:
 ## 📈 Estadísticas de documentación
 
 ```
-Total páginas:              120+
+Total páginas:              130+
 Total palabras:             ~40,000
 Número de diagramas:        8+
 Tablas/matrices:            15+
@@ -351,9 +367,11 @@ Escenarios de caso de uso:  40+
 06 Instalación/Deployment:         30 pgs, 8,000 palabras
 07 Matriz de Riesgos:              18 pgs, 5,500 palabras
 08 Resumen Ejecutivo:              14 pgs, 4,800 palabras
+09 Índice Maestro:                 16 pgs, 5,000 palabras
+10 Evaluación Técnica Profunda:    16 pgs, 5,500 palabras
 + Presentación PPTX:               11 diapositivas
 
-Total:                             215 pgs de contenido
+Total:                             230+ pgs de contenido
                                    + 1 presentación
 ```
 
@@ -388,7 +406,7 @@ Responsables:
 ## 💾 Archivos entregados
 
 ```
-En /mnt/user-data/outputs/:
+En /docs/:
 
 Documentos Markdown:
 ├─ 01_FLUJOS_DETALLADOS.md
@@ -399,12 +417,13 @@ Documentos Markdown:
 ├─ 06_INSTALACION_DEPLOYMENT.md
 ├─ 07_MATRIZ_RIESGOS.md
 ├─ 08_RESUMEN_EJECUTIVO.md
-└─ 09_INDICE_MAESTRO.md (este archivo)
+├─ 09_INDICE_MAESTRO.md (este archivo)
+└─ 10_EVALUACION_TECNICA_PROFUNDA.md
 
 Presentación:
 └─ ITFlow_Presentacion_Profesional.pptx (11 slides)
 
-Total: 9 documentos + 1 presentación
+Total: 10 documentos + 1 presentación
 ```
 
 ---
@@ -521,8 +540,14 @@ General:        itflow-support@empresa.com
 ## 📝 Control de versiones
 
 ```
+v2.2 - Abril 2026
+├─ 10 documentos completos
+├─ Actualización del módulo admin real
+├─ Documentación de estadísticas y asignaciones
+└─ 1 presentación PPTX
+
 v2.1 - Abril 2026
-├─ 8 documentos completos
+├─ 9-10 documentos base
 ├─ 1 presentación PPTX
 ├─ 120+ páginas
 └─ Total 40,000+ palabras
