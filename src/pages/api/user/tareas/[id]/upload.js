@@ -20,7 +20,8 @@ const EXTENSIONES_PERMITIDAS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '14mb', // Margen para base64 (~33% overhead sobre 10MB)
+      // Se deja margen adicional por overhead base64 y metadata JSON.
+      sizeLimit: '20mb',
     },
   },
 };
