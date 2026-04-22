@@ -23,7 +23,7 @@ export default async function handler(req, res) {
           planta:plantas(id, nombre),
           estado:estados_tarea(id, nombre),
           prioridad:prioridades(id, nombre),
-          comentarios:comentarios_tarea(*)
+          comentarios:comentarios_tarea(*, usuario:usuarios(id, nombre_completo))
         `
         )
         .eq('id', id)

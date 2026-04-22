@@ -1,6 +1,6 @@
 # 👨‍🔧 ITFlow — Guía de uso para OPERARIO/TÉCNICO
 
-**Versión:** 2.1 | **Fecha:** Abril 2026 | **Público:** Operarios, técnicos, usuarios regulares
+**Versión:** 2.2 | **Fecha:** Abril 2026 | **Público:** Operarios, técnicos, usuarios regulares
 
 ---
 
@@ -18,6 +18,8 @@ Como **USER**, tu responsabilidad es:
 - ✅ Actualizar mi progreso
 - ✅ Cargar evidencias
 - ✅ Dejar comentarios
+- ✅ Recibir alertas del admin en dashboard
+- ✅ Confirmar lectura de alerta (OK / Enterado)
 - ❌ Ver tareas de otros
 - ❌ Crear tareas
 - ❌ Asignar tareas
@@ -103,6 +105,23 @@ Si todo está bien, verás:
 ```
 URL: /user/dashboard (automático después de login)
 o Click en logo ITFlow desde cualquier página
+```
+
+### Banner de alerta individual (si aplica)
+
+Cuando un admin te envía una alerta, verás un banner en la parte superior del dashboard.
+
+```
+⚠️ [Mensaje del admin...]
+[OK / Enterado]
+```
+
+**Qué hacer:**
+
+```
+1. Lee el mensaje completo
+2. Toma la acción solicitada
+3. Click en "OK / Enterado" para confirmar lectura
 ```
 
 ### Las 4 tarjetas principales
@@ -782,7 +801,7 @@ Intenta:
 
 ---
 
-**Última actualización:** Abril 2026  
+**Última actualización:** 22/04/2026  
 **Próxima revisión:** Q3 2026
 
 **¡Bienvenido al equipo! Cualquier duda, no dudes en preguntar.** 🚀

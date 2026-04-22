@@ -1,6 +1,6 @@
 # 🚀 ITFlow — Guía de instalación y deployment
 
-**Versión:** 2.1 | **Fecha:** Abril 2026 | **Público:** DevOps, desarrolladores
+**Versión:** 2.2 | **Fecha:** Abril 2026 | **Público:** DevOps, desarrolladores
 
 ---
 
@@ -234,6 +234,8 @@ En Supabase Dashboard:
 
 ### Crear tablas
 
+Antes de ejecutar SQL manual, considera correr primero las migraciones del repositorio en `scripts/sql/` para mantener el esquema alineado con el frontend y APIs actuales.
+
 ```sql
 -- Ejecutar en SQL Editor de Supabase
 
@@ -324,6 +326,41 @@ CREATE INDEX idx_tareas_estado_id ON tareas(estado_id);
 CREATE INDEX idx_usuarios_rol_id ON usuarios(rol_id);
 CREATE INDEX idx_usuarios_planta_id ON usuarios(planta_id);
 CREATE INDEX idx_comentarios_tarea_id ON comentarios(tarea_id);
+```
+
+### Migraciones de alertas admin → user (abril 2026)
+
+Ejecuta estos scripts en orden desde `scripts/sql/`:
+
+```sql
+-- 1) Flujo completo de alertas
+-- scripts/sql/2026-04-21_alertas_usuario_flujo.sql
+
+-- 2) Publicación realtime para postgres_changes
+-- scripts/sql/2026-04-22_enable_realtime_alertas_usuario.sql
+```
+
+Estos scripts agregan:
+
+```
+OBJETOS DE DATOS
+├─ Tabla: public.alertas_usuario
+└─ Vista: public.vw_alertas_usuario_estado
+
+FUNCIONES / RPC
+├─ public.crear_alerta_usuario(uuid, uuid, text)
+├─ public.confirmar_alerta_usuario(uuid, uuid)
+├─ public.es_admin_itflow(uuid)
+├─ public.es_user_itflow(uuid)
+└─ public.tg_alertas_usuario_validar()
+
+TRIGGERS
+├─ trg_alertas_usuario_updated_at
+└─ trg_alertas_usuario_validar
+
+SEGURIDAD Y REALTIME
+├─ RLS + policies sobre alertas_usuario
+└─ publication supabase_realtime incluye alertas_usuario
 ```
 
 ### Insertar datos iniciales
@@ -640,7 +677,11 @@ Solución:
 ```
 [ ] Base de datos creada en Supabase
 [ ] Todas las tablas existen
+[ ] `alertas_usuario` y `vw_alertas_usuario_estado` creadas
 [ ] RLS habilitado y configurado
+[ ] RPCs `crear_alerta_usuario` y `confirmar_alerta_usuario` disponibles
+[ ] Trigger de validación y updated_at activos
+[ ] `alertas_usuario` agregado a `supabase_realtime`
 [ ] Variables de entorno configuradas
 [ ] HTTPS habilitado (automático en Vercel)
 [ ] Backups automáticos configurados
@@ -726,5 +767,5 @@ GitHub Issues: github.com/tuempresa/itflow/issues
 
 ---
 
-**Última actualización:** Abril 2026  
+**Última actualización:** 22/04/2026  
 **Próxima revisión:** Q3 2026 (cuando implementemos CI/CD completo)

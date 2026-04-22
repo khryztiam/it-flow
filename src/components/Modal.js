@@ -21,6 +21,8 @@ export default function Modal({
   cargando = false,
   modo = 'ver',
   textoCancel = 'Cancelar',
+  textoAceptar,
+  tamano = 'md',
 }) {
   // Cerrar con ESC
   useEffect(() => {
@@ -36,14 +38,20 @@ export default function Modal({
 
   const estaEditando = modo === 'crear' || modo === 'editar';
 
-  const textoAceptar =
+  const textoAceptarDefault =
     modo === 'crear' ? 'Crear' : modo === 'editar' ? 'Actualizar' : 'Guardar';
 
   if (!abierto) return null;
 
+  const claseTamano =
+    tamano === 'lg' ? styles.contenedorLg : styles.contenedorMd;
+
   return (
     <div className={styles.overlay} onClick={onCerrar}>
-      <div className={styles.contenedor} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`${styles.contenedor} ${claseTamano}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <h2>{titulo}</h2>
           <button
@@ -82,7 +90,7 @@ export default function Modal({
               onClick={onAceptar}
               disabled={cargando}
             >
-              {cargando ? 'Guardando...' : textoAceptar}
+              {cargando ? 'Guardando...' : textoAceptar || textoAceptarDefault}
             </button>
           )}
         </footer>

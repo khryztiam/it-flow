@@ -148,6 +148,32 @@
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   background: #f8fafc;
+  transition:
+    box-shadow 0.2s,
+    background 0.2s;
+}
+.responsableItem:hover,
+.responsableItem:focus {
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.12);
+  background: #fef9c3;
+  outline: none;
+}
+.responsableItem[tabindex='-1']:hover,
+.responsableItem[tabindex='-1']:focus {
+  background: #f8fafc;
+  box-shadow: none;
+}
+.alertaBadge {
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.2em;
+}
+.alerta_pendiente {
+  border: 2px solid #eab308;
+}
+.alerta_confirmada {
+  border: 2px solid #22c55e;
 }
 
 .responsableNombre {
@@ -811,6 +837,102 @@
   gap: 14px;
 }
 
+.modalSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 10px;
+  min-height: 460px;
+  max-height: 62vh;
+  overflow: hidden;
+}
+
+.modalPrincipal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 0;
+}
+
+.modalAsideComentarios {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.modalAsideHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modalAsideHeader h4 {
+  margin: 0;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.modalAsideHeader span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1e3a8a;
+  background: #dbeafe;
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.modalComentariosLista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.modalComentarioItem {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.modalComentarioCabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modalComentarioCabecera strong {
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.modalComentarioCabecera span {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.modalComentarioItem p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Alertas inline del modal */
 .modalAlerta {
   background: #fef2f2;
@@ -835,6 +957,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
 }
 
 .modalLabel {
@@ -846,6 +969,7 @@
 }
 
 .modalSelect {
+  width: 100%;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -864,6 +988,8 @@
 }
 
 .modalTextarea {
+  width: 100%;
+  box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -1182,5 +1308,20 @@
 
   .modalGrid2 {
     grid-template-columns: 1fr;
+  }
+
+  .modalSplit {
+    grid-template-columns: 1fr;
+    max-height: none;
+    min-height: auto;
+  }
+
+  .modalPrincipal {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .modalAsideComentarios {
+    max-height: 260px;
   }
 }
