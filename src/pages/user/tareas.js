@@ -42,13 +42,33 @@ export default function TareasUser() {
       body: body ? JSON.stringify(body) : null,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || error.error || response.statusText);
+    const contentType = response.headers.get('content-type') || '';
+    let payload = null;
+
+    if (response.status !== 204) {
+      if (contentType.includes('application/json')) {
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null;
+        }
+      } else {
+        const rawText = await response.text();
+        payload = rawText ? { rawText } : null;
+      }
     }
 
-    if (response.status === 204) return null;
-    return response.json();
+    if (!response.ok) {
+      const detail =
+        payload?.detail ||
+        payload?.error ||
+        payload?.message ||
+        payload?.rawText ||
+        response.statusText;
+      throw new Error(detail);
+    }
+
+    return payload;
   };
 
   const cargarTareas = async () => {
