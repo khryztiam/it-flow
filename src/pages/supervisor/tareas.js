@@ -1,43 +1,38 @@
 import Layout from '@components/Layout';
 import { useSupervisor } from '@hooks/useProtegerRuta';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import TablaGenerica from '@components/TablaGenerica';
 import Modal from '@components/Modal';
-import FormularioMulti from '@components/FormularioMulti';
 import { supabase } from '@lib/supabase';
 import { useAuth } from '@context/AuthContext';
 import { formatearFecha } from '@utils/formateo';
-import styles from '@styles/TareasSupervisor.module.css';
+import { FiFilter } from 'react-icons/fi';
+import styles from '../../styles/TareasSupervisor.module.css';
 
 export default function TareasSupervisor() {
   const { cargando: cargandoAuth } = useSupervisor();
   const { usuarioDetalles } = useAuth();
+  const router = useRouter();
   const [tareas, setTareas] = useState([]);
-  const [prioridades, setPrioridades] = useState([]);
-  const [estados, setEstados] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState('');
-  const [modalAbierta, setModalAbierta] = useState(false);
-  const [modo, setModo] = useState('crear');
-  const [cargandoFormulario, setCargandoFormulario] = useState(false);
-  const [valores, setValores] = useState({
-    titulo: '',
-    descripcion: '',
-    prioridad_id: '',
-    asignado_a: '',
-    estado_id: '',
-    fecha_inicio: new Date().toISOString().split('T')[0],
-    fecha_limite: '',
-  });
+  const [filtroEstado, setFiltroEstado] = useState('todas');
+
+  // Modal reasignación
+  const [modalReasignarAbierta, setModalReasignarAbierta] = useState(false);
+  const [tareaReasignando, setTareaReasignando] = useState(null);
+  const [nuevoAsignado, setNuevoAsignado] = useState('');
+  const [cargandoReasignar, setCargandoReasignar] = useState(false);
+  const [errorReasignar, setErrorReasignar] = useState('');
 
   useEffect(() => {
-    if (!cargandoAuth && usuarioDetalles?.planta_id) {
-      cargarDatos();
+    if (!cargandoAuth && usuarioDetalles?.id) {
+      cargarTareas();
+      cargarUsuarios();
     }
-  }, [cargandoAuth, usuarioDetalles?.planta_id]);
+  }, [cargandoAuth, usuarioDetalles?.id]);
 
-  // Obtener token del usuario actual
   const obtenerToken = async () => {
     const { data, error } = await supabase.auth.getSession();
     if (error || !data?.session?.access_token) {
@@ -57,139 +52,182 @@ export default function TareasSupervisor() {
       body: body ? JSON.stringify(body) : null,
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || error.error || response.statusText);
+    const contentType = response.headers.get('content-type') || '';
+    let payload = null;
+
+    if (response.status !== 204) {
+      if (contentType.includes('application/json')) {
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null;
+        }
+      } else {
+        const rawText = await response.text();
+        payload = rawText ? { rawText } : null;
+      }
     }
 
-    return response.json();
+    if (!response.ok) {
+      const detail =
+        payload?.detail ||
+        payload?.error ||
+        payload?.message ||
+        payload?.rawText ||
+        response.statusText;
+      throw new Error(detail);
+    }
+
+    return payload;
   };
 
-  const cargarDatos = async () => {
+  const cargarTareas = async () => {
     try {
       setCargando(true);
-      setError('');
-
-      // Cargar datos desde APIs y Supabase
-      const [prioridadesRes, estadosRes, tareasRes, usuariosRes] =
-        await Promise.all([
-          supabase.from('prioridades').select('id, nombre'),
-          supabase.from('estados_tarea').select('id, nombre'),
-          callAPI('/api/admin/tareas'),
-          supabase
-            .from('usuarios')
-            .select('id, nombre_completo')
-            .eq('planta_id', usuarioDetalles.planta_id)
-            .eq('estado', 'activo'),
-        ]);
-
-      setPrioridades(prioridadesRes.data || []);
-      setEstados(estadosRes.data || []);
-      // Filtrar tareas de su planta
-      setTareas(
-        (tareasRes || []).filter(
-          (t) => t.planta_id === usuarioDetalles.planta_id
-        )
-      );
-      setUsuarios(usuariosRes.data || []);
+      const tareasData = await callAPI('/api/supervisor/tareas');
+      setTareas(tareasData || []);
     } catch (err) {
-      setError(`Error cargando datos: ${err.message}`);
+      console.error('Error cargando tareas:', err);
     } finally {
       setCargando(false);
     }
   };
 
-  const handleNuevaTarea = () => {
-    setModo('crear');
-    setValores({
-      titulo: '',
-      descripcion: '',
-      prioridad_id: '',
-      asignado_a: '',
-      estado_id: estados[0]?.id || '',
-      fecha_inicio: new Date().toISOString().split('T')[0],
-      fecha_limite: '',
-    });
-    setModalAbierta(true);
-  };
-
-  const handleGuardar = async () => {
-    setCargandoFormulario(true);
-    setError('');
-
+  const cargarUsuarios = async () => {
     try {
-      if (
-        !valores.titulo ||
-        !valores.fecha_limite ||
-        !valores.prioridad_id ||
-        !valores.estado_id
-      ) {
-        throw new Error('Completa los campos requeridos');
-      }
-
-      const datosTarea = {
-        titulo: valores.titulo,
-        descripcion: valores.descripcion || '',
-        prioridad_id: valores.prioridad_id,
-        asignado_a: valores.asignado_a || null,
-        estado_id: valores.estado_id,
-        fecha_inicio: valores.fecha_inicio,
-        fecha_limite: valores.fecha_limite,
-        planta_id: usuarioDetalles.planta_id,
-        porcentaje_avance: 0,
-      };
-
-      if (modo === 'crear') {
-        const data = await callAPI('/api/admin/tareas', 'POST', datosTarea);
-        setTareas([...tareas, data]);
-      }
-
-      setModalAbierta(false);
+      const { data } = await supabase
+        .from('usuarios')
+        .select('id, nombre_completo')
+        .eq('supervisor_id', usuarioDetalles?.id)
+        .order('nombre_completo');
+      setUsuarios(data || []);
     } catch (err) {
-      setError(err.message || 'Error guardando tarea');
-    } finally {
-      setCargandoFormulario(false);
+      console.error('Error cargando usuarios:', err);
     }
   };
 
+  const handleReasignar = (tarea) => {
+    setTareaReasignando(tarea);
+    setNuevoAsignado(tarea.asignado_a || '');
+    setErrorReasignar('');
+    setModalReasignarAbierta(true);
+  };
+
+  const handleGuardarReasignacion = async () => {
+    if (!nuevoAsignado) {
+      setErrorReasignar('Selecciona un usuario para reasignar');
+      return;
+    }
+
+    if (nuevoAsignado === tareaReasignando.asignado_a) {
+      setErrorReasignar('El usuario es el mismo. Selecciona otro');
+      return;
+    }
+
+    try {
+      setCargandoReasignar(true);
+      setErrorReasignar('');
+
+      await callAPI('/api/admin/asignar', 'POST', {
+        tarea_id: tareaReasignando.id,
+        usuario_id: nuevoAsignado,
+      });
+
+      // Actualizar tabla local
+      setTareas(
+        tareas.map((t) =>
+          t.id === tareaReasignando.id ? { ...t, asignado_a: nuevoAsignado } : t
+        )
+      );
+
+      setModalReasignarAbierta(false);
+    } catch (err) {
+      setErrorReasignar(err.message || 'Error reasignando tarea');
+    } finally {
+      setCargandoReasignar(false);
+    }
+  };
+
+  const tareasFiltradas =
+    filtroEstado === 'todas'
+      ? tareas
+      : tareas.filter((t) => t.estado?.nombre === filtroEstado);
+
   const columnasTabla = [
-    { key: 'titulo', label: 'Título', ancho: '30%' },
+    {
+      key: 'titulo',
+      label: 'Titulo',
+      ancho: '30%',
+      render: (val) => val || '-',
+    },
     {
       key: 'prioridad',
       label: 'Prioridad',
       ancho: '15%',
-      render: (val) => val?.nombre || '-',
+      render: (val) => (typeof val === 'object' ? val?.nombre : val) || '-',
     },
     {
-      key: 'asignado_a_user',
-      label: 'Asignado a',
-      ancho: '20%',
-      render: (val) => val?.nombre_completo || 'Sin asignar',
+      key: 'porcentaje_avance',
+      label: 'Avance',
+      ancho: '15%',
+      render: (val) => {
+        const porcentaje = val || 0;
+
+        return (
+          <div className={styles.barra}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '4rem' }}>
+              <div
+                className={styles.relleno}
+                style={{
+                  width: `${porcentaje}%`,
+                  background:
+                    porcentaje < 30
+                      ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+                      : porcentaje < 70
+                        ? 'linear-gradient(90deg, #f97316, #ea580c)'
+                        : 'linear-gradient(90deg, #22c55e, #16a34a)',
+                }}
+              ></div>
+            </div>
+            <span>{porcentaje}%</span>
+          </div>
+        );
+      },
     },
     {
       key: 'fecha_limite',
-      label: 'Fecha Límite',
-      ancho: '15%',
+      label: 'Fecha limite',
+      ancho: '20%',
       render: (val) => formatearFecha(val),
     },
     {
       key: 'estado',
       label: 'Estado',
       ancho: '12%',
-      render: (val) => <span className={styles[`estado-${val}`]}>{val}</span>,
+      render: (val) => (
+        <span
+          className={
+            styles[
+              `estado-${typeof val === 'object' ? val?.nombre : val || ''}`
+            ]
+          }
+        >
+          {(typeof val === 'object' ? val?.nombre : val) || '-'}
+        </span>
+      ),
     },
   ];
 
   const acciones = [
     {
-      label: 'Editar',
+      label: 'Ver',
       color: 'info',
-      onClick: () => alert('Editar tarea'),
+      onClick: (tarea) => router.push(`/supervisor/tarea/${tarea.id}`),
     },
     {
-      label: 'Eliminar',
-      color: 'danger',
-      onClick: () => alert('Eliminar tarea'),
+      label: 'Reasignar',
+      color: 'warning',
+      onClick: handleReasignar,
     },
   ];
 
@@ -198,96 +236,113 @@ export default function TareasSupervisor() {
   }
 
   return (
-    <Layout titulo="Gestión de Tareas">
-      <div className={styles.contenedor}>
-        {error && <div className={styles.error}>{error}</div>}
-
-        <div className={styles.encabezado}>
-          <h3>Tareas Asignadas</h3>
-          <button className={styles.botonNuevo} onClick={handleNuevaTarea}>
-            + Nueva Tarea
-          </button>
+    <Layout titulo="Tareas de mis Usuarios" ocultarHeader>
+      <section className={styles.hero}>
+        <div className={styles.heroInfo}>
+          <p className={styles.heroKicker}>Tareas de mis Usuarios</p>
+          <h1 className={styles.heroTitulo}>Supervisa y gestiona</h1>
+          <p className={styles.heroSubtitulo}>
+            Revisa el trabajo de los usuarios bajo tu supervisión. Filtra por
+            estado para enfocarte en lo pendiente.
+          </p>
         </div>
+
+        <div className={styles.heroFilterCard}>
+          <label htmlFor="filtro-estado" className={styles.heroFilterLabel}>
+            <FiFilter />
+            <span>Estado</span>
+          </label>
+          <select
+            id="filtro-estado"
+            className={styles.heroSelect}
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+          >
+            <option value="todas">Todas</option>
+            <option value="pending">Pendientes</option>
+            <option value="en_proceso">En proceso</option>
+            <option value="en_revision">En revision</option>
+            <option value="completado">Completadas</option>
+            <option value="detenido">Detenidas</option>
+          </select>
+        </div>
+      </section>
+
+      <div className={styles.contenedor}>
+        <p className={styles.contador}>
+          {tareasFiltradas.length} de {tareas.length} tareas
+        </p>
 
         <TablaGenerica
           columnas={columnasTabla}
-          datos={tareas}
+          datos={tareasFiltradas}
           acciones={acciones}
           cargando={cargando}
-          vacio={tareas.length === 0 ? 'No hay tareas' : ''}
+          vacio={tareasFiltradas.length === 0 ? 'No hay tareas' : ''}
         />
       </div>
 
+      {/* Modal Reasignación */}
       <Modal
-        abierto={modalAbierta}
-        onCerrar={() => setModalAbierta(false)}
-        titulo={`${modo === 'crear' ? 'Nueva' : 'Editar'} Tarea`}
-        onAceptar={handleGuardar}
-        cargando={cargandoFormulario}
+        abierto={modalReasignarAbierta}
+        onCerrar={() => setModalReasignarAbierta(false)}
+        titulo={`Reasignar — ${tareaReasignando?.titulo || ''}`}
+        onAceptar={handleGuardarReasignacion}
+        cargando={cargandoReasignar}
+        modo="editar"
+        textoAceptar="Reasignar"
       >
-        <FormularioMulti
-          modo={modo}
-          campos={[
-            {
-              nombre: 'titulo',
-              label: 'Título',
-              tipo: 'text',
-              requerido: true,
-              mostrarEn: ['crear', 'editar'],
-            },
-            {
-              nombre: 'descripcion',
-              label: 'Descripción',
-              tipo: 'textarea',
-              mostrarEn: ['crear', 'editar'],
-            },
-            {
-              nombre: 'prioridad_id',
-              label: 'Prioridad',
-              tipo: 'select',
-              opciones: prioridades.map((p) => ({ id: p.id, label: p.nombre })),
-              requerido: true,
-              mostrarEn: ['crear', 'editar'],
-            },
-            {
-              nombre: 'estado_id',
-              label: 'Estado',
-              tipo: 'select',
-              opciones: estados.map((e) => ({ id: e.id, label: e.nombre })),
-              requerido: true,
-              mostrarEn: ['crear', 'editar'],
-            },
-            {
-              nombre: 'asignado_a',
-              label: 'Asignar a',
-              tipo: 'select',
-              opciones: usuarios.map((u) => ({
-                id: u.id,
-                label: u.nombre_completo,
-              })),
-              mostrarEn: ['crear', 'editar'],
-            },
-            {
-              nombre: 'fecha_inicio',
-              label: 'Fecha Inicio',
-              tipo: 'text',
-              requerido: true,
-              mostrarEn: ['crear', 'editar'],
-            },
-            {
-              nombre: 'fecha_limite',
-              label: 'Fecha Límite',
-              tipo: 'text',
-              requerido: true,
-              mostrarEn: ['crear', 'editar'],
-            },
-          ]}
-          valores={valores}
-          onCambio={(nombre, valor) =>
-            setValores({ ...valores, [nombre]: valor })
-          }
-          cargando={cargandoFormulario}
-        />
+        {errorReasignar && (
+          <div
+            style={{
+              color: '#991b1b',
+              fontSize: '14px',
+              marginBottom: '12px',
+              padding: '8px 12px',
+              background: '#fee2e2',
+              borderRadius: '6px',
+            }}
+          >
+            {errorReasignar}
+          </div>
+        )}
+        <div style={{ marginBottom: '16px' }}>
+          <label
+            style={{
+              display: 'block',
+              marginBottom: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#0f172a',
+            }}
+          >
+            Nuevo responsable
+          </label>
+          <select
+            value={nuevoAsignado}
+            onChange={(e) => setNuevoAsignado(e.target.value)}
+            disabled={cargandoReasignar}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#0f172a',
+              background: '#ffffff',
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+          >
+            <option value="">-- Seleccionar --</option>
+            {usuarios.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.nombre_completo}
+              </option>
+            ))}
+          </select>
+        </div>
       </Modal>
     </Layout>
   );

@@ -7,6 +7,7 @@ import {
   FiCheckSquare,
   FiShare2,
   FiPieChart,
+  FiUsers,
 } from 'react-icons/fi';
 import styles from '@styles/Layout.module.css';
 import { obtenerTextoRol } from '@utils/formateo';
@@ -148,7 +149,7 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
         return {
           secciones: [
             {
-              titulo: 'OPERACIONES',
+              titulo: 'ADMINISTRACION',
               items: [
                 {
                   label: 'Dashboard',
@@ -156,12 +157,22 @@ export default function Sidebar({ usuarioDetalles, onLogout }) {
                   icono: FiGrid,
                 },
                 {
+                  label: 'Gestion',
+                  ruta: '/supervisor/gestion',
+                  icono: FiUsers,
+                },
+              ],
+            },
+            {
+              titulo: 'OPERACIONES',
+              items: [
+                {
                   label: 'Mis Tareas',
                   ruta: '/supervisor/tareas',
                   icono: FiCheckSquare,
                 },
                 {
-                  label: 'Asignaciones',
+                  label: 'Todas las tareas',
                   ruta: '/supervisor/asignaciones',
                   icono: FiShare2,
                 },

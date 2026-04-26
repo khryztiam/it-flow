@@ -1,8 +1,15 @@
-import { verifyAdminToken, supabaseAdmin } from '@lib/apiHelpers';
+import {
+  verifyAdminOrSupervisorToken,
+  verifyAdminToken,
+  supabaseAdmin,
+} from '@lib/apiHelpers';
 
 export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
-  const verify = await verifyAdminToken(authHeader);
+  const verify =
+    req.method === 'GET'
+      ? await verifyAdminOrSupervisorToken(authHeader)
+      : await verifyAdminToken(authHeader);
 
   if (!verify.isValid) {
     return res.status(403).json({ error: 'Forbidden', detail: verify.reason });
@@ -30,10 +37,29 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
-      const { data, error } = await supabaseAdmin
+      let query = supabaseAdmin
         .from('plantas')
         .select('*, pais:paises(id, nombre)')
         .order('nombre', { ascending: true });
+
+      if (verify.rol === 'supervisor') {
+        const { data: plantaSupervisor, error: plantaErr } = await supabaseAdmin
+          .from('plantas')
+          .select('pais_id')
+          .eq('id', verify.planta_id)
+          .single();
+
+        if (plantaErr || !plantaSupervisor) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            detail: 'Supervisor sin planta válida',
+          });
+        }
+
+        query = query.eq('pais_id', plantaSupervisor.pais_id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         return res.status(400).json({ error: error.message });

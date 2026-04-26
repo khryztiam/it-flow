@@ -1264,6 +1264,75 @@
   }
 }
 
+.formComentarioModal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.textareaModal {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 70px;
+  max-height: 120px;
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+.textareaModal:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.textareaModal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pieFormularioModal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.contadorModal {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.btnEnviarModal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btnEnviarModal:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.btnEnviarModal:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .responsablesLista,
   .resumenEstadosGrid {

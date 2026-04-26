@@ -1,8 +1,15 @@
-import { verifyAdminToken, supabaseAdmin } from '@lib/apiHelpers';
+import {
+  verifyAdminOrSupervisorToken,
+  verifyAdminToken,
+  supabaseAdmin,
+} from '@lib/apiHelpers';
 
 export default async function handler(req, res) {
   const authHeader = req.headers.authorization;
-  const verify = await verifyAdminToken(authHeader);
+  const verify =
+    req.method === 'GET'
+      ? await verifyAdminOrSupervisorToken(authHeader)
+      : await verifyAdminToken(authHeader);
 
   if (!verify.isValid) {
     return res.status(403).json({ error: 'Forbidden', detail: verify.reason });
@@ -58,13 +65,39 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
+      if (verify.rol === 'supervisor') {
+        // Supervisor ve solo sus usuarios y usuarios sin asignar
+        // Filtro: (supervisor_id = auth.uid() OR supervisor_id IS NULL)
+        // Y deben ser role = 'user'
+        const { data, error } = await supabaseAdmin
+          .from('usuarios')
+          .select(
+            `
+            *,
+            rol:roles!inner(id, nombre),
+            planta:plantas!inner(id, nombre, pais_id, pais:paises(id, nombre))
+          `
+          )
+          .eq('rol.nombre', 'user')
+          .neq('id', verify.userId)
+          .or(`supervisor_id.eq.${verify.userId},supervisor_id.is.null`)
+          .order('nombre_completo', { ascending: true });
+
+        if (error) {
+          return res.status(400).json({ error: error.message });
+        }
+
+        return res.status(200).json({ data });
+      }
+
+      // Admin ve todos los usuarios
       const { data, error } = await supabaseAdmin
         .from('usuarios')
         .select(
           `
           *,
           rol:roles(id, nombre),
-          planta:plantas(id, nombre)
+          planta:plantas(id, nombre, pais_id, pais:paises(id, nombre))
         `
         )
         .order('nombre_completo', { ascending: true });

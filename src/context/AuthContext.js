@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
               email,
               nombre_completo,
               estado,
+              supervisor_id,
               rol:roles(id, nombre, descripcion),
               planta:plantas(id, nombre, pais:paises(id, nombre))
             `

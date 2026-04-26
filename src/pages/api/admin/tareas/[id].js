@@ -64,10 +64,10 @@ export default async function handler(req, res) {
         revisado,
       } = req.body;
 
-      // Obtener tarea actual para validar
+      // Obtener tarea actual para validar y capturar asignación anterior
       const { data: currentTask, error: fetchErr } = await supabaseAdmin
         .from('tareas')
-        .select('planta_id')
+        .select('planta_id, asignado_a')
         .eq('id', id)
         .single();
 
@@ -86,11 +86,51 @@ export default async function handler(req, res) {
         });
       }
 
+      if (asignado_a) {
+        const { data: usuarioAsignado, error: usuarioErr } = await supabaseAdmin
+          .from('usuarios')
+          .select('id, planta_id, estado')
+          .eq('id', asignado_a)
+          .single();
+
+        if (usuarioErr || !usuarioAsignado) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (usuarioAsignado.estado !== 'activo') {
+          return res.status(400).json({
+            error: 'Invalid user',
+            detail: 'El usuario asignado no está activo',
+          });
+        }
+
+        if (
+          verify.rol === 'supervisor' &&
+          usuarioAsignado.planta_id !== currentTask.planta_id
+        ) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            detail: 'Supervisores solo pueden asignar usuarios de su planta',
+          });
+        }
+      }
+
       // Construir objeto de actualización
       const updateData = {};
       if (titulo !== undefined) updateData.titulo = titulo;
       if (descripcion !== undefined) updateData.descripcion = descripcion;
-      if (asignado_a !== undefined) updateData.asignado_a = asignado_a;
+
+      // ─── AUDITORÍA DE DELEGACIÓN ───────────────────────────────────
+      // Si se está reasignando la tarea a otro usuario, registrar auditoría
+      if (asignado_a !== undefined && asignado_a !== currentTask.asignado_a) {
+        updateData.asignado_a = asignado_a;
+        updateData.delegado_por = verify.userId;
+        updateData.delegado_de_usuario_id = currentTask.asignado_a;
+        updateData.delegado_en = new Date().toISOString();
+      } else if (asignado_a !== undefined) {
+        updateData.asignado_a = asignado_a;
+      }
+
       if (supervisado_por !== undefined)
         updateData.supervisado_por = supervisado_por;
       if (estado_id !== undefined) updateData.estado_id = estado_id;
@@ -133,7 +173,83 @@ export default async function handler(req, res) {
         });
       }
 
+      // ─── CREAR COMENTARIO DE AUDITORÍA SI HUBO DELEGACIÓN ───────────
+      if (
+        asignado_a !== undefined &&
+        asignado_a !== currentTask.asignado_a &&
+        data &&
+        data.length > 0
+      ) {
+        const usuarioAnterior = currentTask.asignado_a
+          ? `Usuario anterior: ${currentTask.asignado_a}`
+          : 'Sin asignación previa';
+        const nuevoUsuario =
+          data[0].asignado_a_user?.nombre_completo || 'Sin asignar';
+
+        const comentarioAuditoria = `[DELEGACIÓN] Reasignada de ${usuarioAnterior} → ${nuevoUsuario}`;
+
+        await supabaseAdmin.from('comentarios_tarea').insert({
+          tarea_id: id,
+          usuario_id: verify.userId,
+          contenido: comentarioAuditoria,
+        });
+      }
+
       return res.status(200).json(data[0]);
+    }
+
+    if (req.method === 'POST') {
+      // POST /api/admin/tareas/[id] — Agregar comentario a tarea
+      const { contenido } = req.body;
+
+      if (!contenido?.trim()) {
+        return res.status(400).json({
+          error: 'Missing required field',
+          detail: 'contenido es requerido',
+        });
+      }
+
+      // Verificar que la tarea existe
+      const { data: tarea, error: checkErr } = await supabaseAdmin
+        .from('tareas')
+        .select('id, planta_id')
+        .eq('id', id)
+        .single();
+
+      if (checkErr || !tarea) {
+        return res.status(404).json({
+          error: 'Task not found',
+          detail: 'No se encontró la tarea',
+        });
+      }
+
+      // Si supervisor, validar que sea de su planta
+      if (verify.rol === 'supervisor' && tarea.planta_id !== verify.planta_id) {
+        return res.status(403).json({
+          error: 'Forbidden',
+          detail: 'No tienes acceso a esta tarea',
+        });
+      }
+
+      // Insertar comentario
+      const { data: nuevoComentario, error: insertErr } = await supabaseAdmin
+        .from('comentarios_tarea')
+        .insert({
+          tarea_id: id,
+          usuario_id: verify.userId,
+          contenido: contenido.trim(),
+        })
+        .select('*, usuario:usuarios(id, nombre_completo)')
+        .single();
+
+      if (insertErr) {
+        return res.status(400).json({
+          error: 'DB_ERROR',
+          detail: insertErr.message,
+        });
+      }
+
+      return res.status(201).json({ data: nuevoComentario });
     }
 
     if (req.method === 'DELETE') {

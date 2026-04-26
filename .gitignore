@@ -48,6 +48,10 @@ Thumbs.db
 # Supabase
 .supabase/
 
+# Review & Analysis Docs (no subir al repo)
+.review-docs/
+.analysis/
+
 # Yarn
 .yarn/cache
 .yarn/unplugged

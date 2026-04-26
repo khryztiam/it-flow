@@ -81,6 +81,35 @@ export default async function handler(req, res) {
         });
       }
 
+      if (asignado_a) {
+        const { data: usuarioAsignado, error: usuarioErr } = await supabaseAdmin
+          .from('usuarios')
+          .select('id, planta_id, estado')
+          .eq('id', asignado_a)
+          .single();
+
+        if (usuarioErr || !usuarioAsignado) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (usuarioAsignado.estado !== 'activo') {
+          return res.status(400).json({
+            error: 'Invalid user',
+            detail: 'El usuario asignado no está activo',
+          });
+        }
+
+        if (
+          verify.rol === 'supervisor' &&
+          usuarioAsignado.planta_id !== planta_id
+        ) {
+          return res.status(403).json({
+            error: 'Forbidden',
+            detail: 'Supervisores solo pueden asignar usuarios de su planta',
+          });
+        }
+      }
+
       // Crear tarea
       const { data, error: err } = await supabaseAdmin
         .from('tareas')

@@ -6,7 +6,7 @@
 
 ## 📋 Contenido generado
 
-Se ha completado un análisis exhaustivo de la arquitectura, flujos, riesgos y operación de ITFlow. El paquete de documentación contiene **10 documentos principales** totalizando **120+ páginas**.
+Se ha completado un análisis exhaustivo de la arquitectura, flujos, riesgos y operación de ITFlow. El paquete de documentación contiene **12 documentos principales** totalizando **140+ páginas**.
 
 ---
 
@@ -117,13 +117,105 @@ Riesgos naranja (P2):
 
 ---
 
-### 👥 NIVEL USUARIO (Para cada rol)
+### ✅ NIVEL TESTING Y VALIDACIÓN (Para QA, seguridad)
+
+**12_VALIDACION_VISIBILIDAD_ACCESO.md** (22 pgs)
+
+```
+Para:     QA, Security, Tech leads
+Tiempo:   45 minutos (referencia)
+Contenido:
+├─ Matriz de acceso por rol (3x6)
+├─ 11 casos de test API detallados
+├─ 3 casos de test de rutas (páginas)
+├─ 3 casos de test RLS (SQL)
+├─ Checklist manual de validación
+├─ 4 escenarios críticos a probar
+├─ Tests de volumen y performance
+├─ Pruebas de seguridad (SQL injection, tampering)
+├─ Guía de automatización (CI/CD)
+└─ Template para reportar issues
+
+Cubre:
+├─ User solo ve sus tareas
+├─ Supervisor solo ve subordinados
+├─ Admin ve todo
+├─ Acceso rechazado (403) donde aplica
+├─ RLS policies funcionan correctamente
+└─ Seguridad contra tampering de tokens
+```
+
+**GUIA_VALIDACION_RAPIDA.md** (16 pgs) ⭐ **START HERE PARA TESTING**
+
+```
+Para:     QA, Testers, nuevos desarrolladores
+Tiempo:   30 minutos primera lectura
+Contenido:
+├─ Resumen ejecutivo en 5 puntos
+├─ Paso 1: Obtener tokens (opción navegador o CLI)
+├─ Paso 2: Tests de API (script listo)
+├─ Paso 3: Tests manuales en navegador
+├─ Paso 4: Validar datos en Supabase (SQL)
+├─ Paso 5: 3 casos críticos paso a paso
+├─ Paso 6: Checklist de validación (22 items)
+├─ Paso 7: Template de reporte de issues
+├─ Paso 8: Validación de seguridad adicional
+└─ Resumen de archivos y próximos pasos
+
+Herramientas listas:
+├─ test-acceso-simple.js (corre en 2 minutos)
+├─ test-visibilidad-acceso.mjs (tests complejos)
+└─ Scripts SQL para validar RLS
+```
+
+---
+
+### 📊 NIVEL TÉCNICO ESPECÍFICO (Para desarrolladores)
+
+**SUPABASE_ESQUEMA_Y_FLUJOS.md** (32 pgs)
+
+```
+Para:     Desarrolladores, data engineers
+Tiempo:   Referencia (60 min)
+Contenido:
+├─ Schema visual (ER diagram ASCII)
+├─ Descripción de cada tabla (usuarios, tareas, etc)
+├─ Relaciones y foreign keys
+├─ Índices críticos
+├─ Políticas RLS por tabla
+├─ Triggers y funciones
+├─ Flujos de datos (read/write)
+├─ Query patterns comunes
+├─ Performance tips
+├─ Troubleshooting de RLS
+└─ Migraciones futuras
+
+Tablas documentadas:
+├─ usuarios (5 roles: admin, supervisor, user)
+├─ tareas (ciclo de 5 estados)
+├─ comentarios_tarea
+├─ evidencias_tareas
+├─ asignaciones (audit trail)
+├─ estados_tarea
+├─ prioridades
+├─ plantas
+├─ paises
+├─ roles
+└─ relaciones de jerarquía
+```
+
+```
+
+---
+
+### 📋 NIVEL REFERENCIA (Para consultas puntuales)
 
 **03_GUIA_ADMIN.md** (28 pgs)
 
 ```
-Para:     Administradores del sistema
-Tiempo:   Referencia (20-30 min para leer todo)
+
+Para: Administradores del sistema
+Tiempo: Referencia (20-30 min para leer todo)
 Contenido:
 ├─ Descripción del rol
 ├─ Cómo iniciar sesión (cambiar contraseña)
@@ -146,13 +238,15 @@ Secciones más usadas:
 ├─ Estadísticas (semanal)
 ├─ Panel de tareas (3x/semana)
 └─ Asignaciones (según necesidad)
+
 ```
 
 **10_EVALUACION_TECNICA_PROFUNDA.md** (16 pgs)
 
 ```
-Para:     Tech leads, QA, stakeholders técnicos
-Tiempo:   30-40 minutos
+
+Para: Tech leads, QA, stakeholders técnicos
+Tiempo: 30-40 minutos
 Contenido:
 ├─ Estado funcional observado del producto
 ├─ Smoke tests ejecutados
@@ -160,13 +254,15 @@ Contenido:
 ├─ Riesgos de operación
 ├─ Observaciones por módulo
 └─ Recomendaciones accionables
+
 ```
 
 **04_GUIA_USER.md** (35 pgs)
 
 ```
-Para:     Operarios, técnicos, usuarios operativos
-Tiempo:   Referencia (30-40 min primera lectura)
+
+Para: Operarios, técnicos, usuarios operativos
+Tiempo: Referencia (30-40 min primera lectura)
 Contenido:
 ├─ Descripción del rol
 ├─ Primer acceso y cambio de contraseña
@@ -184,19 +280,22 @@ Contenido:
 └─ Soporte
 
 Flujo más común:
+
 1. Login
 2. Dashboard → Ve "Mis tareas"
 3. Click en una tarea
 4. Actualiza % y estado
 5. Carga evidencia
 6. Guarda
+
 ```
 
 **05_GUIA_SUPERVISOR.md** (25 pgs)
 
 ```
-Para:     Supervisores de planta (NOTA: En desarrollo)
-Tiempo:   Referencia (25 min)
+
+Para: Supervisores de planta (NOTA: En desarrollo)
+Tiempo: Referencia (25 min)
 Contenido:
 ├─ Descripción del rol (planeado)
 ├─ Estado de implementación (50% completado)
@@ -213,8 +312,9 @@ Contenido:
 └─ Features en roadmap Q2-Q4
 
 IMPORTANTE: Este rol aún está en desarrollo
-            Documentación es especulativa
-            Será actualizada cuando se implemente
+Documentación es especulativa
+Será actualizada cuando se implemente
+
 ```
 
 ---
@@ -224,8 +324,9 @@ IMPORTANTE: Este rol aún está en desarrollo
 **06_INSTALACION_DEPLOYMENT.md** (30 pgs)
 
 ```
-Para:     DevOps, desarrolladores, system admins
-Tiempo:   Referencia (60-90 min según necesidad)
+
+Para: DevOps, desarrolladores, system admins
+Tiempo: Referencia (60-90 min según necesidad)
 Contenido:
 ├─ Requisitos previos (hardware, software)
 ├─ Instalación local (6 pasos)
@@ -248,6 +349,7 @@ Archivos de referencia:
 ├─ Dockerfile (template)
 ├─ scripts/init-db.sql (SQL para tablas)
 └─ SQL policies (RLS)
+
 ```
 
 ---
@@ -255,39 +357,41 @@ Archivos de referencia:
 ## 📊 Matriz de lectura por rol
 
 ```
+
 ╔════════════════╦════════╦═══════════════════════════════════════════════════╗
-║ ROL            ║ TIEMPO ║ DOCUMENTOS A LEER (en orden)                      ║
+║ ROL ║ TIEMPO ║ DOCUMENTOS A LEER (en orden) ║
 ╠════════════════╬════════╬═══════════════════════════════════════════════════╣
-║ EJECUTIVO      ║ 20min  ║ 08 (Resumen ejecutivo)                            ║
-║                ║        ║ + 02 (si quiere detalles técnicos)                ║
-║                ║        ║                                                   ║
-║ TECH LEAD      ║ 90min  ║ 08 → 01 → 02 → 07 → 06                           ║
-║                ║        ║ (Recomendado leer en ese orden)                   ║
-║                ║        ║                                                   ║
-║ ADMINISTRADOR  ║ 30min  ║ 03 (Guía admin) como referencia                   ║
-║ (ITFlow)       ║ ref    ║ 04 (Guía user) para entender usuarios             ║
-║                ║        ║                                                   ║
-║ USUARIO ADMIN  ║ 30min  ║ 03 (Guía admin - LEER COMPLETO)                   ║
-║ (ITFlow)       ║ ref    ║ 01 (Flujos - solo secciones admin)                ║
-║                ║        ║                                                   ║
-║ USUARIO TECH   ║ 30min  ║ 04 (Guía user - LEER COMPLETO)                    ║
-║ (ITFlow)       ║ ref    ║ + video tutorial (en desarrollo)                  ║
-║                ║        ║                                                   ║
-║ SUPERVISOR     ║ 25min  ║ 05 (Guía supervisor - cuando esté ready)          ║
-║ (futuro)       ║ ref    ║ (Aún en desarrollo)                               ║
-║                ║        ║                                                   ║
-║ DEVOPS         ║ 90min  ║ 06 (Instalación/deployment - como referencia)     ║
-║ IT OPS         ║ ref    ║ 07 (Matriz de riesgos - para monitoreo)           ║
-║                ║        ║ 02 (Hallazgos - context de seguridad)             ║
-║                ║        ║                                                   ║
-║ DEVELOPER      ║ 120min ║ 01 → 02 → 06 → 07                                 ║
-║ (New hire)     ║        ║ (Orden recomendado para onboarding)               ║
-║                ║        ║ + 03 si es admin o 04 si es usuario               ║
-║                ║        ║                                                   ║
-║ PROJECT MGR    ║ 40min  ║ 08 (Resumen ejecutivo)                            ║
-║                ║        ║ 02 (Hallazgos si necesita detalles)               ║
-║                ║        ║ 07 (Riesgos si es PM técnico)                     ║
+║ EJECUTIVO ║ 20min ║ 08 (Resumen ejecutivo) ║
+║ ║ ║ + 02 (si quiere detalles técnicos) ║
+║ ║ ║ ║
+║ TECH LEAD ║ 90min ║ 08 → 01 → 02 → 07 → 06 ║
+║ ║ ║ (Recomendado leer en ese orden) ║
+║ ║ ║ ║
+║ ADMINISTRADOR ║ 30min ║ 03 (Guía admin) como referencia ║
+║ (ITFlow) ║ ref ║ 04 (Guía user) para entender usuarios ║
+║ ║ ║ ║
+║ USUARIO ADMIN ║ 30min ║ 03 (Guía admin - LEER COMPLETO) ║
+║ (ITFlow) ║ ref ║ 01 (Flujos - solo secciones admin) ║
+║ ║ ║ ║
+║ USUARIO TECH ║ 30min ║ 04 (Guía user - LEER COMPLETO) ║
+║ (ITFlow) ║ ref ║ + video tutorial (en desarrollo) ║
+║ ║ ║ ║
+║ SUPERVISOR ║ 25min ║ 05 (Guía supervisor - cuando esté ready) ║
+║ (futuro) ║ ref ║ (Aún en desarrollo) ║
+║ ║ ║ ║
+║ DEVOPS ║ 90min ║ 06 (Instalación/deployment - como referencia) ║
+║ IT OPS ║ ref ║ 07 (Matriz de riesgos - para monitoreo) ║
+║ ║ ║ 02 (Hallazgos - context de seguridad) ║
+║ ║ ║ ║
+║ DEVELOPER ║ 120min ║ 01 → 02 → 06 → 07 ║
+║ (New hire) ║ ║ (Orden recomendado para onboarding) ║
+║ ║ ║ + 03 si es admin o 04 si es usuario ║
+║ ║ ║ ║
+║ PROJECT MGR ║ 40min ║ 08 (Resumen ejecutivo) ║
+║ ║ ║ 02 (Hallazgos si necesita detalles) ║
+║ ║ ║ 07 (Riesgos si es PM técnico) ║
 ╚════════════════╩════════╩═══════════════════════════════════════════════════╝
+
 ```
 
 ---
@@ -297,49 +401,59 @@ Archivos de referencia:
 ### "Necesito capacitar a un admin en 1 hora"
 
 ```
+
 → Dale documento 03_GUIA_ADMIN.md
 → Dedica 30 min a leer
 → Dedica 30 min a demostración live
 → Responde preguntas
 → Admin listo para operar
+
 ```
 
 ### "Necesito entender la arquitectura"
 
 ```
+
 → Lee 01_FLUJOS_DETALLADOS.md (30 min)
 → Lee 02_HALLAZGOS_RECOMENDACIONES.md (30 min)
 → Dibuja tu propio diagrama para solidificar
 → Listo para code review
+
 ```
 
 ### "Tengo bug en producción"
 
 ```
+
 → Consulta 07_MATRIZ_RIESGOS.md para contexto
 → Lee sección relevante en 01_FLUJOS_DETALLADOS.md
 → Revisa API correspondiente en código
 → Usa 06_INSTALACION_DEPLOYMENT.md para logs/monitoring
 → Sigue troubleshooting en ese documento
+
 ```
 
 ### "Necesito escalar la aplicación"
 
 ```
+
 → Lee 08_RESUMEN_EJECUTIVO.md (presupuesto/timeline)
 → Lee 02_HALLAZGOS_RECOMENDACIONES.md (qué mejorar)
 → Lee 07_MATRIZ_RIESGOS.md (qué puede fallar)
 → Lee 06_INSTALACION_DEPLOYMENT.md (arquitectura escalable)
 → Plantea soluciones con datos
+
 ```
 
 ### "Necesito justificar más presupuesto"
 
 ```
+
 → Usa 08_RESUMEN_EJECUTIVO.md (ROI, benchmark)
 → Extrae datos de 07_MATRIZ_RIESGOS.md (cost of inaction)
 → Detalla plan de 02_HALLAZGOS_RECOMENDACIONES.md
 → Presenta a stakeholders
+
 ```
 
 ---
@@ -347,32 +461,36 @@ Archivos de referencia:
 ## 📈 Estadísticas de documentación
 
 ```
-Total páginas:              130+
-Total palabras:             ~40,000
-Número de diagramas:        8+
-Tablas/matrices:            15+
-Listas de checklist:        20+
-Ejemplos de código:         25+
-Escenarios de caso de uso:  40+
+
+Total páginas: 130+
+Total palabras: ~40,000
+Número de diagramas: 8+
+Tablas/matrices: 15+
+Listas de checklist: 20+
+Ejemplos de código: 25+
+Escenarios de caso de uso: 40+
+
 ```
 
 ### Por documento
 
 ```
-01 Flujos detallados:              20 pgs, 8,000 palabras
-02 Hallazgos:                      25 pgs, 9,500 palabras
-03 Guía Admin:                     28 pgs, 7,200 palabras
-04 Guía User:                      35 pgs, 8,500 palabras
-05 Guía Supervisor:                25 pgs, 6,500 palabras
-06 Instalación/Deployment:         30 pgs, 8,000 palabras
-07 Matriz de Riesgos:              18 pgs, 5,500 palabras
-08 Resumen Ejecutivo:              14 pgs, 4,800 palabras
-09 Índice Maestro:                 16 pgs, 5,000 palabras
-10 Evaluación Técnica Profunda:    16 pgs, 5,500 palabras
-+ Presentación PPTX:               11 diapositivas
 
-Total:                             230+ pgs de contenido
-                                   + 1 presentación
+01 Flujos detallados: 20 pgs, 8,000 palabras
+02 Hallazgos: 25 pgs, 9,500 palabras
+03 Guía Admin: 28 pgs, 7,200 palabras
+04 Guía User: 35 pgs, 8,500 palabras
+05 Guía Supervisor: 25 pgs, 6,500 palabras
+06 Instalación/Deployment: 30 pgs, 8,000 palabras
+07 Matriz de Riesgos: 18 pgs, 5,500 palabras
+08 Resumen Ejecutivo: 14 pgs, 4,800 palabras
+09 Índice Maestro: 16 pgs, 5,000 palabras
+10 Evaluación Técnica Profunda: 16 pgs, 5,500 palabras
+
+- Presentación PPTX: 11 diapositivas
+
+Total: 230+ pgs de contenido + 1 presentación
+
 ```
 
 ---
@@ -380,6 +498,7 @@ Total:                             230+ pgs de contenido
 ## 🔄 Cómo mantener actualizada la documentación
 
 ```
+
 Quarterly review (cada 3 meses):
 ├─ Identificar secciones desactualizado
 ├─ Agregar nuevas features documentadas
@@ -399,6 +518,7 @@ Responsables:
 ├─ Product manager: 08
 ├─ Capacitador: 03, 04, 05
 └─ DevOps: 06, 07
+
 ```
 
 ---
@@ -406,6 +526,7 @@ Responsables:
 ## 💾 Archivos entregados
 
 ```
+
 En /docs/:
 
 Documentos Markdown:
@@ -418,12 +539,22 @@ Documentos Markdown:
 ├─ 07_MATRIZ_RIESGOS.md
 ├─ 08_RESUMEN_EJECUTIVO.md
 ├─ 09_INDICE_MAESTRO.md (este archivo)
-└─ 10_EVALUACION_TECNICA_PROFUNDA.md
+├─ 10_EVALUACION_TECNICA_PROFUNDA.md
+├─ SUPABASE_ESQUEMA_Y_FLUJOS.md
+└─ 12_VALIDACION_VISIBILIDAD_ACCESO.md
+
+En root del proyecto:
+
+Scripts de testing:
+├─ test-acceso-simple.js (tests rápidos de API)
+├─ test-visibilidad-acceso.mjs (tests completos)
+└─ GUIA_VALIDACION_RAPIDA.md (step-by-step)
 
 Presentación:
 └─ ITFlow_Presentacion_Profesional.pptx (11 slides)
 
-Total: 10 documentos + 1 presentación
+Total: 12 documentos + 3 scripts + 1 presentación
+
 ```
 
 ---
@@ -433,6 +564,7 @@ Total: 10 documentos + 1 presentación
 ### INMEDIATO (Esta semana)
 
 ```
+
 1. Ejecutivos: Leer 08 (Resumen ejecutivo)
    └─ Decidir si aprobar inversión de $15-21K
 
@@ -441,11 +573,13 @@ Total: 10 documentos + 1 presentación
 
 3. DevOps: Revisar 06
    └─ Preparar ambiente de test
+
 ```
 
 ### CORTO PLAZO (Próximas 2 semanas)
 
 ```
+
 1. Admins: Completar 03 (Guía admin)
    └─ Ser usuarios internos antes de capacitar
 
@@ -454,11 +588,13 @@ Total: 10 documentos + 1 presentación
 
 3. Supervisores: Revisar 05 (cuando esté listo)
    └─ Entender rol planeado
+
 ```
 
 ### MEDIANO PLAZO (Q2 2026)
 
 ```
+
 1. Implementar plan de 3 meses de 02
    ├─ Semana 1-2: Seguridad crítica
    ├─ Semana 3-4: Testing
@@ -473,6 +609,7 @@ Total: 10 documentos + 1 presentación
    ├─ KPIs semanales
    ├─ Escalación de issues
    └─ Mitigación de riesgos
+
 ```
 
 ---
@@ -483,42 +620,52 @@ Total: 10 documentos + 1 presentación
 
 **R:** Sí. Contienen detalles técnicos, riesgos y roadmap.
 ```
+
 Distribución recomendada:
 ├─ 08 (Ejecutivo): Todos
 ├─ 03, 04, 05 (Guías): Usuarios y capacitadores
 ├─ 01, 02, 06, 07: Solo equipo técnico + PM
 └─ Presentación: Según audiencia
+
 ```
 
 ### P: ¿Puedo modificar estos documentos?
 
 **R:** Sí, pero con control de cambios.
 ```
+
 Proceso recomendado:
+
 1. Crear rama: git checkout -b update-docs
 2. Editar .md
 3. Actualizar fecha y versión
 4. Code review con tech lead
 5. Merge a main cuando aprobado
+
 ```
 
 ### P: ¿Cuál documento leer si tengo poco tiempo?
 
 **R:** Depende del rol
 ```
-< 20 min:   08 (Resumen ejecutivo)
-< 45 min:   08 + parte de 01
-< 90 min:   08 + 01 + 02
-> 120 min:  Todo, en orden de rol sugerido
+
+< 20 min: 08 (Resumen ejecutivo)
+< 45 min: 08 + parte de 01
+< 90 min: 08 + 01 + 02
+
+> 120 min: Todo, en orden de rol sugerido
+
 ```
 
 ### P: ¿Cómo se genera la presentación PPTX?
 
 **R:** Con script Node.js usando PptxGenJS
 ```
+
 npm install pptxgenjs
 node generate_presentation.js
 Output: ITFlow_Presentacion_Profesional.pptx
+
 ```
 
 ---
@@ -528,11 +675,13 @@ Output: ITFlow_Presentacion_Profesional.pptx
 **Para preguntas sobre documentación:**
 
 ```
-Técnicas:       dev-lead@empresa.com
-Comerciales:    pm@empresa.com
-Capacitación:   training@empresa.com
-Ejecutivas:     finance@empresa.com
-General:        itflow-support@empresa.com
+
+Técnicas: dev-lead@empresa.com
+Comerciales: pm@empresa.com
+Capacitación: training@empresa.com
+Ejecutivas: finance@empresa.com
+General: itflow-support@empresa.com
+
 ```
 
 ---
@@ -540,6 +689,7 @@ General:        itflow-support@empresa.com
 ## 📝 Control de versiones
 
 ```
+
 v2.2 - Abril 2026
 ├─ 10 documentos completos
 ├─ Actualización del módulo admin real
@@ -559,6 +709,7 @@ v2.0 - Marzo 2026 (anterior)
 
 v1.0 - Febrero 2026 (inicial)
 └─ README básico solamente
+
 ```
 
 ---
@@ -568,6 +719,7 @@ v1.0 - Febrero 2026 (inicial)
 **Para máximo impacto:**
 
 ```
+
 1. Distribuir 08 (Resumen) a ejecutivos
    └─ Toma decisión en 48 horas
 
@@ -587,14 +739,16 @@ v1.0 - Febrero 2026 (inicial)
 
 5. Rerevisar documentación en 3 meses
    └─ Update con progreso realizado
+
 ```
 
 ---
 
-**Documentación completada:** Abril 2026  
-**Estado:** ✅ PRONTA PARA USAR  
+**Documentación completada:** Abril 2026
+**Estado:** ✅ PRONTA PARA USAR
 **Próxima revisión:** Q3 2026 (después de implementar mejoras)
 
 ---
 
 **¡ITFlow está listo para escalar con esta base de conocimiento!** 🚀
+```

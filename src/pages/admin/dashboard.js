@@ -21,6 +21,7 @@ import {
   FiImage,
   FiFile,
   FiSave,
+  FiSend,
 } from 'react-icons/fi';
 
 export default function AdminDashboard() {
@@ -96,6 +97,8 @@ export default function AdminDashboard() {
   const [modalCargandoEvidencias, setModalCargandoEvidencias] = useState(false);
   const [modalCargandoComentarios, setModalCargandoComentarios] =
     useState(false);
+  const [modalNuevoComentario, setModalNuevoComentario] = useState('');
+  const [modalAgreganComentario, setModalAgreganComentario] = useState(false);
   const [modalGuardando, setModalGuardando] = useState(false);
   const [modalError, setModalError] = useState('');
   const [modalSuccess, setModalSuccess] = useState('');
@@ -582,6 +585,7 @@ export default function AdminDashboard() {
   const CerrarModal = () => {
     setModalDetalleAbierto(false);
     setTareaSeleccionada(null);
+    setModalNuevoComentario('');
   };
 
   const GuardarModal = async () => {
@@ -630,6 +634,42 @@ export default function AdminDashboard() {
       setModalError(err.message);
     } finally {
       setModalGuardando(false);
+    }
+  };
+
+  const agregarComentarioModal = async () => {
+    if (!modalNuevoComentario.trim() || !tareaSeleccionada) return;
+
+    try {
+      setModalAgreganComentario(true);
+      setModalError('');
+
+      const token = await obtenerToken();
+      const res = await fetch(`/api/admin/tareas/${tareaSeleccionada.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          contenido: modalNuevoComentario,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Error al agregar comentario');
+      }
+
+      const { data: nuevoComentario } = await res.json();
+      setModalComentarios((prev) => [nuevoComentario, ...prev]);
+      setModalNuevoComentario('');
+      setModalSuccess('Comentario agregado');
+      setTimeout(() => setModalSuccess(''), 2500);
+    } catch (err) {
+      setModalError(err.message);
+    } finally {
+      setModalAgreganComentario(false);
     }
   };
 
@@ -1141,7 +1181,9 @@ export default function AdminDashboard() {
 
                 {/* ── Revisado ── */}
                 <div className={styles.modalCampo}>
-                  <label className={styles.modalLabel}>Revisado por admin</label>
+                  <label className={styles.modalLabel}>
+                    Revisado por admin
+                  </label>
                   <button
                     className={`${styles.toggleRevisado} ${modalRevisado ? styles.toggleOn : styles.toggleOff}`}
                     onClick={() => setModalRevisado((v) => !v)}
@@ -1240,7 +1282,9 @@ export default function AdminDashboard() {
                 </div>
 
                 {modalCargandoComentarios ? (
-                  <p className={styles.modalTextoSec}>Cargando comentarios...</p>
+                  <p className={styles.modalTextoSec}>
+                    Cargando comentarios...
+                  </p>
                 ) : modalComentarios.length === 0 ? (
                   <p className={styles.modalTextoSec}>
                     Sin comentarios registrados.
@@ -1264,6 +1308,31 @@ export default function AdminDashboard() {
                     ))}
                   </div>
                 )}
+
+                <div className={styles.formComentarioModal}>
+                  <textarea
+                    placeholder="Agregar comentario..."
+                    value={modalNuevoComentario}
+                    onChange={(e) => setModalNuevoComentario(e.target.value)}
+                    className={styles.textareaModal}
+                    maxLength={500}
+                    disabled={modalAgreganComentario}
+                  />
+                  <div className={styles.pieFormularioModal}>
+                    <span className={styles.contadorModal}>
+                      {modalNuevoComentario.length}/500
+                    </span>
+                    <button
+                      onClick={agregarComentarioModal}
+                      disabled={
+                        modalAgreganComentario || !modalNuevoComentario.trim()
+                      }
+                      className={styles.btnEnviarModal}
+                    >
+                      {modalAgreganComentario ? 'Enviando...' : 'Enviar'}
+                    </button>
+                  </div>
+                </div>
               </aside>
             </div>
           </div>
