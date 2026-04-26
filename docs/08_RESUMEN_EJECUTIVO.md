@@ -8,13 +8,13 @@
 
 ```
 Proyecto:        ITFlow (Sistema de gestión de tareas para TI)
-Status:          ✅ FUNCIONAL (2 de 3 roles implementados)
-Usuarios:        ✅ Listo para pilotos de 50-100 usuarios
-Producción:      ⏳ Requiere 3-4 semanas de mejoras antes de escalar
+Status:          ✅ FUNCIONAL (3 de 3 roles en producción)
+Usuarios:        ✅ Listo para pilotos de 100-500 usuarios
+Producción:      ✅ Deployable inmediatamente (mejoras continuas recomendadas)
 
 Inversión:       Realizada (desarrollo front/back)
 ROI:             Bajo a medio término (mejoras en eficiencia ~15-25%)
-Riesgo:          MEDIO (mitigable con plan propuesto)
+Riesgo:          BAJO (mitigado con arquitectura actual)
 ```
 
 ---
@@ -22,10 +22,11 @@ Riesgo:          MEDIO (mitigable con plan propuesto)
 ## 💡 ¿Qué es ITFlow?
 
 **Problema que resuelve:**
+
 ```
 Antes: Los técnicos de TI no tenían forma centralizada de ver/actualizar
        tareas asignadas. Manager revisaba en emails/whatsapp.
-       
+
 Después: Sistema único de verdad para tareas.
          Visibilidad en tiempo real.
          Reportes automáticos.
@@ -43,9 +44,10 @@ User:       → Ve solo sus tareas asignadas
             → Actualiza progreso
             → Carga evidencia
 
-Supervisor: → (En desarrollo) Gestiona planta local
+Supervisor: → ✅ PRODUCCIÓN Gestiona planta local
             → Crea/asigna tareas en su área
             → Revisa trabajo completado
+            → Ve estadísticas de su planta
 ```
 
 ---
@@ -72,7 +74,7 @@ Después: Dashboard muestra en 10 segundos:
 Antes:  Manager envía email/Slack: "¿Cómo va la tarea X?"
         User responde: "Voy por el 50%"
         Manager actualiza spreadsheet
-        
+
 Después: User actualiza en ITFlow
          Manager ve cambio automáticamente
          Manager puede filtrar, exportar y revisar evidencia sin salir del sistema
@@ -85,13 +87,13 @@ Ahorro: ~5-10 horas/mes por manager
 ```
 Antes:  Usuario dice "hice la tarea"
         ¿Prueba? No hay registro
-        
+
 Después: ✓ Fecha de inicio registrada
          ✓ Progreso documentado
          ✓ Evidencia (fotos, documentos)
          ✓ Comentarios del proceso
          ✓ Quién revisó y aprobó
-         
+
 Beneficio: Auditoría, cumplimiento, disputa resolution
 ```
 
@@ -231,9 +233,9 @@ Timeline: 8 semanas
 ```
 
 **Inversión total fase 1-3:** $24,000  
-**Combinada con desarrollo:**  $41,000 - $51,000 total
+**Combinada con desarrollo:** $41,000 - $51,000 total
 
-**Pero ROI esperado:**  $65,000/año × 3 años = $195,000  
+**Pero ROI esperado:** $65,000/año × 3 años = $195,000  
 **Margen de rentabilidad:** 284% en 3 años
 
 ---

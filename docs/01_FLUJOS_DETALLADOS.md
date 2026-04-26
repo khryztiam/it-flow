@@ -211,9 +211,9 @@ Admin en /admin/dashboard → Selecciona responsable
 
 ---
 
-### 🟡 SUPERVISOR — Jefe de planta (en desarrollo)
+### 🟡 SUPERVISOR — Jefe de planta (✅ EN PRODUCCIÓN)
 
-#### Acceso y permisos planeados:
+#### Acceso y permisos (implementados):
 
 ```
 SUPERVISOR puede:
@@ -222,11 +222,43 @@ SUPERVISOR puede:
 ├─ Asignar tareas a usuarios de su planta
 ├─ Revisar tareas completadas
 ├─ Ver estadísticas de su planta
+├─ Cambiar estado y agregar observaciones a tareas
+├─ Ver evidencias y comentarios de tareas
 ├─ NO accede a otras plantas
-└─ NO gestiona usuarios
+└─ NO gestiona usuarios (responsabilidad admin)
 ```
 
-#### Dashboard Supervisor (planeado)
+#### Dashboard Supervisor (implementado)
+
+```
+/supervisor/dashboard
+├─ Resumen estadísticas de planta
+├─ Total tareas, completadas, en progreso, vencidas
+├─ Acordeón de subordinados con sus tareas
+├─ Filtros: usuario, prioridad, estado
+└─ Modal de detalle para actualizar tareas
+```
+
+#### Panel de Tareas Supervisor (implementado)
+
+```
+/supervisor/tareas
+├─ Tabla de tareas de la planta
+├─ Filtrado avanzado
+├─ Botón de reasignación
+└─ Navegación a detalle por tarea
+```
+
+#### APIs Supervisor (en producción)
+
+```
+GET  /api/supervisor/tareas              → Lista tareas de mi planta
+GET  /api/supervisor/tareas/[id]         → Detalle de tarea
+PUT  /api/supervisor/tareas/[id]         → Actualizar estado/observaciones
+GET  /api/supervisor/tareas/[id]/evidencias → Evidencias de tarea
+GET  /api/supervisor/subordinados/tareas → Tareas agrupadas por subordinado
+POST /api/supervisor/asignaciones        → Reasignar tarea
+```
 
 ```
 /supervisor/dashboard
@@ -517,7 +549,7 @@ ADMIN → /api/admin/tareas
         created_at, updated_at
       }
 
-SUPERVISOR → /api/supervisor/tareas (en desarrollo)
+SUPERVISOR → /api/supervisor/tareas (✅ EN PRODUCCIÓN)
 ├─ Query: SELECT * FROM tareas WHERE planta_id = supervisor.planta_id
 └─ Retorna: Tareas de su planta solo
 
@@ -529,24 +561,29 @@ USER → /api/user/tareas
 ### Suscripciones Realtime
 
 ```
-Dashboard Admin/User escucha cambios en tiempo real:
+Dashboards escuchan cambios en tiempo real:
 │
-├─ TAREAS
-│  ├─ Canales: realtime-tareas-admin, realtime-tareas-user
+├─ TAREAS (Admin, User, Supervisor)
+│  ├─ Canales:
+│  │  ├─ realtime-tareas-admin (Admin Dashboard)
+│  │  ├─ realtime-tareas-user (User Dashboard)
+│  │  └─ realtime-tareas-supervisor (Supervisor Dashboard, Tareas, Asignaciones)
 │  ├─ Tabla: tareas
-│  └─ Eventos: INSERT, UPDATE, DELETE
+│  ├─ Eventos: INSERT, UPDATE, DELETE
+│  └─ Filtrado: Cada rol ve solo sus datos (RLS + API)
 │
-├─ ALERTAS USUARIO
+├─ ALERTAS USUARIO (Admin, User)
 │  ├─ Admin: realtime-alertas-admin (tabla alertas_usuario)
 │  ├─ User: realtime-alertas-user-{usuario_id} (filtro por usuario_id)
 │  ├─ Eventos: INSERT, UPDATE, DELETE
 │  └─ Requiere publicación en supabase_realtime para alertas_usuario
 │
 └─ Callback:
-   ├─ Detecta cambio
+   ├─ Detecta cambio en tabla monitoreada
    ├─ Recarga lista de tareas o alertas (GET/consulta directa)
    ├─ Actualiza UI sin full page reload
-   └─ Notificación visual opcional
+   ├─ Notificación visual opcional
+   └─ NOTA: Supervisor - datos filtrados por planta automáticamente
 ```
 
 ### Modelo de datos (tablas)
@@ -724,15 +761,15 @@ Admin combina /admin/dashboard + /admin/estadisticas + /admin/tareas
 
 ## 🚀 Resumen de flujos
 
-| Flujo | Inicio | Fin | Duración esperada | Roles |
-|-------|--------|-----|-------------------|-------|
-| Login | /login | /dashboard | < 2 seg | Todos |
-| Crear tarea | Admin/tareas | BD | < 1 seg | Admin, Supervisor |
-| Actualizar tarea | User/tarea/[id] | BD | < 1 seg | User |
-| Cargar evidencia | User/tarea/[id] | Storage | < 5 seg (según tamaño) | User |
-| Reasignar tarea | Admin/tareas | BD | < 1 seg | Admin |
-| Ver estadísticas admin | Admin/estadisticas | KPIs y charts | < 2 seg | Admin |
-| Ver dashboard | / | Estadísticas | < 2 seg | Todos |
+| Flujo                  | Inicio             | Fin           | Duración esperada      | Roles             |
+| ---------------------- | ------------------ | ------------- | ---------------------- | ----------------- |
+| Login                  | /login             | /dashboard    | < 2 seg                | Todos             |
+| Crear tarea            | Admin/tareas       | BD            | < 1 seg                | Admin, Supervisor |
+| Actualizar tarea       | User/tarea/[id]    | BD            | < 1 seg                | User              |
+| Cargar evidencia       | User/tarea/[id]    | Storage       | < 5 seg (según tamaño) | User              |
+| Reasignar tarea        | Admin/tareas       | BD            | < 1 seg                | Admin             |
+| Ver estadísticas admin | Admin/estadisticas | KPIs y charts | < 2 seg                | Admin             |
+| Ver dashboard          | /                  | Estadísticas  | < 2 seg                | Todos             |
 
 ---
 

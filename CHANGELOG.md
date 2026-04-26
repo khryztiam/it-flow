@@ -4,6 +4,51 @@ Todos los cambios importantes de ITFlow se documentan en este archivo.
 
 El formato sigue una estructura simple por version para dejar claro que cambio a nivel funcional, tecnico y de documentacion.
 
+## [1.3.1] - 2026-04-26
+
+### Agregado
+
+- ✅ **Realtime habilitado para Supervisor**: Dashboards actualizados en tiempo real
+- Canal realtime `realtime-tareas-supervisor` activo en:
+  - `/supervisor/dashboard` — Estadísticas y tareas actualizadas
+  - `/supervisor/tareas` — Lista de tareas con cambios en vivo
+  - `/supervisor/asignaciones` — Formulario de tareas con datos frescos
+- Suscripciones automáticas a cambios en tabla `tareas`
+
+### Cambiado
+
+- Comportamiento realtime: Todos los roles (Admin, User, Supervisor) reciben actualizaciones en tiempo real
+- Documentación actualizada sobre capacidades realtime
+
+### Documentación
+
+- docs/05_GUIA_SUPERVISOR.md — Realtime ✅ activo
+- docs/SUPABASE_ESQUEMA_Y_FLUJOS.md — Canales realtime expandidos
+- docs/01_FLUJOS_DETALLADOS.md — Suscripciones realtime por rol
+
+---
+
+## [1.3.0] - 2026-04-26
+
+### Agregado
+
+- ✅ **Supervisor completamente en producción**: Dashboard, panel de tareas, asignaciones locales
+- Nuevas vistas: `/supervisor/dashboard`, `/supervisor/tareas`, `/supervisor/gestion`, `/supervisor/asignaciones`
+- APIs supervisor: `/api/supervisor/tareas`, `/api/supervisor/subordinados`, `/api/supervisor/asignaciones`
+- Modal de detalle y actualización de tareas desde supervisor
+- Sistema de filtrado por usuario, prioridad y estado en vistas supervisor
+
+### Cambiado
+
+- Estado oficial: **3 de 3 roles en producción** (Admin, Supervisor, User)
+- Documentación actualizada para reflejar supervisor como producción (no planeado)
+
+### Documentación
+
+- Actualización de README.md con supervisor en producción
+- Actualización de guías y referencias a supervisor
+- Aclaración: Realtime está activo para supervisor
+
 ## [1.2.0] - 2026-04-19
 
 ### Agregado
@@ -62,4 +107,3 @@ El formato sigue una estructura simple por version para dejar claro que cambio a
 
 - Base del proyecto ITFlow publicada en GitHub.
 - Estructura inicial con autenticacion, roles, dashboards, tareas, APIs y componentes principales.
-

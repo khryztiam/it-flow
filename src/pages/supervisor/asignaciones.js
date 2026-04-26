@@ -73,8 +73,30 @@ export default function AsignacionesSupervisor() {
     if (!cargandoAuth && usuarioDetalles?.id) {
       cargarDatos();
     }
+
+    // --- SUSCRIPCIÓN REALTIME ---
+    let channel = null;
+    if (!cargandoAuth && usuarioDetalles?.id) {
+      channel = supabase
+        .channel('realtime-tareas-supervisor')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tareas',
+          },
+          (payload) => {
+            // Recargar datos ante cambios
+            cargarDatos();
+          }
+        )
+        .subscribe();
+    }
+
     return () => {
       montadoRef.current = false;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [cargandoAuth, usuarioDetalles?.id]);
 

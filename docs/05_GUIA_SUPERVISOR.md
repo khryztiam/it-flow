@@ -1,12 +1,13 @@
 # 👨‍💼 ITFlow — Guía de uso para SUPERVISOR
 
-**Versión:** 2.1 (BORRADOR - En desarrollo) | **Fecha:** Abril 2026 | **Público:** Supervisores de planta
+**Versión:** 2.2 (PRODUCCIÓN) | **Fecha:** Abril 2026 | **Público:** Supervisores de planta
 
 ---
 
 ## 📌 Descripción del rol
 
 Como **SUPERVISOR**, eres responsable de:
+
 - Gestión de tareas en tu planta (no todas las plantas)
 - Crear y asignar tareas a usuarios de tu planta
 - Revisar tareas completadas
@@ -14,6 +15,7 @@ Como **SUPERVISOR**, eres responsable de:
 - Contacto directo entre admin global y usuarios locales
 
 **Permisos (Planeados):**
+
 - ✅ Ver tareas de mi planta
 - ✅ Crear tareas (solo para mi planta)
 - ✅ Asignar a usuarios de mi planta
@@ -28,27 +30,27 @@ Como **SUPERVISOR**, eres responsable de:
 ## ⚠️ Estado actual
 
 ```
-ESTADO DE DESARROLLO: 50% completado
+ESTADO DE PRODUCCIÓN: ✅ 100% IMPLEMENTADO
 
-Funcionalidades IMPLEMENTADAS:
+Funcionalidades DISPONIBLES:
 ├─ ✅ Autenticación de Supervisor
 ├─ ✅ Hook useProtegerRuta para proteger ruta
 ├─ ✅ Funciones de permisos (esSupervisor, etc)
-└─ ✅ Estructura base de rutas
+├─ ✅ Dashboard de Supervisor (/supervisor/dashboard)
+├─ ✅ Panel de tareas (/supervisor/tareas)
+├─ ✅ Gestion local (/supervisor/gestion)
+├─ ✅ Asignaciones (/supervisor/asignaciones)
+├─ ✅ APIs de supervisor (/api/supervisor/*)
+├─ ✅ Filtrado por planta, usuario, prioridad, estado
+├─ ✅ Modal de detalle y actualización de tareas
+├─ ✅ Visualización de evidencias y comentarios
+└─ ✅ Asignación local a usuarios de la planta
 
-Funcionalidades EN DESARROLLO:
-├─ 🚧 Dashboard de Supervisor (/supervisor/dashboard)
-├─ 🚧 Panel de tareas (/supervisor/tareas)
-├─ 🚧 APIs de supervisor (/api/supervisor/*)
-├─ 🚧 Filtrado por planta
-├─ 🚧 Asignación local
-└─ 🚧 Revisión de tareas
-
-Funcionalidades PLANEADAS:
-├─ 📅 Reportes por planta
-├─ 📊 Gráficos de productividad local
-├─ 📧 Notificaciones de tareas vencidas
-└─ 📱 Mobile-responsive
+Características EN TIEMPO REAL:
+├─ ✅ Realtime está habilitado (tabla tareas)
+├─ ℹ️ Los dashboards se actualizan automáticamente ante cambios
+├─ ℹ️ Canales activos: realtime-tareas-supervisor
+└─ ℹ️ Datos filtrados por planta automáticamente en APIs
 ```
 
 ---

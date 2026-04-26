@@ -155,10 +155,17 @@ Observacion importante:
 
 ## Realtime
 
-Los dashboards escuchan cambios sobre `tareas` con un canal estilo:
+Los dashboards escuchan cambios sobre `tareas` con canales estilo:
 
 ```js
-supabase.channel('realtime-tareas')
+// Admin Dashboard
+supabase.channel('realtime-tareas-admin');
+
+// User Dashboard
+supabase.channel('realtime-tareas-user');
+
+// Supervisor Dashboard, Tareas, Asignaciones
+supabase.channel('realtime-tareas-supervisor');
 ```
 
 Eventos esperados:
@@ -169,10 +176,11 @@ Eventos esperados:
 
 Comportamiento:
 
-- se detecta el cambio;
-- se vuelve a consultar la lista;
+- se detecta el cambio en la tabla `tareas`;
+- se vuelve a consultar la lista (filtrada por rol y permisos);
 - la UI se refresca sin recarga completa;
-- el usuario ve cambios casi inmediatos.
+- el usuario ve cambios casi inmediatos;
+- **Supervisor:** datos filtrados automáticamente por planta en las APIs.
 
 ## Flujos principales
 

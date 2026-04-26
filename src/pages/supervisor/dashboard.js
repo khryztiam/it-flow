@@ -66,8 +66,30 @@ export default function SupervisorDashboard() {
         setCargando(false);
       }
     }
+
+    // --- SUSCRIPCIÓN REALTIME ---
+    let channel = null;
+    if (!cargandoAuth && plantaId) {
+      channel = supabase
+        .channel('realtime-tareas-supervisor')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'tareas',
+          },
+          (payload) => {
+            // Recargar datos ante cambios (la API filtrará por planta automáticamente)
+            cargarDatos();
+          }
+        )
+        .subscribe();
+    }
+
     return () => {
       montadoRef.current = false;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [cargandoAuth, plantaId]);
 

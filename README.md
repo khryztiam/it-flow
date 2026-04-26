@@ -4,7 +4,8 @@
 
 **Tipo:** Aplicación SaaS de gestión de tareas multirrol.  
 **Stack:** Next.js 16, React 19, Supabase, CSS Modules  
-**Última actualización:** 22 de abril de 2026
+**Última actualización:** 26 de abril de 2026  
+**Status:** ✅ 3 roles en producción (Admin, Supervisor, User)
 
 **Historial de cambios:** ver [CHANGELOG.md](./CHANGELOG.md)
 
@@ -15,12 +16,13 @@
 ✅ **Autenticación segura** — Login con Supabase Auth  
 ✅ **Gestión de roles** — Admin, Supervisor, User con permisos granulares  
 ✅ **Dashboards personalizados** — Cada rol ve vistas únicas  
-✅ **Asignación de tareas** — Supervisores asignan a usuarios específicos  
+✅ **Asignación de tareas** — Admins y supervisores asignan a usuarios  
 ✅ **Seguimiento en tiempo real** — Estados, prioridades, porcentaje de avance  
 ✅ **Alertas admin → user en realtime** — Banner individual con confirmación "OK / Enterado"  
 ✅ **Trazabilidad de alertas** — El admin ve confirmación temporal tras lectura del usuario  
 ✅ **Gestión multiplantas** — Soporte para múltiples ubicaciones y países  
-✅ **Reportes administrativos** — Estadísticas globales para admins
+✅ **Reportes administrativos** — Estadísticas globales para admins  
+✅ **Panel supervisor en producción** — Gestión local de tareas por planta
 
 ---
 
@@ -109,9 +111,9 @@ src/
 
 ## 👥 Roles y permisos
 
-**Estado actual:** 2 de 3 roles implementados ✅
+**Estado actual:** 3 de 3 roles implementados en producción ✅
 
-### 🔴 **ADMIN** (Administrador) — ✅ EN USO
+### 🔴 **ADMIN** (Administrador) — ✅ EN PRODUCCIÓN
 
 - **Acceso:** Sistema completo
 - **Dashboard:** "Tablero de Tareas por Región" — Carga por responsable, Estado global %, Riesgo actual
@@ -120,7 +122,7 @@ src/
 - **Filtros:** Por usuario, prioridad, estado, planta
 - **Monitoreo:** Detectar desbalance de carga de trabajo
 
-### 🟢 **USER** (Operario/Técnico) — ✅ EN USO
+### 🟢 **USER** (Operario/Técnico) — ✅ EN PRODUCCIÓN
 
 - **Acceso:** Solo sus tareas asignadas
 - **Dashboard:** "Mis Tareas" — Activas, En proceso, Vencidas, % Avance
@@ -129,9 +131,14 @@ src/
 - **Evidencias:** Cargar archivos (JPG, PNG, PDF máx 10 MB)
 - **Comentarios:** Sistema de comunicación en cada tarea
 
-### 🟡 **SUPERVISOR** (Jefe de planta) — ⏳ EN DESARROLLO
+### 🟡 **SUPERVISOR** (Jefe de planta) — ✅ EN PRODUCCIÓN
 
-- Funcionalidades planeadas: Crear/asignar tareas, revisar completadas, ver estadísticas de planta
+- **Acceso:** Tareas de su planta únicamente
+- **Dashboard:** Estadísticas locales, tareas activas, subordinados
+- **Tareas:** Crear, asignar a usuarios de su planta, revisar completadas
+- **Operaciones:** Cambiar estado, agregar observaciones, ver evidencias
+- **Filtros:** Por usuario, prioridad, estado (solo su planta)
+- **Monitoreo:** Carga de trabajo de subordinados, tareas vencidas locales
 
 ---
 
