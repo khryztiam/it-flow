@@ -2,11 +2,13 @@
 
 **Versión:** 2.1 | **Fecha:** Abril 2026 | **Arquitecto de Software**
 
+> Nota de mantenimiento - 27/04/2026: este documento conserva analisis historico. Antes de tomar decisiones, contrastar con `docs/00_ESTADO_ACTUAL.md`. El rol supervisor ya esta activo y el proyecto mantiene JavaScript como lenguaje de la app; cualquier referencia a migrar a TypeScript debe tratarse solo como idea historica, no como recomendacion vigente del proyecto.
+
 ---
 
 ## 📊 Resumen ejecutivo
 
-ITFlow es un sistema de gestión de tareas **bien estructurado arquitectónicamente** con separación clara de responsabilidades. Se implementaron 2 de 3 roles (Admin + User) con seguridad multinivel (cliente → API → BD).
+ITFlow es un sistema de gestión de tareas **bien estructurado arquitectónicamente** con separación clara de responsabilidades. Al 27/04/2026 ya tiene 3 roles activos (Admin, Supervisor y User) con seguridad multinivel (cliente → API → BD).
 
 **Estado del proyecto:**
 - ✅ Arquitectura sólida
@@ -633,11 +635,11 @@ export const logger = {
 
 ---
 
-### 12. TypeScript (opcional)
+### 12. TypeScript (referencia historica, no vigente)
 
 **Hallazgo:** Proyecto en JavaScript puro
 
-**Recomendación:** Migración gradual a TypeScript
+**Estado actual:** No migrar a TypeScript. La convencion vigente del proyecto es JavaScript puro.
 
 ```bash
 # Convertir archivos críticos
@@ -645,7 +647,7 @@ src/lib/permisos.js → src/lib/permisos.ts
 src/context/AuthContext.js → src/context/AuthContext.tsx
 ```
 
-**Beneficio:** Autocompletar, detección de errores, mejor DX
+**Lectura:** Mantener esta seccion solo como contexto historico. Para mejoras actuales, priorizar validaciones, pruebas y seguridad sin cambiar el lenguaje de la app.
 
 ---
 
@@ -664,7 +666,7 @@ src/context/AuthContext.js → src/context/AuthContext.tsx
 | 9 | Loading states | Media | 2-3h | Bajo | **P3** |
 | 10 | Supervisor routes | Media | 1-2h | Bajo | **P2** |
 | 11 | Logging | Baja | 1h | Bajo | **P3** |
-| 12 | TypeScript | Baja | 10-15h | Medio | **P4** |
+| 12 | Mantener JavaScript y reforzar validaciones | Baja | 4-8h | Medio | **P4** |
 
 ---
 
@@ -693,9 +695,9 @@ src/context/AuthContext.js → src/context/AuthContext.tsx
 - [ ] SWR para caché (3-4h)
 - [ ] Loading states en todos los componentes (2-3h)
 - [ ] E2E tests con Playwright (5-8h)
-- [ ] Investigación TypeScript + plan de migración
+- [ ] Limpieza de recomendaciones historicas que contradicen JavaScript puro
 
-**Resultado:** UX mejorada, tests E2E, roadmap TypeScript
+**Resultado:** UX mejorada, tests E2E y documentacion alineada al stack vigente
 
 ---
 
@@ -730,4 +732,3 @@ ITFlow tiene **cimientos sólidos** pero necesita **inversión en calidad** ante
 ---
 
 **Próxima reunión de arquitectura:** Mes 1, Semana 2
-

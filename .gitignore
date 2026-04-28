@@ -51,6 +51,7 @@ Thumbs.db
 # Review & Analysis Docs (no subir al repo)
 .review-docs/
 .analysis/
+GUIA_USUARIOS_ITFlow.md
 
 # Yarn
 .yarn/cache

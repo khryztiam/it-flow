@@ -2,11 +2,12 @@
 
 ## Alcance
 
-Documento reconstruido a partir del estado actual del repositorio en `origin/main`, principalmente desde:
+Documento actualizado contra el estado real del repositorio el 27 de abril de 2026, principalmente desde:
 
-- `docs/01_FLUJOS_DETALLADOS.md`
-- `docs/06_INSTALACION_DEPLOYMENT.md`
+- `docs/00_ESTADO_ACTUAL.md`
 - `src/lib/auth.js`
+- `src/context/AuthContext.js`
+- `src/pages/api/**`
 
 Resume el modelo de datos en Supabase, las relaciones clave, la seguridad observada y los flujos funcionales que hoy usa ITFlow.
 
@@ -17,6 +18,7 @@ Resume el modelo de datos en Supabase, las relaciones clave, la seguridad observ
 - La tabla `tareas` concentra el flujo operativo principal.
 - `Storage` guarda evidencias de tareas en el bucket `evidencias-tareas`.
 - `Realtime` actualiza dashboards y listas cuando cambian registros de `tareas`.
+- `alertas_usuario` permite avisos directos de admin hacia user con confirmacion.
 - El backend de Next.js usa `SUPABASE_SERVICE_ROLE_KEY` para operaciones servidor a servidor.
 
 ## Variables de entorno relacionadas
@@ -41,6 +43,7 @@ Campos principales:
 - `estado` (`activo` o `inactivo`)
 - `rol_id` FK a `roles`
 - `planta_id` FK a `plantas`
+- `supervisor_id`
 - `created_at`
 - `updated_at`
 
@@ -95,6 +98,30 @@ Campos observados en flujo backend:
 - `archivo_url`
 - metadatos de archivo y auditoria
 
+### Tabla `alertas_usuario`
+
+Guarda alertas enviadas por admin a usuarios especificos.
+
+Campos observados en el flujo:
+
+- `id`
+- `usuario_id` FK a `usuarios`
+- `creado_por` FK a `usuarios`
+- `mensaje`
+- `activa`
+- `enviada_at`
+- `confirmada_at`
+- `confirmada_por`
+- `admin_resuelta_visible_hasta`
+
+Vista relacionada:
+
+- `vw_alertas_usuario_estado`
+
+Funcion/RPC relacionada:
+
+- `confirmar_alerta_usuario`
+
 ### Catalogos auxiliares
 
 - `roles`
@@ -138,7 +165,7 @@ Politicas funcionales descritas:
 
 - `admin` puede ver todas las tareas.
 - `user` ve solo tareas donde `asignado_a = auth.uid()`.
-- `supervisor` ve tareas de su planta.
+- `supervisor` ve tareas de su planta y/o usuarios supervisados segun la API usada.
 
 ### Autorizacion actual en backend
 
@@ -206,8 +233,11 @@ User:
 
 Supervisor:
 
-- flujo documentado, aun marcado como parcial o en desarrollo en algunas guias
-- deberia limitarse a tareas de su planta
+- consume `/api/supervisor/tareas`
+- consume `/api/supervisor/subordinados/tareas`
+- consume endpoints de `/api/supervisor/tareas/[id]`
+- opera tareas propias, tareas locales y tareas de usuarios supervisados
+- debe mantenerse limitado por planta y relacion de supervision
 
 ### 3. Creacion de tarea
 
@@ -249,6 +279,15 @@ Supervisor:
 3. Se actualiza `asignado_a`.
 4. Realtime y/o refetch reflejan la nueva asignacion.
 
+### 8. Alertas admin hacia user
+
+1. Admin abre el modal de alerta desde el dashboard.
+2. Se crea o actualiza una alerta activa para el usuario.
+3. User ve un banner en `/user/dashboard`.
+4. User confirma con `OK / Enterado`.
+5. La app llama `confirmar_alerta_usuario`.
+6. Admin ve el estado visual de alerta pendiente o confirmada mientras corresponda.
+
 ## Mapa rapido de tablas a funcionalidades
 
 - `usuarios`: identidad operativa, rol, planta, estado
@@ -259,15 +298,19 @@ Supervisor:
 - `plantas` y `paises`: segmentacion geografica
 - `estados_tarea`: ciclo de vida
 - `prioridades`: urgencia y foco
+- `alertas_usuario`: avisos directos y confirmacion de lectura
+- `vw_alertas_usuario_estado`: estado visual de alertas para admin
 
 ## Riesgos tecnicos visibles desde el codigo actual
 
 - La validacion del token en backend depende de parsear JWT y luego consultar `usuarios`.
-- El flujo supervisor aparece documentado pero no completamente homologado en todas las vistas.
+- El flujo supervisor ya esta implementado en vistas y APIs, pero debe validarse siempre contra planta, subordinados y RLS.
 - La seguridad real depende de mantener consistentes tanto las validaciones API como las politicas RLS.
 
 ## Referencias internas
 
-- [01_FLUJOS_DETALLADOS.md](/m:/Apps/it-flow/docs/01_FLUJOS_DETALLADOS.md:1)
-- [06_INSTALACION_DEPLOYMENT.md](/m:/Apps/it-flow/docs/06_INSTALACION_DEPLOYMENT.md:1)
-- [auth.js](/m:/Apps/it-flow/src/lib/auth.js:1)
+- `docs/00_ESTADO_ACTUAL.md`
+- `docs/01_FLUJOS_DETALLADOS.md`
+- `docs/06_INSTALACION_DEPLOYMENT.md`
+- `src/lib/auth.js`
+- `src/context/AuthContext.js`

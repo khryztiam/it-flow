@@ -263,11 +263,11 @@ export default function TareasSupervisor() {
     <Layout titulo="Tareas de mis Usuarios" ocultarHeader>
       <section className={styles.hero}>
         <div className={styles.heroInfo}>
-          <p className={styles.heroKicker}>Tareas de mis Usuarios</p>
-          <h1 className={styles.heroTitulo}>Supervisa y gestiona</h1>
+          <p className={styles.heroKicker}>Mis Tareas</p>
+          <h1 className={styles.heroTitulo}>Gestiona tu trabajo</h1>
           <p className={styles.heroSubtitulo}>
-            Revisa el trabajo de los usuarios bajo tu supervisión. Filtra por
-            estado para enfocarte en lo pendiente.
+            Consulta tus tareas asignadas. Reasigna a otro usuario bajo tu
+            supervisión si es necesario.
           </p>
         </div>
 

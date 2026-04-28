@@ -32,6 +32,18 @@ Trabajar sobre la base de código existente de forma segura, quirúrgica y consi
 
 ---
 
+## Estrategia de Razonamiento (Agent Thought Protocol)
+
+Antes de proponer cambios o aplicar una solución, el agente debe seguir este flujo mental:
+
+1.  **Pausa Crítica y Lectura:** No asumas que conoces la estructura. Lee los archivos relacionados para verificar si las relaciones de Supabase usan plural o singular (ej. `prioridades` vs `prioridad`) y si las tablas coinciden con el esquema actual.
+2.  **Validación de Roles:** Dado que existen archivos similares para diferentes roles (ej. `DashboardAdmin` vs `DashboardSupervisor`), verifica siempre si el cambio es exclusivo de un rol o debe replicarse en ambos.
+3.  **Eficiencia de Contexto:** No re-leas archivos ya analizados en la misma sesión. Si un archivo supera los 100KB, analízalo solo por secciones relevantes.
+4.  **Revisión de Flujo Completo:** Antes de declarar una tarea como "terminada", realiza una validación mental: ¿Este cambio de CSS rompe el layout de 3 columnas? ¿Este cambio en JS requiere una nueva política RLS en Supabase?
+5.  **Comunicación Directa:** Elimina cortesías, agradecimientos o introducciones. Ve directo al grano técnico.
+
+---
+
 ## Convenciones de código
 
 ### Nombres

@@ -1,379 +1,349 @@
-# 📊 ITFlow — Sistema de Gestión de Tareas y Flujo de TI
+# ITFlow
 
-**ITFlow** es una aplicación web moderna para gestionar tareas, proyectos y flujos de trabajo en equipos de TI. Permite asignar, monitorear y completar tareas con roles jerárquicos, dashboards específicos y trazabilidad completa.
+**Gestion clara de tareas para equipos de TI** 🧭
 
-**Tipo:** Aplicación SaaS de gestión de tareas multirrol.  
-**Stack:** Next.js 16, React 19, Supabase, CSS Modules  
-**Última actualización:** 26 de abril de 2026  
-**Status:** ✅ 3 roles en producción (Admin, Supervisor, User)
-
-**Historial de cambios:** ver [CHANGELOG.md](./CHANGELOG.md)
+ITFlow ayuda a que administradores, supervisores y usuarios sepan que tareas hay, quien las tiene asignadas, en que estado van y que pendientes necesitan atencion. La idea es simple: menos seguimiento por mensajes sueltos y mas visibilidad en un solo lugar.
 
 ---
 
-## 🎯 Características principales
+## Vista Rapida
 
-✅ **Autenticación segura** — Login con Supabase Auth  
-✅ **Gestión de roles** — Admin, Supervisor, User con permisos granulares  
-✅ **Dashboards personalizados** — Cada rol ve vistas únicas  
-✅ **Asignación de tareas** — Admins y supervisores asignan a usuarios  
-✅ **Seguimiento en tiempo real** — Estados, prioridades, porcentaje de avance  
-✅ **Alertas admin → user en realtime** — Banner individual con confirmación "OK / Enterado"  
-✅ **Trazabilidad de alertas** — El admin ve confirmación temporal tras lectura del usuario  
-✅ **Gestión multiplantas** — Soporte para múltiples ubicaciones y países  
-✅ **Reportes administrativos** — Estadísticas globales para admins  
-✅ **Panel supervisor en producción** — Gestión local de tareas por planta
-
----
-
-## 🏗️ Arquitectura general
-
-```
-ITFlow
-├── Frontend (Next.js 16 - Pages Router)
-│   ├── Autenticación → AuthContext
-│   ├── Dashboards por rol → Admin / Supervisor / User
-│   ├── Gestión de tareas → CRUD tareas
-│   └── UI Components → Reutilizables
-│
-└── Backend (API Routes + Supabase)
-    ├── Autenticación → Supabase Auth
-    ├── Base de datos → PostgreSQL (Supabase)
-    └── APIs REST → /api/admin, /api/user, /api/supervisor
-```
+| Dato | Estado actual |
+| --- | --- |
+| Version de la app | `1.4.0` |
+| Estado funcional | 3 roles activos: Admin, Supervisor y User ✅ |
+| Tipo de app | Aplicacion web privada para gestion operativa de tareas |
+| Framework | Next.js `^16.1.0` con Pages Router |
+| Lenguaje | JavaScript |
+| Base de datos y login | Supabase |
+| Estilos | CSS Modules |
+| Iconos | React Icons y Lucide React |
+| Ultima revision de este README | 27 de abril de 2026 |
 
 ---
 
-## 📁 Estructura del proyecto
+## Que Puedes Hacer con ITFlow
 
+- 📌 **Ver tareas por rol:** cada persona entra a una vista pensada para su trabajo.
+- 👥 **Asignar responsables:** admin y supervisor pueden organizar tareas segun permisos.
+- 📊 **Revisar avance:** estados, prioridades, fechas y porcentaje de progreso.
+- 🚨 **Detectar atrasos:** las vistas resaltan tareas vencidas o cercanas a vencer.
+- 💬 **Comentar tareas:** cada tarea puede tener conversacion y seguimiento.
+- 📎 **Subir evidencias:** imagenes, PDF u otros archivos permitidos desde el detalle de tarea.
+- 🔔 **Enviar alertas:** el admin puede mandar avisos directos a usuarios y ver si fueron atendidos.
+- 🌎 **Trabajar por planta y pais:** la informacion se organiza por ubicacion cuando aplica.
+- ⚡ **Actualizar en tiempo real:** dashboards y listas se refrescan cuando cambian las tareas.
+
+---
+
+## Para Quien Es
+
+### Admin 🔴
+
+El administrador tiene una vista global del sistema.
+
+Puede:
+
+- Ver el **Tablero de Tareas por Region**.
+- Revisar carga por responsable.
+- Detectar tareas vencidas o usuarios con demasiada carga.
+- Crear, editar, revisar y eliminar tareas.
+- Gestionar paises, plantas y usuarios.
+- Ver estadisticas del tablero.
+- Enviar alertas individuales a responsables.
+- Consultar evidencias y comentarios.
+
+Rutas principales:
+
+- `/admin/dashboard`
+- `/admin/estadisticas`
+- `/admin/gestion`
+- `/admin/tareas`
+- `/admin/asignaciones`
+
+### Supervisor 🟡
+
+El supervisor trabaja con su planta y sus usuarios supervisados.
+
+Puede:
+
+- Ver su **Tablero de supervisor**.
+- Revisar su propio trabajo y el de usuarios supervisados.
+- Filtrar por usuario, prioridad y estado.
+- Crear tareas locales.
+- Reasignar tareas dentro de su alcance.
+- Ver evidencias y comentarios.
+- Gestionar usuarios asignados a su supervision.
+
+Rutas principales:
+
+- `/supervisor/dashboard`
+- `/supervisor/gestion`
+- `/supervisor/tareas`
+- `/supervisor/asignaciones`
+- `/supervisor/tarea/[id]`
+
+### User 🟢
+
+El usuario ve solamente sus tareas asignadas.
+
+Puede:
+
+- Ver su dashboard personal con tareas activas, en proceso, vencidas y avance promedio.
+- Abrir el detalle de cada tarea.
+- Actualizar estado y porcentaje de avance.
+- Agregar observaciones y comentarios.
+- Subir evidencias.
+- Confirmar alertas recibidas con **OK / Enterado**.
+
+Rutas principales:
+
+- `/user/dashboard`
+- `/user/tareas`
+- `/user/tarea/[id]`
+
+---
+
+## Como Se Ve el Flujo Diario
+
+```text
+1. La persona inicia sesion en /login.
+2. ITFlow identifica su rol.
+3. La app la envia a su dashboard.
+4. Desde ahi revisa tareas, filtros, vencimientos y avance.
+5. Si trabaja una tarea, abre el detalle y actualiza progreso.
+6. Si hace falta, agrega comentario o evidencia.
+7. Los paneles se actualizan para que otros roles vean el cambio.
 ```
+
+---
+
+## Funciones Destacadas por Pantalla
+
+| Pantalla | Que muestra |
+| --- | --- |
+| Login | Entrada con usuario y contrasena usando Supabase Auth |
+| Home `/` | Redireccion automatica segun rol |
+| Admin Dashboard | Carga por responsable, estado global, riesgo actual y alertas |
+| Admin Estadisticas | Lectura del portafolio, graficos y analisis por fechas |
+| Admin Gestion | Catalogos de paises, plantas y usuarios |
+| Admin Tareas | Lista global, filtros, creacion, edicion, evidencias y comentarios |
+| Admin Asignaciones | Asignacion centralizada y seguimiento operativo |
+| Supervisor Dashboard | Tareas propias, tareas de supervisados, riesgo local y filtros |
+| Supervisor Gestion | Asignacion y desasignacion de usuarios supervisados |
+| Supervisor Tareas | Tareas del supervisor con filtros y reasignacion |
+| Supervisor Asignaciones | Gestion local de tareas y creacion desde supervisor |
+| User Dashboard | Resumen personal, filtros y alerta activa si existe |
+| User Tareas | Lista de tareas asignadas |
+| Detalle de Tarea | Estado, avance, observaciones, comentarios y evidencias |
+
+---
+
+## Tecnologias y Paquetes
+
+ITFlow esta construido con:
+
+| Paquete | Version en `package.json` | Uso |
+| --- | --- | --- |
+| `next` | `^16.1.0` | Aplicacion web con Pages Router |
+| `react` | `^18.3.0` | Interfaz de usuario |
+| `react-dom` | `^18.3.0` | Renderizado React |
+| `@supabase/supabase-js` | `^2.45.0` | Login, base de datos, realtime y storage |
+| `react-icons` | `^5.0.0` | Iconos de la interfaz |
+| `lucide-react` | `^0.395.0` | Iconos adicionales |
+| `recharts` | `^2.12.0` | Graficos |
+| `chart.js` | `^4.4.1` | Graficos |
+| `react-chartjs-2` | `^5.2.0` | Integracion React para Chart.js |
+| `date-fns` | `^3.6.0` | Manejo de fechas |
+| `vitest` | `^1.1.0` | Pruebas |
+| `eslint` | `^9.0.0` | Revision de codigo |
+| `prettier` | `^3.1.1` | Formato de codigo |
+
+Nota: el repositorio tiene `typescript` como dependencia de desarrollo y un script `type-check`, pero el codigo de la app esta escrito en JavaScript. No se usa App Router ni Tailwind.
+
+---
+
+## Estructura Principal
+
+```text
 src/
-├── pages/
-│   ├── _app.js                          # Configuración global
-│   ├── _document.js                     # HTML base
-│   ├── index.js                         # Home (redirección según rol)
-│   ├── login.js                         # Página de login
-│   ├── admin/                           # Dashboard y gestiones admin
-│   │   ├── dashboard.js                 # Estadísticas globales
-│   │   ├── gestion.js                   # Gestión de datos maestros
-│   │   ├── tareas.js                    # Listado de todas las tareas
-│   │   └── asignaciones.js              # Asignar tareas a usuarios
-│   ├── supervisor/                      # Vistas supervisor
-│   │   ├── dashboard.js                 # Estadísticas de la planta
-│   │   ├── tareas.js                    # Tareas de la planta
-│   │   └── asignaciones.js              # Asignar tareas a usuarios
-│   ├── user/                            # Vistas usuario operativo
-│   │   ├── dashboard.js                 # Mis tareas y estadísticas
-│   │   ├── tareas.js                    # Lista de mis tareas
-│   │   └── tarea/[id].js                # Detalle y actualizar tarea
-│   └── api/
-│       ├── admin/                       # APIs administrativas
-│       │   ├── asignar.js
-│       │   ├── crear-usuario.js
-│       │   └── [recursos]/              # CRUD plantas, países, usuarios
-│       └── user/
-│           └── tareas/                  # APIs de tareas del usuario
-│
-├── components/
-│   ├── Layout.js                        # Layout principal (header + sidebar)
-│   ├── EncabezadoPrincipal.js          # Header/navegación
-│   ├── Sidebar.js                       # Menú lateral
-│   ├── TablaGenerica.js                 # Tabla reutilizable
-│   ├── FormularioMulti.js               # Formulario genérico
-│   ├── Modal.js                         # Modal reutilizable
-│   └── Tabs.js                          # Sistema de pestañas
-│
-├── context/
-│   └── AuthContext.js                   # Estado global de autenticación
-│
-├── hooks/
-│   ├── useAuth.js                       # Hook para obtener estado auth
-│   ├── useCargaDatos.js                 # Hook para cargar datos
-│   └── useProtegerRuta.js               # Hooks de protección por rol
-│
-├── lib/
-│   ├── supabase.js                      # Cliente Supabase (público)
-│   ├── supabaseClient.js                # Alias cliente
-│   ├── supabaseAdmin.js                 # Cliente admin (server-side)
-│   ├── permisos.js                      # Funciones de autorización
-│   ├── apiHelpers.js                    # Helpers para APIs
-│   └── auth.js                          # Utilidades de autenticación
-│
-├── styles/
-│   ├── global.css                       # Estilos globales
-│   └── [Componente].module.css          # CSS modules por componente
-│
-└── utils/
-    └── formateo.js                      # Funciones de formato
+├─ pages/                 Vistas y API routes de Next.js
+│  ├─ admin/              Pantallas de administrador
+│  ├─ supervisor/         Pantallas de supervisor
+│  ├─ user/               Pantallas de usuario operativo
+│  └─ api/                Endpoints internos
+├─ components/            Layout, sidebar, modales, tablas y formularios
+├─ context/               Estado de sesion y perfil del usuario
+├─ hooks/                 Proteccion de rutas y carga de datos
+├─ lib/                   Clientes Supabase, permisos y helpers
+├─ styles/                CSS Modules y estilos globales
+└─ utils/                 Utilidades de formato
+```
+
+Documentacion adicional:
+
+```text
+docs/
+├─ 00_ESTADO_ACTUAL.md              Resumen vivo del estado real del proyecto
+├─ 01_FLUJOS_DETALLADOS.md          Flujos funcionales y tecnicos
+├─ 03_GUIA_ADMIN.md                 Guia para administradores
+├─ 04_GUIA_USER.md                  Guia para usuarios
+├─ 05_GUIA_SUPERVISOR.md            Guia para supervisores
+├─ 06_INSTALACION_DEPLOYMENT.md     Instalacion y despliegue
+├─ 11_GUIA_VALIDACION_RAPIDA.md     Pruebas rapidas de acceso por rol
+├─ 09_INDICE_MAESTRO.md             Indice actualizado de lectura
+└─ SUPABASE_ESQUEMA_Y_FLUJOS.md     Tablas, permisos y flujos de datos
 ```
 
 ---
 
-## 👥 Roles y permisos
+## Instalacion Local
 
-**Estado actual:** 3 de 3 roles implementados en producción ✅
+### 1. Requisitos
 
-### 🔴 **ADMIN** (Administrador) — ✅ EN PRODUCCIÓN
+- Node.js 18 o superior.
+- npm.
+- Proyecto Supabase activo.
+- Variables de entorno configuradas.
 
-- **Acceso:** Sistema completo
-- **Dashboard:** "Tablero de Tareas por Región" — Carga por responsable, Estado global %, Riesgo actual
-- **Tareas:** Ver todas, crear, editar, cambiar estado
-- **Alertas:** Enviar alerta directa por usuario desde dashboard y ver estado de lectura
-- **Filtros:** Por usuario, prioridad, estado, planta
-- **Monitoreo:** Detectar desbalance de carga de trabajo
-
-### 🟢 **USER** (Operario/Técnico) — ✅ EN PRODUCCIÓN
-
-- **Acceso:** Solo sus tareas asignadas
-- **Dashboard:** "Mis Tareas" — Activas, En proceso, Vencidas, % Avance
-- **Tareas:** Ver solo asignadas, actualizar estado y avance
-- **Alertas:** Recibir banner individual en dashboard y confirmar lectura
-- **Evidencias:** Cargar archivos (JPG, PNG, PDF máx 10 MB)
-- **Comentarios:** Sistema de comunicación en cada tarea
-
-### 🟡 **SUPERVISOR** (Jefe de planta) — ✅ EN PRODUCCIÓN
-
-- **Acceso:** Tareas de su planta únicamente
-- **Dashboard:** Estadísticas locales, tareas activas, subordinados
-- **Tareas:** Crear, asignar a usuarios de su planta, revisar completadas
-- **Operaciones:** Cambiar estado, agregar observaciones, ver evidencias
-- **Filtros:** Por usuario, prioridad, estado (solo su planta)
-- **Monitoreo:** Carga de trabajo de subordinados, tareas vencidas locales
-
----
-
-## 🗄️ Modelo de datos
-
-```
-USUARIOS
-├── id (PK)
-├── email
-├── nombre_completo
-├── estado (activo/inactivo)
-├── rol_id (FK) → ROLES
-└── planta_id (FK) → PLANTAS
-
-TAREAS
-├── id (PK)
-├── titulo
-├── descripcion
-├── fecha_inicio
-├── fecha_limite
-├── estado_id (FK) → ESTADOS_TAREA
-├── prioridad_id (FK) → PRIORIDADES
-├── porcentaje_avance (0-100)
-├── asignado_a (FK) → USUARIOS
-├── creado_por (FK) → USUARIOS
-├── supervisado_por (FK) → USUARIOS
-├── planta_id (FK) → PLANTAS
-├── observaciones
-├── evidencia (URL)
-└── revisado (boolean)
-
-PLANTAS
-├── id (PK)
-├── nombre
-├── pais_id (FK) → PAISES
-
-PAISES
-├── id (PK)
-└── nombre
-
-ROLES
-├── id (PK)
-├── nombre (admin/supervisor/user)
-└── descripcion
-
-ESTADOS_TAREA
-├── id (PK)
-├── nombre (pendiente/en_proceso/completado)
-└── color_hex
-
-PRIORIDADES
-├── id (PK)
-└── nombre (baja/media/alta/urgente)
-
-ALERTAS_USUARIO
-├── id (PK)
-├── usuario_id (FK) → USUARIOS (destinatario)
-├── creado_por (FK) → USUARIOS (admin)
-├── mensaje (1-500 chars)
-├── activa (true hasta confirmación user)
-├── enviada_at
-├── confirmada_at
-├── confirmada_por (FK) → USUARIOS
-└── admin_resuelta_visible_hasta (visibilidad temporal para admin)
-```
-
----
-
-## 🚀 Instalación y configuración
-
-### Requisitos previos
-
-- Node.js 18+
-- npm o yarn
-- Cuenta Supabase activa
-
-### 1. Instalación de dependencias
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-### 2. Configurar variables de entorno
+### 3. Crear `.env.local`
 
-Crea un archivo `.env.local` en la raíz del proyecto:
+Usa `.env.example` como plantilla:
 
 ```env
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-clave-anonima
-SUPABASE_SERVICE_ROLE_KEY=tu-clave-servicio
-
-# (Opcional) Configuración adicional
-NODE_ENV=development
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
+BASE_URL=http://localhost:3000
 ```
 
-### 3. Inicializar Supabase (si es nuevo)
+Importante 🔐
 
-- Crea tablas según el modelo de datos arriba
-- Habilita autenticación con email/contraseña
-- Configura políticas RLS (Row Level Security)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` se puede usar en el cliente.
+- `SUPABASE_SERVICE_ROLE_KEY` solo debe vivir en servidor o scripts seguros.
+- Nunca subas `.env.local` al repositorio.
 
-### 4. Ejecutar en desarrollo
+### 4. Levantar la app
 
 ```bash
 npm run dev
 ```
 
-Accede a: [http://localhost:3000](http://localhost:3000)
+Abre:
+
+```text
+http://localhost:3000
+```
 
 ---
 
-## 🛠 Scripts disponibles
+## Scripts Disponibles
+
+| Comando | Para que sirve |
+| --- | --- |
+| `npm run dev` | Inicia la app en desarrollo |
+| `npm run build` | Compila la app para produccion |
+| `npm run start` | Ejecuta la version compilada |
+| `npm run lint` | Revisa y corrige estilo con ESLint |
+| `npm run format` | Formatea archivos de `src` |
+| `npm test` | Ejecuta pruebas con Vitest |
+| `npm run test:ui` | Abre la interfaz visual de Vitest |
+| `npm run type-check` | Ejecuta `tsc --noEmit`; existe por tooling, aunque la app es JavaScript |
+
+---
+
+## Seguridad
+
+ITFlow separa responsabilidades:
+
+- 🔑 **Login:** Supabase Auth.
+- 🧑‍💼 **Perfil y rol:** tabla `usuarios` conectada con `roles`.
+- 🚪 **Rutas protegidas:** hooks como `useAdmin`, `useSupervisor` y `useUser`.
+- 🧱 **APIs protegidas:** endpoints validan token y rol antes de responder.
+- 🗄️ **Base de datos:** se espera RLS activo en Supabase para reforzar permisos.
+- 🧰 **Clave de servicio:** `SUPABASE_SERVICE_ROLE_KEY` solo para backend y scripts autorizados.
+
+Puntos a vigilar:
+
+- Las APIs actuales leen el JWT y luego contrastan el usuario contra Supabase. Conviene mantener RLS fuerte y revisar validacion criptografica del token si se endurece seguridad.
+- Supervisor debe seguir limitado por planta y usuarios supervisados.
+- User no debe recibir tareas que no esten asignadas a su usuario.
+
+---
+
+## Vulnerabilidades Detectadas Hoy
+
+Resultado de `npm audit --json` ejecutado el **27 de abril de 2026**:
+
+| Severidad | Cantidad |
+| --- | --- |
+| Moderada | 7 |
+| Alta | 0 |
+| Critica | 0 |
+
+Detalle importante:
+
+- ⚠️ `postcss` `<8.5.10`, reportado via `next`: XSS al serializar CSS con `</style>` sin escapar. Aviso: `GHSA-qx2v-qp2m-jg93`.
+- ⚠️ `esbuild` `<=0.24.2`, via `vite`: un sitio podria hacer peticiones al servidor de desarrollo y leer respuestas en ciertos escenarios. Aviso: `GHSA-67mh-4wv8-2f99`.
+- ⚠️ `vite` `<=6.4.1`, via `vitest`: path traversal en mapas de dependencias optimizadas. Aviso: `GHSA-4w7w-66w2-5vf9`.
+- ⚠️ `vitest`, `@vitest/ui` y `vite-node`: heredan avisos de Vite/esbuild y tienen fix mayor disponible hacia `4.1.5`.
+
+Lectura practica:
+
+- La mayoria del riesgo viene de herramientas de desarrollo y pruebas.
+- El aviso de `postcss` aparece ligado a `next`, por lo que debe revisarse con cuidado antes de actualizar.
+- `npm audit` sugiere cambios mayores en algunos paquetes; no conviene aplicar `--force` sin probar build, login, rutas por rol, evidencias y dashboards.
+
+---
+
+## Validacion Recomendada
+
+Antes de dar un cambio por listo:
 
 ```bash
-npm run dev              # Inicia servidor de desarrollo (puerto 3000)
-npm run build            # Compila para producción
-npm run start            # Inicia servidor de producción
-npm run lint             # Ejecuta ESLint
-npm run format           # Formatea código con Prettier
-npm test                 # Ejecuta unit tests con Vitest
-npm run test:ui          # Inicia Vitest con UI
-npx npm audit            # Audita vulnerabilidades de dependencias
+npm run lint
+npm run build
+npm test
+npm audit
 ```
+
+Prueba manual minima:
+
+1. Entrar como admin y abrir dashboard, estadisticas, gestion, tareas y asignaciones.
+2. Entrar como supervisor y confirmar que solo ve su alcance.
+3. Entrar como user y confirmar que solo ve sus tareas.
+4. Actualizar una tarea y comprobar que el cambio aparece en los paneles.
+5. Subir una evidencia desde detalle de tarea.
+6. Enviar una alerta desde admin y confirmarla desde user.
 
 ---
 
-## 📊 Flujo de usuario por rol
+## Buenas Practicas para Trabajar en el Proyecto
 
-### 1️⃣ Login
-
-```
-Usuario accede a /login
-↓
-Ingresa email + contraseña
-↓
-Supabase valida credenciales
-↓
-AuthContext carga datos del usuario + rol
-↓
-Redirección automática al dashboard según rol
-```
-
-### 2️⃣ Dashboard ADMIN ("Tablero de Tareas por Región")
-
-```
-Ve 3 secciones principales:
-├─ CARGA POR RESPONSABLE: ¿Cuántas tareas cada responsable?
-├─ ESTADO GLOBAL: ¿Qué % está completado?
-└─ RIESGO ACTUAL: ¿Quién tiene tareas vencidas?
-↓
-Acceso a panel completo: /admin/tareas
-├─ Ver todas las tareas del sistema
-├─ Crear nuevas tareas
-├─ Editar detalles y cambiar estado
-├─ Ver evidencias cargadas por usuarios
-└─ Abrir modal de comentarios desde botón "Comentarios"
-↓
-Dashboard /admin/dashboard
-├─ Enviar alerta individual a responsable
-└─ Ver estado visual: pendiente / confirmada visible
-```
-
-### 3️⃣ Dashboard USER ("Mis Tareas")
-
-```
-Ve resumen personalizado:
-├─ Activas (sin completar)
-├─ En proceso
-├─ Vencidas
-└─ % Avance promedio
-↓
-Click en tarea → "Detalle de Tarea"
-├─ Ver información completa
-├─ Actualizar estado
-├─ Actualizar % avance (slider)
-├─ Agregar comentarios
-├─ Cargar evidencia (archivos)
-↓
-Si hay alerta activa:
-├─ Muestra banner en /user/dashboard
-└─ User confirma con "OK / Enterado"
-```
+- Mantener Pages Router.
+- Mantener JavaScript.
+- Usar CSS Modules.
+- No mover logica sensible al cliente.
+- Revisar `AuthContext.js`, `useProtegerRuta.js`, APIs y RLS cuando se toque login, roles o permisos.
+- Hacer cambios pequenos y comprobables.
+- Actualizar documentacion cuando cambie una vista, permiso o flujo.
 
 ---
 
-## 🔐 Seguridad
+## Historial
 
-- **Autenticación:** Supabase JWT
-- **Autorización:** Verificación de rol en cliente + validación en servidor
-- **Protección de rutas:** Hooks `useProtegerRuta` redirigen si no tiene permisos
-- **Validación de datos:** APIs verifican rol y filtran resultados
-- **Variables sensibles:** Service role key solo en servidor (`.env.local` no se expone)
+Consulta [CHANGELOG.md](./CHANGELOG.md) para ver cambios por version.
 
 ---
 
-## 📦 Dependencias principales
+## Soporte
 
-| Paquete                 | Versión  | Propósito              |
-| ----------------------- | -------- | ---------------------- |
-| `next`                  | ^16.1.0  | Framework React/SSR    |
-| `react`                 | ^18.3.0  | Librería UI            |
-| `@supabase/supabase-js` | ^2.45.0  | Cliente de BD y auth   |
-| `recharts`              | ^2.12.0  | Gráficos (dashboards)  |
-| `react-icons`           | ^5.0.0   | Iconos SVG             |
-| `lucide-react`          | ^0.395.0 | Más iconos             |
-| `date-fns`              | ^3.6.0   | Manipulación de fechas |
+Para dudas de uso, reportes o mejoras, contacta al equipo responsable de ITFlow.
 
----
-
-## ⚠️ Vulnerabilidades conocidas
-
-Después de correr `npm audit` el 17/04/2026:
-
-- **5 vulnerabilidades moderadas** en dependencias de desarrollo (`vitest`, `vite`, `esbuild`)
-- **Impacto:** Solo en desarrollo, no afecta producción
-- **Recomendación:** Actualizar cuando sea necesario con `npm audit fix --force`
-
-Ver [VULNERABILITIES.md](./VULNERABILITIES.md) para detalles.
-
----
-
-## 🤝 Contribuir
-
-1. Crea una rama desde `main`
-2. Haz cambios y testea
-3. Abre un PR con descripción del cambio
-4. Espera revisión
-
----
-
-## 📞 Soporte
-
-Para reportar bugs o sugerencias, contacta al equipo de desarrollo.
-
----
-
-**Creado:** 2024 | **Última actualización:** 22/04/2026
+**ITFlow busca que el trabajo diario sea mas claro, trazable y facil de seguir.** ✅

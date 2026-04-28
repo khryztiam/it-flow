@@ -14,7 +14,7 @@ Como **SUPERVISOR**, eres responsable de:
 - Reportar estadísticas de tu área
 - Contacto directo entre admin global y usuarios locales
 
-**Permisos (Planeados):**
+**Permisos actuales:**
 
 - ✅ Ver tareas de mi planta
 - ✅ Crear tareas (solo para mi planta)
@@ -22,7 +22,7 @@ Como **SUPERVISOR**, eres responsable de:
 - ✅ Revisar tareas completadas
 - ✅ Ver estadísticas locales
 - ❌ Ver tareas de otras plantas
-- ❌ Gestionar usuarios
+- ✅ Gestionar usuarios supervisados desde su alcance
 - ❌ Gestionar plantas/países
 
 ---
@@ -55,7 +55,7 @@ Características EN TIEMPO REAL:
 
 ---
 
-## 🚀 Inicio de sesión (cuando esté implementado)
+## 🚀 Inicio de sesión
 
 ### Paso 1: Acceder
 
@@ -71,126 +71,66 @@ Click: "Iniciar sesión"
 ```
 Sistema detecta que eres Supervisor
 ↓
-Te redirige a: /supervisor/tareas
-(una vez que se implemente)
-
-O si dashboard existe primero:
-↓
-/supervisor/dashboard
+Te redirige a: /supervisor/dashboard
 ```
 
 ---
 
-## 📊 Dashboard Supervisor (planeado)
+## 📊 Dashboard Supervisor
 
-**Estado:** En desarrollo  
-**Ubicación esperada:** `/supervisor/dashboard`
+**Estado:** Implementado
+**Ubicación:** `/supervisor/dashboard`
 
-### Componentes planeados
-
-```
-┌─────────────────────────────────────────────────────┐
-│ SUPERVISOR: Planta "Santa Tecla - El Salvador"     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│ RESUMEN DE PLANTA                                   │
-│ ───────────────────────────────────────────────────│
-│                                                     │
-│ 📋 Total tareas:   48       📈 En progreso:  18    │
-│ ✅ Completadas:     15       ⚠️ Vencidas:     3    │
-│                                                     │
-│ % Completitud:  [████████░░░░] 31%                 │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│ USUARIOS EN MI PLANTA                               │
-│ ───────────────────────────────────────────────────│
-│                                                     │
-│ Juan Pérez     (9 activas)  [Ver tareas] [+]       │
-│ María García   (7 activas)  [Ver tareas] [+]       │
-│ Carlos López   (6 activas)  [Ver tareas] [+]       │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│ ALERTAS LOCALES                                     │
-│ ───────────────────────────────────────────────────│
-│                                                     │
-│ 🔴 Carlos López - Tarea vencida hace 2 días        │
-│    "Instalar parches Windows"                      │
-│    [Ver detalle] [Reasignar]                       │
-│                                                     │
-│ 🟡 Juan Pérez - Vence hoy                          │
-│    "Configurar firewall"                           │
-│    [Ver detalle] [Acelerar]                        │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-```
-
-### Funciones esperadas
+### Que muestra
 
 ```
-1. Crear tarea rápida
-   Click: "+ Nueva tarea"
-   Abre: Modal con formulario
-   └─ Auto-completa: Mi planta
+Tablero de supervisor
+├─ Carga por usuario supervisado
+├─ Estado global de tareas supervisadas
+├─ Riesgo actual: persona con mas tareas vencidas
+├─ Mis tareas
+├─ Tareas de usuarios supervisados
+├─ Filtros por usuario, prioridad y estado
+└─ Modal de detalle con estado, observaciones, evidencias y comentarios
+```
 
-2. Ver tareas de mi planta
-   Click: "Panel de tareas"
-   Muestra: Solo tareas de mi ubicación
+### Funciones disponibles
 
-3. Asignar tarea a usuario local
-   Click: "Asignar"
-   Filtra: Solo usuarios de mi planta
-
-4. Revisar trabajo completado
-   Estado: Completadas
-   Puedo: Marcar como "Revisada"
-   └─ Comentar si necesita correcciones
-
-5. Exportar reporte local
-   Click: "Descargar reporte"
-   Rango: Selecciona fechas
-   Datos: Solo mi planta
+```
+1. Ver tareas propias.
+2. Ver tareas de usuarios supervisados.
+3. Abrir detalle de una tarea.
+4. Actualizar estado y observaciones segun permisos.
+5. Consultar evidencias.
+6. Agregar comentarios.
+7. Filtrar por usuario, prioridad y estado.
 ```
 
 ---
 
-## 📋 Panel de tareas (planeado)
+## 📋 Panel de tareas
 
-**Estado:** En desarrollo  
-**Ubicación esperada:** `/supervisor/tareas`
+**Estado:** Implementado
+**Ubicación:** `/supervisor/tareas`
 
-### Vista esperada
+### Vista actual
 
 ```
-PLANTA: Santa Tecla - El Salvador
-
-[Filtros]
-├─ Usuario: [Todos ▼]
-├─ Estado:  [☐ Pendiente ☑ En Proceso ☑ Vencidas]
-├─ Prioridad: [☑ Todas]
-└─ Buscar: [_____________]
-
-[Tabla de tareas]
-┌─────┬──────────────────┬────────┬──────┬──────────┬────────────┐
-│ #   │ Tarea            │ Usuario│ Prio │ Avance   │ Vence      │
-├─────┼──────────────────┼────────┼──────┼──────────┼────────────┤
-│ 1   │ Instalar router  │ Juan   │ 🔴   │ [██ 50%] │ Hoy ⚠️     │
-│ 2   │ Config DNS       │ María  │ 🟡   │ [░░ 0%]  │ +2 días    │
-│ 3   │ Backup servidor  │ Juan   │ 🟢   │ [██ 100%]│ +5 días ✓  │
-│ 4   │ Instalar parches │ Carlos │ 🔴   │ [██ 75%] │ -1 día ⚠️  │
-│ 5   │ Revisar logs     │ María  │ 🟡   │ [█░ 25%] │ +3 días    │
-└─────┴──────────────────┴────────┴──────┴──────────┴────────────┘
-
-[Acciones]
-├─ Click en tarea → Abre detalle
-├─ Hover en fila → Botón "Reasignar"
-└─ Checkbox → Acciones en batch
+Hero: "Gestiona tu trabajo"
+├─ Filtro por estado
+├─ Listado de tareas asignadas al supervisor
+├─ Prioridad
+├─ Estado
+├─ Fechas
+├─ Progreso
+└─ Reasignacion cuando aplica
 ```
 
 ---
 
 ## ➕ Crear tarea local
 
-**Flujo esperado:** (cuando esté implementado)
+**Flujo actual:**
 
 ### Paso 1: Click "+ Nueva tarea"
 
@@ -278,35 +218,24 @@ Opción B: PROBLEMAS
 
 ---
 
-## 📊 Reportes locales (planeado)
+## 📊 Reportes locales
 
-**Funcionalidad esperada:**
+**Estado:** no hay exportacion local dedicada en la vista supervisor. Para reportes formales, usar el flujo de admin o solicitar el corte al administrador.
 
 ```
-Botón: "Descargar reporte"
-
-Opciones:
-├─ Formato: PDF | Excel
-├─ Período: Última semana | Mes | Personalizado
-└─ Incluir: Tareas completadas | En proceso | Vencidas
-
-Datos:
-├─ Solo de mi planta
-├─ Productividad por usuario
-├─ Tareas vencidas
-└─ Timeline de progreso
-
-Uso:
-├─ Reportar a admin global
-├─ Planificación de capacidad
-└─ Justificar necesidades de recursos
+Disponible hoy:
+├─ Dashboard local
+├─ Filtros por usuario, prioridad y estado
+├─ Conteos de tareas en vista
+├─ Riesgo por vencimiento
+└─ Evidencias y comentarios por tarea
 ```
 
 ---
 
 ## 👥 Gestión de usuarios locales
 
-**Limitaciones (planeadas):**
+**Alcance actual:**
 
 ```
 Puedes VER:
@@ -394,7 +323,7 @@ Escalar a Admin:
 ```
 1. Revisar tareas completadas esta semana
 2. Aprobar o pedir correcciones
-3. Generar reporte de desempeño
+3. Preparar resumen de desempeño para admin si aplica
 4. Planificar siguiente semana
 ```
 
@@ -480,12 +409,12 @@ MALO: Esperar a que se agrave
 
 ---
 
-## 🚀 Características futuras
+## 🚀 Mejoras futuras
 
 ```
 📅 En roadmap Q2 2026:
 ├─ Notificaciones automáticas de vencidas
-├─ Gráficos de productividad en tiempo real
+├─ Gráficos adicionales de productividad
 ├─ Predictor de tareas que van a vencer
 ├─ Integración con Slack/Teams
 ├─ Mobile app nativa
@@ -502,12 +431,12 @@ MALO: Esperar a que se agrave
 ## ⚠️ Limitaciones actuales
 
 ```
-Mientras estamos en fase beta:
+Limitaciones operativas actuales:
 
 ❌ No puedes editar tareas creadas por admin
 ❌ No puedes ver reportes de otras plantas
 ❌ No hay filtro por país (solo por planta)
-❌ Notificaciones aún en desarrollo
+❌ Notificaciones automáticas avanzadas aún no están integradas
 ❌ Sin integración con calendarios
 
 WORKAROUND: Contacta al admin para estos cambios
@@ -520,7 +449,7 @@ WORKAROUND: Contacta al admin para estos cambios
 **¿La aplicación de Supervisor no funciona?**
 
 ```
-Como aún está en desarrollo, es normal encontrar bugs.
+El rol supervisor ya esta disponible. Si una pantalla no carga o muestra datos fuera de tu alcance, reportalo como incidencia.
 
 Reporta a:
 ├─ Email: dev-itflow@empresa.com
@@ -558,7 +487,7 @@ Contacta a:
 ☐ Reunión con equipo
 ☐ Distribuir nuevas tareas
 ☐ Revisar tareas completadas
-☐ Generar reporte
+☐ Preparar resumen semanal si aplica
 ☐ Escalaciones pendientes
 ```
 

@@ -1,4 +1,9 @@
-# Guía Rápida: Validación de Acceso y Visibilidad
+# Guia rapida: validacion de acceso y visibilidad
+
+**Ubicacion vigente:** `docs/11_GUIA_VALIDACION_RAPIDA.md`
+**Fecha de revision:** 27 de abril de 2026
+
+---
 
 ## Resumen Ejecutivo
 
@@ -56,7 +61,7 @@ export SUPERVISOR_TOKEN="eyJ..."
 export ADMIN_TOKEN="eyJ..."
 
 # Ejecuta el test
-node test-acceso-simple.js
+node tests/validation/test-acceso-simple.js
 ```
 
 **Resultado esperado**:
@@ -289,7 +294,7 @@ Si encuentra un problema, documenta:
 ```bash
 # Esperar a que el token expire (o manipularlo)
 # Luego intentar acceso
-node test-acceso-simple.js
+node tests/validation/test-acceso-simple.js
 
 # Esperado: 401 Unauthorized o 403 Forbidden
 ```
@@ -319,15 +324,16 @@ curl -H "Authorization: Bearer TOKEN" \
 
 | Archivo                                    | Propósito                               |
 | ------------------------------------------ | --------------------------------------- |
-| `test-acceso-simple.js`                    | Tests de API rápidos                    |
-| `test-visibilidad-acceso.mjs`              | Tests más complejos con Supabase client |
+| `tests/validation/test-acceso-simple.js`       | Tests de API rápidos                    |
+| `tests/validation/test-visibilidad-acceso.mjs` | Tests más complejos con Supabase client |
 | `docs/12_VALIDACION_VISIBILIDAD_ACCESO.md` | Documentación completa                  |
+| `docs/11_GUIA_VALIDACION_RAPIDA.md`        | Esta guía rápida                        |
 
 ---
 
 ## Próximos Pasos
 
-1. ✓ Ejecuta `node test-acceso-simple.js` con tokens válidos
+1. ✓ Ejecuta `node tests/validation/test-acceso-simple.js` con tokens válidos
 2. ✓ Verifica los casos manuales en navegador
 3. ✓ Confirma que dashboard = lista (números)
 4. ✓ Prueba con 2+ supervisores
@@ -335,4 +341,4 @@ curl -H "Authorization: Bearer TOKEN" \
 
 ---
 
-**Última actualización**: 25 de abril de 2026
+**Ultima actualización**: 27 de abril de 2026
