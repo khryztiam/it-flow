@@ -10,7 +10,7 @@ ITFlow ayuda a que administradores, supervisores y usuarios sepan que tareas hay
 
 | Dato | Estado actual |
 | --- | --- |
-| Version de la app | `1.4.0` |
+| Version de la app | `1.4.1` |
 | Estado funcional | 3 roles activos: Admin, Supervisor y User ✅ |
 | Tipo de app | Aplicacion web privada para gestion operativa de tareas |
 | Framework | Next.js `^16.1.0` con Pages Router |
@@ -280,6 +280,8 @@ Puntos a vigilar:
 ## Vulnerabilidades Detectadas Hoy
 
 Resultado de `npm audit --json` ejecutado el **27 de abril de 2026**:
+
+Detalle completo: [docs/13_VULNERABILIDADES_ACTUALES.md](./docs/13_VULNERABILIDADES_ACTUALES.md)
 
 | Severidad | Cantidad |
 | --- | --- |

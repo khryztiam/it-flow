@@ -2,52 +2,122 @@
 
 Todos los cambios importantes de ITFlow se documentan en este archivo.
 
-El formato sigue una estructura simple por version para dejar claro que cambio a nivel funcional, tecnico y de documentacion.
-
-## [1.3.1] - 2026-04-26
-
-### Agregado
-
-- ✅ **Realtime habilitado para Supervisor**: Dashboards actualizados en tiempo real
-- Canal realtime `realtime-tareas-supervisor` activo en:
-  - `/supervisor/dashboard` — Estadísticas y tareas actualizadas
-  - `/supervisor/tareas` — Lista de tareas con cambios en vivo
-  - `/supervisor/asignaciones` — Formulario de tareas con datos frescos
-- Suscripciones automáticas a cambios en tabla `tareas`
-
-### Cambiado
-
-- Comportamiento realtime: Todos los roles (Admin, User, Supervisor) reciben actualizaciones en tiempo real
-- Documentación actualizada sobre capacidades realtime
-
-### Documentación
-
-- docs/05_GUIA_SUPERVISOR.md — Realtime ✅ activo
-- docs/SUPABASE_ESQUEMA_Y_FLUJOS.md — Canales realtime expandidos
-- docs/01_FLUJOS_DETALLADOS.md — Suscripciones realtime por rol
+El formato sigue una estructura simple por version para dejar claro que cambio a nivel funcional, tecnico, seguridad y documentacion.
 
 ---
 
-## [1.3.0] - 2026-04-26
+## [1.4.1] - 2026-04-27
+
+### Documentacion
+
+- Reescritura completa de `README.md` con enfoque mas claro para usuarios y desarrolladores nuevos.
+- Nuevo `docs/00_ESTADO_ACTUAL.md` como referencia vigente del estado real del proyecto.
+- Nuevo `docs/13_VULNERABILIDADES_ACTUALES.md` con detalle del ultimo `npm audit`.
+- Consolidacion del indice maestro y resumen ejecutivo para reducir duplicidad.
+- Actualizacion de la guia de supervisor para reflejar que el rol ya esta activo.
+- Actualizacion de esquema y flujos Supabase con alertas, realtime y alcance supervisor.
+- Movimiento de la guia rapida de validacion a `docs/11_GUIA_VALIDACION_RAPIDA.md`.
+
+### Limpieza
+
+- Eliminacion del repo de documentos raiz historicos u obsoletos que duplicaban informacion de `docs/`.
+- Movimiento de pruebas manuales utiles a `tests/validation/`.
+- Eliminacion del repo de scripts de prueba antiguos con credenciales hardcodeadas.
+- Eliminacion de `tareas_rows.csv` del repo.
+
+---
+
+## [1.4.0] - 2026-04-25
 
 ### Agregado
 
-- ✅ **Supervisor completamente en producción**: Dashboard, panel de tareas, asignaciones locales
-- Nuevas vistas: `/supervisor/dashboard`, `/supervisor/tareas`, `/supervisor/gestion`, `/supervisor/asignaciones`
-- APIs supervisor: `/api/supervisor/tareas`, `/api/supervisor/subordinados`, `/api/supervisor/asignaciones`
-- Modal de detalle y actualización de tareas desde supervisor
-- Sistema de filtrado por usuario, prioridad y estado en vistas supervisor
+- Supervisor pasa a estar operativo con dashboard, tareas, gestion, asignaciones y detalle de tarea.
+- Nuevas rutas de supervisor:
+  - `/supervisor/dashboard`
+  - `/supervisor/tareas`
+  - `/supervisor/gestion`
+  - `/supervisor/asignaciones`
+  - `/supervisor/tarea/[id]`
+- Nuevas APIs de supervisor:
+  - `/api/supervisor/tareas`
+  - `/api/supervisor/tareas/crear`
+  - `/api/supervisor/tareas/todas`
+  - `/api/supervisor/tareas/[id]`
+  - `/api/supervisor/tareas/[id]/upload`
+  - `/api/supervisor/tareas/[id]/evidencias`
+  - `/api/supervisor/subordinados/tareas`
+- Nueva gestion de usuarios supervisados desde `/supervisor/gestion`.
+- Endpoint administrativo `/api/admin/elevar-supervisor`.
+- Soporte de evidencias y comentarios para supervisor.
+- Modal de detalle y actualizacion de tareas para supervisor.
+- Formulario de comentarios en modales de dashboard admin y supervisor.
+- Scripts de soporte y validacion para flujos supervisor.
+- Documentos de validacion de acceso y visibilidad por rol.
 
 ### Cambiado
 
-- Estado oficial: **3 de 3 roles en producción** (Admin, Supervisor, User)
-- Documentación actualizada para reflejar supervisor como producción (no planeado)
+- `package.json` sube de `1.3.1` a `1.4.0`.
+- Sidebar incluye opciones completas para el rol supervisor.
+- `AuthContext` carga `supervisor_id` dentro del perfil de usuario.
+- Endpoints admin de tareas, usuarios y plantas amplian validaciones y datos relacionados.
+- Vistas de supervisor reciben un rediseño funcional amplio para operar tareas, evidencia, comentarios y filtros.
 
-### Documentación
+### Realtime y documentacion posterior
 
-- Actualización de README.md con supervisor en producción
-- Actualización de guías y referencias a supervisor
-- Aclaración: Realtime está activo para supervisor
+- Realtime habilitado para supervisor en:
+  - `/supervisor/dashboard`
+  - `/supervisor/tareas`
+  - `/supervisor/asignaciones`
+- Canal `realtime-tareas-supervisor` agregado para recargar datos ante cambios en `tareas`.
+- Documentacion actualizada para reflejar supervisor como rol activo.
+
+### Seguridad
+
+- Remocion de credenciales hardcodeadas en scripts de creacion de usuarios/admin.
+- `.env.example` ampliado con variables seguras y advertencias de manejo de secrets.
+
+---
+
+## [1.3.1] - 2026-04-22
+
+### Corregido
+
+- Upload de evidencias de usuario ahora maneja respuestas no JSON sin romper la UI.
+- `bodyParser.sizeLimit` para `/api/user/tareas/[id]/upload` aumenta a `20mb`.
+- Mensaje mas claro cuando el servidor rechaza archivos demasiado grandes.
+- `user/tarea/[id].js` y `user/tareas.js` usan parsing defensivo de respuestas API.
+
+### Cambiado
+
+- `package.json` sube de `1.3.0` a `1.3.1`.
+
+---
+
+## [1.3.0] - 2026-04-21
+
+### Agregado
+
+- Flujo de alertas admin -> user.
+- Nueva tabla Supabase `alertas_usuario`.
+- Nueva vista `vw_alertas_usuario_estado`.
+- Nuevas funciones/RPC:
+  - `crear_alerta_usuario`
+  - `confirmar_alerta_usuario`
+- Politicas RLS para alertas de usuario.
+- Script SQL `scripts/sql/2026-04-21_alertas_usuario_flujo.sql`.
+- Script SQL `scripts/sql/2026-04-22_enable_realtime_alertas_usuario.sql`.
+- Dashboard admin puede enviar alerta individual a un responsable.
+- Dashboard admin muestra estado visual de alerta pendiente o confirmada.
+- Dashboard user muestra banner de alerta activa.
+- User puede confirmar alerta con `OK / Enterado`.
+
+### Cambiado
+
+- `package.json` sube de `1.2.0` a `1.3.0`.
+- `Modal` y estilos relacionados se ajustan para soportar el nuevo flujo.
+- Documentacion de admin, user, flujos e instalacion incorpora alertas.
+
+---
 
 ## [1.2.0] - 2026-04-19
 
@@ -70,6 +140,8 @@ El formato sigue una estructura simple por version para dejar claro que cambio a
 
 - Se consolido documentacion tecnica y funcional complementaria para respaldar el estado actual del sistema y su evolucion.
 
+---
+
 ## [1.1.0] - 2026-04-18
 
 ### Agregado
@@ -82,6 +154,8 @@ El formato sigue una estructura simple por version para dejar claro que cambio a
 
 - Ampliacion del panel administrativo, gestion de tareas y asignaciones.
 - Mejoras a `TablaGenerica`, sidebar y estilos administrativos.
+
+---
 
 ## [1.0.1] - 2026-04-17
 
@@ -100,6 +174,8 @@ El formato sigue una estructura simple por version para dejar claro que cambio a
 ### Seguridad
 
 - Eliminacion de credenciales hardcodeadas en scripts, migrando a variables de entorno.
+
+---
 
 ## [1.0.0] - 2026-04-16
 

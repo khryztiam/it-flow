@@ -1,7 +1,7 @@
 # ITFlow - Resumen ejecutivo
 
 **Fecha de revision:** 27 de abril de 2026
-**Version app:** `1.4.0`
+**Version app:** `1.4.1`
 **Publico:** responsables de producto, operacion y tecnologia
 
 ---
