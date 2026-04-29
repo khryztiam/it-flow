@@ -1305,6 +1305,7 @@
   background: rgba(15, 23, 42, 0.16);
   display: flex;
   justify-content: flex-end;
+  animation: drawerOverlayIn 0.28s ease-out both;
 }
 
 .drawer {
@@ -1315,6 +1316,64 @@
   box-shadow: -18px 0 42px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
+  animation: drawerIn 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.drawerOverlaySaliendo {
+  animation: drawerOverlayOut 0.22s ease-in both;
+}
+
+.drawerSaliendo {
+  animation: drawerOut 0.22s ease-in both;
+}
+
+@keyframes drawerOverlayIn {
+  from {
+    background: rgba(15, 23, 42, 0);
+  }
+  to {
+    background: rgba(15, 23, 42, 0.16);
+  }
+}
+
+@keyframes drawerOverlayOut {
+  from {
+    background: rgba(15, 23, 42, 0.16);
+  }
+  to {
+    background: rgba(15, 23, 42, 0);
+  }
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(72px);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes drawerOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(72px);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawerOverlay,
+  .drawer,
+  .drawerOverlaySaliendo,
+  .drawerSaliendo {
+    animation: none;
+  }
 }
 
 .drawerHeader {
@@ -1354,6 +1413,7 @@
 }
 
 .drawerBtnPrimario,
+.drawerBtnSecundario,
 .drawerBtnIcono {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -1386,6 +1446,15 @@
 .drawerBtnPrimario:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.drawerBtnSecundario {
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.drawerBtnSecundario:hover {
+  background: #f1f5f9;
 }
 
 .drawerBtnIcono {
@@ -1597,13 +1666,17 @@
   }
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1400px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .resumenSeccion {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .resumenCardResponsables {
+    grid-column: 1 / -1;
   }
 
   .responsablesLista {
@@ -1611,7 +1684,7 @@
   }
 
   .acordeonContenido {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .cardTop {
@@ -1640,6 +1713,12 @@
 
   .cardColFechas {
     padding-left: 10px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .resumenSeccion {
+    grid-template-columns: 1fr;
   }
 }
 

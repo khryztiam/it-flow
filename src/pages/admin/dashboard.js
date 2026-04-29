@@ -1,7 +1,7 @@
 import Layout from '@components/Layout';
 import Modal from '@components/Modal';
 import { useAdmin } from '@hooks/useProtegerRuta';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { supabase } from '@lib/supabase';
 import styles from '@styles/DashboardAdmin.module.css';
 import {
@@ -25,6 +25,7 @@ export default function AdminDashboard() {
   const montadoRef = useRef(true);
   const responsablesIdsRef = useRef([]);
   const cierreAlertaTimerRef = useRef(null);
+  const drawerCierreTimerRef = useRef(null);
   const cargarAlertasActivasRef = useRef(null);
   const [todasLasTareas, setTodasLasTareas] = useState([]);
   const [estadosDisponibles, setEstadosDisponibles] = useState([]);
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
   const [cargando, setCargando] = useState(true);
   const [expandido, setExpandido] = useState({});
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+  const [drawerCerrando, setDrawerCerrando] = useState(false);
   const [modalAlertaAbierto, setModalAlertaAbierto] = useState(false);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [responsableSeleccionado, setResponsableSeleccionado] = useState(null);
@@ -134,6 +136,9 @@ export default function AdminDashboard() {
       montadoRef.current = false;
       if (cierreAlertaTimerRef.current) {
         clearTimeout(cierreAlertaTimerRef.current);
+      }
+      if (drawerCierreTimerRef.current) {
+        clearTimeout(drawerCierreTimerRef.current);
       }
       if (channel) supabase.removeChannel(channel);
     };
@@ -577,6 +582,11 @@ export default function AdminDashboard() {
   };
 
   const AbrirModal = async (tarea) => {
+    if (drawerCierreTimerRef.current) {
+      clearTimeout(drawerCierreTimerRef.current);
+      drawerCierreTimerRef.current = null;
+    }
+    setDrawerCerrando(false);
     setTareaSeleccionada(tarea);
     setModalEstadoId(tarea.estado_id || '');
     setModalProgreso(tarea.porcentaje_avance || 0);
@@ -624,26 +634,39 @@ export default function AdminDashboard() {
     }
   };
 
-  const CerrarModal = () => {
+  const CerrarModal = useCallback(() => {
+    setDrawerCerrando(false);
     setModalDetalleAbierto(false);
     setTareaSeleccionada(null);
     setModalNuevoComentario('');
-  };
+  }, []);
+
+  const CerrarDrawerAnimado = useCallback(() => {
+    if (drawerCerrando) return;
+    setDrawerCerrando(true);
+
+    if (drawerCierreTimerRef.current) {
+      clearTimeout(drawerCierreTimerRef.current);
+    }
+
+    drawerCierreTimerRef.current = setTimeout(() => {
+      CerrarModal();
+      drawerCierreTimerRef.current = null;
+    }, 220);
+  }, [CerrarModal, drawerCerrando]);
 
   useEffect(() => {
     if (!modalDetalleAbierto) return;
 
     const cerrarConEscape = (e) => {
       if (e.key === 'Escape') {
-        setModalDetalleAbierto(false);
-        setTareaSeleccionada(null);
-        setModalNuevoComentario('');
+        CerrarDrawerAnimado();
       }
     };
 
     document.addEventListener('keydown', cerrarConEscape);
     return () => document.removeEventListener('keydown', cerrarConEscape);
-  }, [modalDetalleAbierto]);
+  }, [modalDetalleAbierto, CerrarDrawerAnimado]);
 
   const GuardarModal = async () => {
     if (!tareaSeleccionada) return;
@@ -1179,10 +1202,15 @@ export default function AdminDashboard() {
       </div>
 
       {modalDetalleAbierto && tareaSeleccionada && (
-        <div className={styles.drawerOverlay} onClick={CerrarModal}>
+        <div
+          className={`${styles.drawerOverlay} ${
+            drawerCerrando ? styles.drawerOverlaySaliendo : ''
+          }`}
+        >
           <aside
-            className={styles.drawer}
-            onClick={(e) => e.stopPropagation()}
+            className={`${styles.drawer} ${
+              drawerCerrando ? styles.drawerSaliendo : ''
+            }`}
             aria-label="Detalle operativo de tarea"
           >
             <header className={styles.drawerHeader}>
@@ -1202,11 +1230,12 @@ export default function AdminDashboard() {
                 </button>
                 <button
                   type="button"
-                  className={styles.drawerBtnIcono}
-                  onClick={CerrarModal}
+                  className={styles.drawerBtnSecundario}
+                  onClick={CerrarDrawerAnimado}
                   aria-label="Cerrar detalle"
                 >
                   <FiX />
+                  Cerrar
                 </button>
               </div>
             </header>
