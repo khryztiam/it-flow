@@ -1,7 +1,7 @@
 # ITFlow - Indice maestro de documentacion
 
-**Fecha de revision:** 27 de abril de 2026
-**Version app:** `1.4.1`
+**Fecha de revision:** 28 de abril de 2026
+**Version app:** `1.5.0`
 **Estado:** documentacion en proceso de consolidacion
 
 ---

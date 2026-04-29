@@ -1,7 +1,7 @@
 # ITFlow - Estado actual del proyecto
 
-**Fecha de revision:** 27 de abril de 2026
-**Version de la app:** `1.4.1`
+**Fecha de revision:** 28 de abril de 2026
+**Version de la app:** `1.5.0`
 **Fuente principal:** codigo actual en `src/`, `package.json` y auditoria `npm audit`
 
 ---

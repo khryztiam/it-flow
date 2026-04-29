@@ -6,6 +6,18 @@ El formato sigue una estructura simple por version para dejar claro que cambio a
 
 ---
 
+## [1.5.0] - 2026-04-28
+
+### Mejorado (UI/UX)
+
+- Rediseño visual de dashboard admin: hero section mejorado con gradientes refinados y mejor gestión de indicadores.
+- Cambio de modal a drawer en dashboard admin para interacciones con tareas.
+- Refinado de columnas, cards y espaciado en dashboard admin.
+- Rediseño de vista de estadísticas admin: paneles reorganizados, indicadores consolidados.
+- Eliminación de duplicidad de información en estadísticas.
+
+---
+
 ## [1.4.1] - 2026-04-27
 
 ### Documentacion
