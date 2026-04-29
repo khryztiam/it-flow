@@ -20,16 +20,16 @@ El sistema ya trabaja con tres roles:
 
 ## Estado Actual
 
-| Area | Estado |
-| --- | --- |
-| Login y sesion | Activo con Supabase Auth |
-| Roles | Admin, Supervisor y User activos |
-| Tareas | Creacion, edicion, asignacion, filtros y seguimiento |
-| Evidencias | Subida y consulta desde detalle de tarea |
-| Comentarios | Disponibles en tareas |
-| Alertas | Admin envia, user confirma |
-| Realtime | Activo para cambios de tareas |
-| Documentacion | En consolidacion para eliminar duplicidad |
+| Area           | Estado                                               |
+| -------------- | ---------------------------------------------------- |
+| Login y sesion | Activo con Supabase Auth                             |
+| Roles          | Admin, Supervisor y User activos                     |
+| Tareas         | Creacion, edicion, asignacion, filtros y seguimiento |
+| Evidencias     | Subida y consulta desde detalle de tarea             |
+| Comentarios    | Disponibles en tareas                                |
+| Alertas        | Admin envia, user confirma                           |
+| Realtime       | Activo para cambios de tareas                        |
+| Documentacion  | En consolidacion para eliminar duplicidad            |
 
 ---
 
@@ -45,11 +45,11 @@ El sistema ya trabaja con tres roles:
 
 ## Pantallas Clave
 
-| Rol | Pantallas principales |
-| --- | --- |
-| Admin | Dashboard global, estadisticas, gestion, tareas y asignaciones |
+| Rol        | Pantallas principales                                               |
+| ---------- | ------------------------------------------------------------------- |
+| Admin      | Dashboard global, estadisticas, gestion, tareas y asignaciones      |
 | Supervisor | Dashboard local, gestion de usuarios, tareas y asignaciones locales |
-| User | Dashboard personal, mis tareas y detalle de tarea |
+| User       | Dashboard personal, mis tareas y detalle de tarea                   |
 
 ---
 
@@ -70,13 +70,13 @@ No usa App Router, Tailwind ni TypeScript en el codigo de la app.
 
 ## Riesgos Actuales
 
-| Riesgo | Lectura ejecutiva |
-| --- | --- |
-| Validacion de APIs | Debe mantenerse fuerte para evitar accesos fuera de rol |
-| RLS en Supabase | Es clave para que los permisos no dependan solo del frontend |
-| Token en backend | Hoy se lee el JWT y se contrasta contra `usuarios`; conviene endurecer si se escala |
-| Dependencias | `npm audit` reporta 7 vulnerabilidades moderadas |
-| Documentacion antigua | Algunos documentos tenian referencias ya desactualizadas |
+| Riesgo                | Lectura ejecutiva                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| Validacion de APIs    | Debe mantenerse fuerte para evitar accesos fuera de rol                             |
+| RLS en Supabase       | Es clave para que los permisos no dependan solo del frontend                        |
+| Token en backend      | Hoy se lee el JWT y se contrasta contra `usuarios`; conviene endurecer si se escala |
+| Dependencias          | `npm audit` reporta 7 vulnerabilidades moderadas                                    |
+| Documentacion antigua | Algunos documentos tenian referencias ya desactualizadas                            |
 
 ---
 

@@ -17,10 +17,12 @@ import {
 } from 'recharts';
 import {
   FiActivity,
+  FiAlertCircle,
   FiBarChart2,
   FiCheckCircle,
   FiClipboard,
   FiClock,
+  FiFileText,
   FiUsers,
 } from 'react-icons/fi';
 import styles from '@styles/EstadisticasAdmin.module.css';
@@ -584,20 +586,42 @@ export default function EstadisticasAdmin() {
 
           <div className={styles.summaryGrid}>
             <div className={styles.summaryItem}>
-              <span>Completadas</span>
-              <strong>{totalCompletadas}</strong>
+              <span className={`${styles.summaryIcon} ${styles.summaryOk}`}>
+                <FiCheckCircle />
+              </span>
+              <div className={styles.summaryData}>
+                <span>Completadas</span>
+                <strong>{totalCompletadas}</strong>
+              </div>
             </div>
             <div className={styles.summaryItem}>
-              <span>Vencidas</span>
-              <strong>{totalVencidas}</strong>
+              <span className={`${styles.summaryIcon} ${styles.summaryDanger}`}>
+                <FiAlertCircle />
+              </span>
+              <div className={styles.summaryData}>
+                <span>Vencidas</span>
+                <strong>{totalVencidas}</strong>
+              </div>
             </div>
             <div className={styles.summaryItem}>
-              <span>Con evidencia</span>
-              <strong>{coberturaEvidencia}%</strong>
+              <span className={`${styles.summaryIcon} ${styles.summaryInfo}`}>
+                <FiFileText />
+              </span>
+              <div className={styles.summaryData}>
+                <span>Con evidencia</span>
+                <strong>{coberturaEvidencia}%</strong>
+              </div>
             </div>
             <div className={styles.summaryItem}>
-              <span>No revisadas</span>
-              <strong>{totalNoRevisadas}</strong>
+              <span
+                className={`${styles.summaryIcon} ${styles.summaryWarning}`}
+              >
+                <FiClock />
+              </span>
+              <div className={styles.summaryData}>
+                <span>No revisadas</span>
+                <strong>{totalNoRevisadas}</strong>
+              </div>
             </div>
           </div>
 
@@ -618,11 +642,11 @@ export default function EstadisticasAdmin() {
           </div>
         </article>
 
-        <article className={styles.panel}>
+        <article className={`${styles.panel} ${styles.qualityPanel}`}>
           <div className={styles.panelHeader}>
             <div>
               <p className={styles.eyebrow}>Calidad de seguimiento</p>
-              <h3>Indicadores documentales</h3>
+              <h3>Seguimiento documental y calendario</h3>
             </div>
           </div>
 
@@ -636,6 +660,31 @@ export default function EstadisticasAdmin() {
                 <strong>{item.valor}</strong>
               </div>
             ))}
+          </div>
+
+          <div className={styles.calendarSummary}>
+            <div>
+              <p className={styles.eyebrow}>Fechas objetivo</p>
+              <h4>Vencimientos por mes</h4>
+            </div>
+
+            {chartCalendario.length ? (
+              <div className={styles.calendarSummaryGrid}>
+                {chartCalendario.map((item) => (
+                  <div
+                    key={item.sortKey}
+                    className={styles.calendarSummaryItem}
+                  >
+                    <strong>{item.total}</strong>
+                    <span>{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={styles.calendarSummaryEmpty}>
+                No hay vencimientos para construir calendario.
+              </p>
+            )}
           </div>
         </article>
       </section>
@@ -875,66 +924,6 @@ export default function EstadisticasAdmin() {
             ) : (
               <EmptyChart message="No hay plantas para graficar en el filtro actual." />
             )}
-          </article>
-        </div>
-      </section>
-
-      <section className={styles.chartSection}>
-        <div className={styles.sectionHeader}>
-          <p className={styles.eyebrow}>Calendario</p>
-          <h2 className={styles.sectionTitle}>Lectura por fechas objetivo</h2>
-        </div>
-
-        <div className={styles.calendarGrid}>
-          <article className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Calendario</p>
-                <h3>Tareas por mes de vencimiento</h3>
-              </div>
-            </div>
-
-            {chartCalendario.length ? (
-              <div className={styles.chartWrapSmall}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartCalendario}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar
-                      dataKey="total"
-                      name="Tareas"
-                      fill="#0ea5e9"
-                      radius={[8, 8, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <EmptyChart message="No hay vencimientos para construir un calendario." />
-            )}
-          </article>
-
-          <article className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <div>
-                <p className={styles.eyebrow}>Cobertura documental</p>
-                <h3>Indicadores de calidad</h3>
-              </div>
-            </div>
-
-            <div className={styles.qualityList}>
-              {resumenCalidad.map((item) => (
-                <div key={item.label} className={styles.qualityItem}>
-                  <div>
-                    <p>{item.label}</p>
-                    <span>{item.helper}</span>
-                  </div>
-                  <strong>{item.valor}</strong>
-                </div>
-              ))}
-            </div>
           </article>
         </div>
       </section>

@@ -140,9 +140,9 @@
 }
 
 .responsableItem {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   padding: 10px 12px;
   border: 1px solid #e2e8f0;
@@ -152,6 +152,11 @@
     box-shadow 0.2s,
     background 0.2s;
 }
+
+.responsableConAlerta {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+}
+
 .responsableItem:hover,
 .responsableItem:focus {
   box-shadow: 0 2px 8px rgba(234, 179, 8, 0.12);
@@ -164,11 +169,18 @@
   box-shadow: none;
 }
 .alertaBadge {
-  margin-left: 12px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   font-size: 1.2em;
 }
+
+.responsableInfo {
+  min-width: 0;
+}
+
 .alerta_pendiente {
   border: 2px solid #eab308;
 }
@@ -181,6 +193,9 @@
   font-size: 13px;
   font-weight: 700;
   color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .responsableMeta {
@@ -194,6 +209,7 @@
   font-size: 20px;
   line-height: 1;
   color: #1d4ed8;
+  justify-self: end;
 }
 
 .resumenEstadosGrid {
@@ -511,18 +527,20 @@
 
 .tarjetaTarea {
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
   border-left: 4px solid #e2e8f0;
-  padding: 12px 14px;
+  padding: 14px 16px;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.tarjetaTarea:hover {
+.tarjetaTarea:hover,
+.tarjetaTarea:focus {
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
   transform: translateY(-2px);
+  outline: none;
 }
 
 .tarjetaRoja {
@@ -551,28 +569,38 @@
 .tarjetaVerde:hover {
   border-left-color: #16a34a;
 }
-.cardFila1 {
+.cardTop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cardBadges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .cardUsuario {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .cardUsuarioNombre {
   margin: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: #0f172a;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cardCuerpo {
@@ -609,13 +637,77 @@
 }
 
 .tarjetaTitulo {
-  flex: 1;
-  margin: 0;
+  margin: 0 0 8px;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 800;
   color: #0f172a;
-  line-height: 1.15;
+  line-height: 1.25;
   word-break: break-word;
+}
+
+.cardMetaLinea {
+  margin: 0 0 14px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.cardProgresoFila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.cardProgresoBloque {
+  min-width: 0;
+}
+
+.cardProgresoHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.cardRiesgo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cardFooter span,
+.cardFooter strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cardFooter strong {
+  margin-left: auto;
+  color: #1d4ed8;
 }
 
 .tarjetaSubtitulo {
@@ -754,58 +846,99 @@
 }
 
 .badgePrioridad {
-  background: #fce7f3;
-  color: #831843;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid #fbcfe8;
+  background: #fdf2f8;
+  color: #9d174d;
+  text-transform: uppercase;
 }
 
 .prioridadUrgente {
+  border-color: #fecaca;
   background: #fee2e2;
   color: #991b1b;
 }
 
 .prioridadAlta {
-  background: #fee2e2;
-  color: #b45309;
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .prioridadMedia {
+  border-color: #fde68a;
   background: #fef3c7;
   color: #92400e;
 }
 
 .prioridadBaja {
+  border-color: #bbf7d0;
   background: #dcfce7;
   color: #166534;
 }
 
 .badgeEstado {
-  background: #e0f2fe;
-  color: #0c4a6e;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid #bae6fd;
+  background: #f0f9ff;
+  color: #075985;
+  text-transform: uppercase;
 }
 
 .estadoPendiente {
+  border-color: #fde68a;
   background: #fef3c7;
   color: #92400e;
 }
 
 .estadoEnProceso {
+  border-color: #bfdbfe;
   background: #dbeafe;
   color: #1e3a8a;
 }
 
 .estadoEnRevision {
+  border-color: #fed7aa;
   background: #ffedd5;
   color: #c2410c;
 }
 
 .estadoCompletado {
+  border-color: #bbf7d0;
   background: #dcfce7;
   color: #166534;
 }
 
 .estadoDetenido {
+  border-color: #fecaca;
   background: #fee2e2;
   color: #991b1b;
+}
+
+.badgePrioridad::before,
+.badgeEstado::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.8;
 }
 
 .barraProgreso {
@@ -821,6 +954,18 @@
   height: 100%;
   background: linear-gradient(90deg, #0284c7 0%, #4f46e5 100%);
   transition: width 0.3s ease;
+}
+
+.tarjetaVerde .barraProgresoFill {
+  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+}
+
+.tarjetaAmarilla .barraProgresoFill {
+  background: linear-gradient(90deg, #f59e0b 0%, #eab308 100%);
+}
+
+.tarjetaRoja .barraProgresoFill {
+  background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
 }
 
 .barraProgresoTexto {
@@ -1153,6 +1298,222 @@
   line-height: 1.4;
 }
 
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(15, 23, 42, 0.16);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: min(760px, 92vw);
+  height: 100vh;
+  background: #f8fafc;
+  border-left: 1px solid #cbd5e1;
+  box-shadow: -18px 0 42px rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+}
+
+.drawerHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.drawerHeader h2 {
+  margin: 3px 0 0;
+  color: #0f172a;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.drawerEyebrow {
+  margin: 0;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.drawerAcciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.drawerBtnPrimario,
+.drawerBtnIcono {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.drawerBtnPrimario {
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #ffffff;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.drawerBtnPrimario:hover:not(:disabled) {
+  background: #1e40af;
+  border-color: #1e40af;
+}
+
+.drawerBtnPrimario:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.drawerBtnIcono {
+  width: 38px;
+  height: 38px;
+}
+
+.drawerBtnIcono:hover {
+  background: #f1f5f9;
+}
+
+.drawerBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.drawerGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.drawerColumna {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.drawerSeccion {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.drawerSeccion h3 {
+  margin: 0 0 12px;
+  color: #0f172a;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.drawerSeccionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.drawerSeccionHeader h3 {
+  margin: 0;
+}
+
+.drawerSeccionHeader span {
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.drawerResumenGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.drawerResumenGrid div {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 9px 10px;
+  min-width: 0;
+}
+
+.drawerResumenGrid span {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.drawerResumenGrid strong {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.drawerDescripcion {
+  margin: 0;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.drawerProgresoControl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px;
+  gap: 10px;
+  align-items: center;
+}
+
+.drawerProgresoControl input[type='range'] {
+  width: 100%;
+}
+
+.drawerProgresoControl input[type='number'] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  color: #0f172a;
+}
+
 .seccion {
   background: #ffffff;
   border-radius: 14px;
@@ -1219,6 +1580,23 @@
   }
 }
 
+@media (min-width: 1500px) {
+  .drawer {
+    width: min(980px, 82vw);
+  }
+
+  .drawerGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+    align-items: start;
+  }
+}
+
+@media (min-width: 1600px) {
+  .acordeonContenido {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1280px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1236,8 +1614,9 @@
     grid-template-columns: 1fr;
   }
 
-  .cardFila1 {
+  .cardTop {
     flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
   }
 
@@ -1348,8 +1727,9 @@
     padding: 12px;
   }
 
-  .cardFila1 {
+  .cardTop {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .cardCuerpo {
@@ -1368,6 +1748,19 @@
   .cardColFechas {
     border-bottom: none;
     padding-bottom: 0;
+  }
+
+  .cardProgresoFila {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .cardRiesgo {
+    justify-content: flex-start;
+  }
+
+  .cardFooter strong {
+    margin-left: 0;
   }
 
   .tareasHeader {
@@ -1392,5 +1785,29 @@
 
   .modalAsideComentarios {
     max-height: 260px;
+  }
+
+  .drawer {
+    width: 100vw;
+  }
+
+  .drawerHeader {
+    flex-direction: column;
+  }
+
+  .drawerAcciones {
+    width: 100%;
+  }
+
+  .drawerBtnPrimario {
+    flex: 1;
+  }
+
+  .drawerResumenGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .drawerProgresoControl {
+    grid-template-columns: 1fr;
   }
 }

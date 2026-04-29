@@ -5,23 +5,19 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@lib/supabase';
 import styles from '@styles/DashboardAdmin.module.css';
 import {
-  FiUsers,
   FiGlobe,
   FiFilter,
-  FiCalendar,
-  FiTrendingUp,
   FiChevronDown,
   FiAlertCircle,
   FiCheckCircle,
-  FiClock,
-  FiUser,
-  FiFlag,
-  FiFileText,
   FiExternalLink,
   FiImage,
   FiFile,
-  FiSave,
-  FiSend,
+  FiMessageCircle,
+  FiPaperclip,
+  FiArrowRight,
+  FiRefreshCw,
+  FiX,
 } from 'react-icons/fi';
 
 export default function AdminDashboard() {
@@ -90,6 +86,7 @@ export default function AdminDashboard() {
 
   // Estado editable del modal
   const [modalEstadoId, setModalEstadoId] = useState('');
+  const [modalProgreso, setModalProgreso] = useState(0);
   const [modalRevisado, setModalRevisado] = useState(false);
   const [modalObservaciones, setModalObservaciones] = useState('');
   const [modalEvidencias, setModalEvidencias] = useState([]);
@@ -171,7 +168,7 @@ export default function AdminDashboard() {
       const { data: tareasData, error } = await supabase
         .from('tareas')
         .select(
-          'id,titulo,descripcion,created_at,fecha_inicio,fecha_limite,porcentaje_avance,observaciones,evidencia,revisado,estado_id,prioridad_id,asignado_a,planta_id,creado_por,supervisado_por'
+          'id,titulo,descripcion,created_at,fecha_inicio,fecha_limite,fecha_cierre,porcentaje_avance,observaciones,evidencia,revisado,estado_id,prioridad_id,asignado_a,planta_id,creado_por,supervisado_por'
         )
         .order('fecha_limite', { ascending: true });
 
@@ -190,9 +187,23 @@ export default function AdminDashboard() {
         supabase.from('prioridades').select('id, nombre'),
       ]);
 
-      const { data: paises } = await supabase
-        .from('paises')
-        .select('id, nombre');
+      const tareasIds = (tareasData || []).map((tarea) => tarea.id);
+      const [{ data: paises }, { data: comentarios }, { data: evidencias }] =
+        await Promise.all([
+          supabase.from('paises').select('id, nombre'),
+          tareasIds.length
+            ? supabase
+                .from('comentarios_tarea')
+                .select('id, tarea_id')
+                .in('tarea_id', tareasIds)
+            : Promise.resolve({ data: [] }),
+          tareasIds.length
+            ? supabase
+                .from('evidencias_tareas')
+                .select('id, tarea_id')
+                .in('tarea_id', tareasIds)
+            : Promise.resolve({ data: [] }),
+        ]);
 
       // Crear mapas para búsqueda rápida
       const plantasMap = (plantas || []).reduce(
@@ -215,6 +226,14 @@ export default function AdminDashboard() {
         (acc, p) => ({ ...acc, [p.id]: p }),
         {}
       );
+      const comentariosPorTarea = (comentarios || []).reduce((acc, item) => {
+        acc[item.tarea_id] = (acc[item.tarea_id] || 0) + 1;
+        return acc;
+      }, {});
+      const evidenciasPorTarea = (evidencias || []).reduce((acc, item) => {
+        acc[item.tarea_id] = (acc[item.tarea_id] || 0) + 1;
+        return acc;
+      }, {});
 
       // Combinar datos
       const tareasConRelaciones = (tareasData || []).map((tarea) => ({
@@ -222,6 +241,8 @@ export default function AdminDashboard() {
         usuarios: usuariosMap[tarea.asignado_a],
         estados: estadosMap[tarea.estado_id],
         prioridades: prioridadesMap[tarea.prioridad_id],
+        totalComentarios: comentariosPorTarea[tarea.id] || 0,
+        totalEvidencias: evidenciasPorTarea[tarea.id] || 0,
         plantas: {
           ...plantasMap[tarea.planta_id],
           paises: paisesMap[plantasMap[tarea.planta_id]?.pais_id],
@@ -319,12 +340,13 @@ export default function AdminDashboard() {
     return styles.badgePrioridad;
   };
 
-  const obtenerIconoPrioridad = (nombrePrioridad) => {
-    if (!nombrePrioridad) return '⚡';
-    if (nombrePrioridad.toLowerCase().includes('urgente')) return '🔴';
-    if (nombrePrioridad.toLowerCase().includes('alta')) return '🔴';
-    if (nombrePrioridad.toLowerCase().includes('media')) return '🟡';
-    return '🟢';
+  const obtenerPesoPrioridad = (nombrePrioridad) => {
+    const prioridad = nombrePrioridad?.toLowerCase() || '';
+    if (prioridad.includes('urgente')) return 0;
+    if (prioridad.includes('alta')) return 1;
+    if (prioridad.includes('media')) return 2;
+    if (prioridad.includes('baja')) return 3;
+    return 4;
   };
 
   const normalizarEtiqueta = (texto) => {
@@ -357,21 +379,29 @@ export default function AdminDashboard() {
     });
   };
 
-  const obtenerIconoCriticidad = (tarea) => {
+  const obtenerTextoDiasRestantes = (tarea) => {
+    if (!tarea.fecha_limite) return 'Sin fecha limite';
     if (tarea.estaVencida) {
-      return <FiAlertCircle />;
+      return `Vencida hace ${Math.abs(Math.floor(tarea.diasRestantes))} dias`;
     }
-    if (tarea.diasRestantes <= 3) {
-      return <FiClock />;
-    }
-    return <FiCheckCircle />;
+
+    const dias = Math.ceil(tarea.diasRestantes);
+    if (dias <= 0) return 'Vence hoy';
+    if (dias === 1) return 'Falta 1 dia';
+    return `Faltan ${dias} dias`;
+  };
+
+  const obtenerRiesgoTarea = (tarea) => {
+    if (esEstadoFinal(tarea.estados?.nombre)) return 'Completada';
+    if (tarea.estaVencida) return 'Vencida';
+    if (tarea.diasRestantes <= 3) return 'En riesgo';
+    return 'En tiempo';
   };
 
   const obtenerClaseTarjeta = (tarea) => {
     const estadoNombre = tarea.estados?.nombre?.toLowerCase() || '';
     if (esEstadoFinal(estadoNombre)) {
       const fechaLimite = new Date(tarea.fecha_limite);
-      const fechaInicio = new Date(tarea.fecha_inicio);
       const fechaCierre = tarea.fecha_cierre
         ? new Date(tarea.fecha_cierre)
         : fechaLimite;
@@ -519,6 +549,17 @@ export default function AdminDashboard() {
     }
     tareasAgrupadasFiltradas[pais].push(tarea);
   });
+  Object.keys(tareasAgrupadasFiltradas).forEach((pais) => {
+    tareasAgrupadasFiltradas[pais].sort((a, b) => {
+      const prioridadA = obtenerPesoPrioridad(a.prioridades?.nombre);
+      const prioridadB = obtenerPesoPrioridad(b.prioridades?.nombre);
+
+      if (prioridadA !== prioridadB) return prioridadA - prioridadB;
+      if (a.estaVencida && !b.estaVencida) return -1;
+      if (!a.estaVencida && b.estaVencida) return 1;
+      return a.diasRestantes - b.diasRestantes;
+    });
+  });
 
   const iniciales = (nombre = '') => {
     if (!nombre) return 'SN';
@@ -538,6 +579,7 @@ export default function AdminDashboard() {
   const AbrirModal = async (tarea) => {
     setTareaSeleccionada(tarea);
     setModalEstadoId(tarea.estado_id || '');
+    setModalProgreso(tarea.porcentaje_avance || 0);
     setModalRevisado(tarea.revisado || false);
     setModalObservaciones(tarea.observaciones || '');
     setModalEvidencias([]);
@@ -588,6 +630,21 @@ export default function AdminDashboard() {
     setModalNuevoComentario('');
   };
 
+  useEffect(() => {
+    if (!modalDetalleAbierto) return;
+
+    const cerrarConEscape = (e) => {
+      if (e.key === 'Escape') {
+        setModalDetalleAbierto(false);
+        setTareaSeleccionada(null);
+        setModalNuevoComentario('');
+      }
+    };
+
+    document.addEventListener('keydown', cerrarConEscape);
+    return () => document.removeEventListener('keydown', cerrarConEscape);
+  }, [modalDetalleAbierto]);
+
   const GuardarModal = async () => {
     if (!tareaSeleccionada) return;
     setModalGuardando(true);
@@ -603,6 +660,7 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({
           estado_id: modalEstadoId,
+          porcentaje_avance: Number(modalProgreso),
           revisado: modalRevisado,
           observaciones: modalObservaciones,
         }),
@@ -619,6 +677,7 @@ export default function AdminDashboard() {
             ? {
                 ...t,
                 estado_id: modalEstadoId,
+                porcentaje_avance: Number(modalProgreso),
                 revisado: modalRevisado,
                 observaciones: modalObservaciones,
                 estados:
@@ -760,7 +819,9 @@ export default function AdminDashboard() {
                   className={
                     styles.responsableItem +
                     ' ' +
-                    (estadoAlerta ? styles[`alerta_${estadoAlerta}`] : '')
+                    (estadoAlerta
+                      ? `${styles.responsableConAlerta} ${styles[`alerta_${estadoAlerta}`]}`
+                      : '')
                   }
                   tabIndex={responsable.id !== 'sin-asignar' ? 0 : -1}
                   role="button"
@@ -795,19 +856,6 @@ export default function AdminDashboard() {
                     }
                   }}
                 >
-                  <div>
-                    <p className={styles.responsableNombre}>
-                      {responsable.nombre}
-                    </p>
-                    <span className={styles.responsableMeta}>
-                      {responsable.vencidas > 0
-                        ? `${responsable.vencidas} vencidas`
-                        : 'Sin vencidas'}
-                    </span>
-                  </div>
-                  <strong className={styles.responsableTotal}>
-                    {responsable.total}
-                  </strong>
                   {estadoAlerta === 'pendiente' && (
                     <span
                       className={styles.alertaBadge}
@@ -824,6 +872,19 @@ export default function AdminDashboard() {
                       <FiCheckCircle color="#22c55e" />
                     </span>
                   )}
+                  <div className={styles.responsableInfo}>
+                    <p className={styles.responsableNombre}>
+                      {responsable.nombre}
+                    </p>
+                    <span className={styles.responsableMeta}>
+                      {responsable.vencidas > 0
+                        ? `${responsable.vencidas} vencidas`
+                        : 'Sin vencidas'}
+                    </span>
+                  </div>
+                  <strong className={styles.responsableTotal}>
+                    {responsable.total}
+                  </strong>
                 </div>
               );
             })}
@@ -1026,12 +1087,29 @@ export default function AdminDashboard() {
                           key={tarea.id}
                           className={`${styles.tarjetaTarea} ${obtenerClaseTarjeta(tarea)}`}
                           onClick={() => AbrirModal(tarea)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') AbrirModal(tarea);
+                          }}
+                          role="button"
+                          tabIndex={0}
                         >
-                          {/* Fila 1: Título + Usuario */}
-                          <div className={styles.cardFila1}>
-                            <h4 className={styles.tarjetaTitulo}>
-                              {tarea.titulo}
-                            </h4>
+                          <div className={styles.cardTop}>
+                            <div className={styles.cardBadges}>
+                              <span
+                                className={obtenerColorPrioridad(
+                                  tarea.prioridades?.nombre
+                                )}
+                              >
+                                {normalizarEtiqueta(tarea.prioridades?.nombre)}
+                              </span>
+                              <span
+                                className={obtenerColorEstado(
+                                  tarea.estados?.nombre
+                                )}
+                              >
+                                {normalizarEtiqueta(tarea.estados?.nombre)}
+                              </span>
+                            </div>
                             <div className={styles.cardUsuario}>
                               <span className={styles.avatarMini}>
                                 {iniciales(tarea.usuarios?.nombre_completo)}
@@ -1043,78 +1121,51 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          {/* Cuerpo 3 columnas */}
-                          <div className={styles.cardCuerpo}>
-                            {/* Descripción */}
-                            <div className={styles.cardColDesc}>
-                              <span className={styles.metaLabel}>
-                                <FiFileText /> Descripción
+                          <h4 className={styles.tarjetaTitulo}>
+                            {tarea.titulo}
+                          </h4>
+
+                          <p className={styles.cardMetaLinea}>
+                            {tarea.plantas?.nombre || 'Sin planta'} · Vence{' '}
+                            {formatearFecha(tarea.fecha_limite)} ·{' '}
+                            {obtenerTextoDiasRestantes(tarea)}
+                          </p>
+
+                          <div className={styles.cardProgresoFila}>
+                            <div className={styles.cardProgresoBloque}>
+                              <div className={styles.cardProgresoHeader}>
+                                <span>
+                                  Progreso {tarea.porcentaje_avance || 0}%
+                                </span>
+                              </div>
+                              <div className={styles.barraProgreso}>
+                                <div
+                                  className={styles.barraProgresoFill}
+                                  style={{
+                                    width: `${tarea.porcentaje_avance || 0}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            {!esEstadoFinal(tarea.estados?.nombre) && (
+                              <span className={styles.cardRiesgo}>
+                                <FiAlertCircle /> {obtenerRiesgoTarea(tarea)}
                               </span>
-                              <p className={styles.tareaResumen}>
-                                {tarea.descripcion || 'Sin descripción'}
-                              </p>
-                            </div>
+                            )}
+                          </div>
 
-                            {/* Prioridad + Estado */}
-                            <div className={styles.cardColStatus}>
-                              <div className={styles.metaItem}>
-                                <span className={styles.metaLabel}>
-                                  <FiFlag /> Prioridad
-                                </span>
-                                <span
-                                  className={obtenerColorPrioridad(
-                                    tarea.prioridades?.nombre
-                                  )}
-                                >
-                                  {normalizarEtiqueta(
-                                    tarea.prioridades?.nombre
-                                  )}
-                                </span>
-                              </div>
-
-                              <div className={styles.metaItem}>
-                                <span className={styles.metaLabel}>
-                                  <FiCheckCircle /> Estado
-                                </span>
-                                <span
-                                  className={obtenerColorEstado(
-                                    tarea.estados?.nombre
-                                  )}
-                                >
-                                  {normalizarEtiqueta(tarea.estados?.nombre)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Fechas + Progreso */}
-                            <div className={styles.cardColFechas}>
-                              <div className={styles.metaItem}>
-                                <span className={styles.metaLabel}>
-                                  <FiCalendar /> F. Inicio / F. Fin
-                                </span>
-                                <span className={styles.tarjetaValor}>
-                                  {formatearFecha(tarea.fecha_inicio)} →{' '}
-                                  {formatearFecha(tarea.fecha_limite)}
-                                </span>
-                              </div>
-
-                              <div className={styles.metaItem}>
-                                <span className={styles.metaLabel}>
-                                  <FiTrendingUp /> Progreso
-                                </span>
-                                <div className={styles.barraProgreso}>
-                                  <div
-                                    className={styles.barraProgresoFill}
-                                    style={{
-                                      width: `${tarea.porcentaje_avance || 0}%`,
-                                    }}
-                                  />
-                                </div>
-                                <span className={styles.barraProgresoTexto}>
-                                  {tarea.porcentaje_avance || 0}%
-                                </span>
-                              </div>
-                            </div>
+                          <div className={styles.cardFooter}>
+                            <span>
+                              <FiMessageCircle /> {tarea.totalComentarios || 0}{' '}
+                              comentarios
+                            </span>
+                            <span>
+                              <FiPaperclip /> {tarea.totalEvidencias || 0}{' '}
+                              evidencias
+                            </span>
+                            <strong>
+                              Ver <FiArrowRight />
+                            </strong>
                           </div>
                         </div>
                       ))}
@@ -1127,217 +1178,328 @@ export default function AdminDashboard() {
         )}
       </div>
 
-      {/* Modal de Detalles + Acciones */}
-      <Modal
-        abierto={modalDetalleAbierto}
-        onCerrar={CerrarModal}
-        titulo="Detalles de la Tarea"
-        modo="editar"
-        onAceptar={GuardarModal}
-        cargando={modalGuardando}
-        tamano="lg"
-      >
-        {tareaSeleccionada && (
-          <div className={styles.modalDetalle}>
-            {modalError && (
-              <div className={styles.modalAlerta}>{modalError}</div>
-            )}
-            {modalSuccess && (
-              <div className={styles.modalAlertaOk}>{modalSuccess}</div>
-            )}
+      {modalDetalleAbierto && tareaSeleccionada && (
+        <div className={styles.drawerOverlay} onClick={CerrarModal}>
+          <aside
+            className={styles.drawer}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Detalle operativo de tarea"
+          >
+            <header className={styles.drawerHeader}>
+              <div>
+                <p className={styles.drawerEyebrow}>Detalle operativo</p>
+                <h2>{tareaSeleccionada.titulo}</h2>
+              </div>
+              <div className={styles.drawerAcciones}>
+                <button
+                  type="button"
+                  className={styles.drawerBtnPrimario}
+                  onClick={GuardarModal}
+                  disabled={modalGuardando}
+                >
+                  <FiRefreshCw />
+                  {modalGuardando ? 'Actualizando...' : 'Actualizar'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.drawerBtnIcono}
+                  onClick={CerrarModal}
+                  aria-label="Cerrar detalle"
+                >
+                  <FiX />
+                </button>
+              </div>
+            </header>
 
-            <div className={styles.modalSplit}>
-              <div className={styles.modalPrincipal}>
-                {/* ── Info contextual (solo lectura) ── */}
-                <div className={styles.modalGrid2}>
-                  <div className={styles.modalItem}>
-                    <label>Asignado a</label>
-                    <p>
-                      {tareaSeleccionada.usuarios?.nombre_completo ||
-                        'Sin asignar'}
-                    </p>
-                  </div>
-                  <div className={styles.modalItem}>
-                    <label>Planta</label>
-                    <p>{tareaSeleccionada.plantas?.nombre || 'N/A'}</p>
-                  </div>
-                </div>
+            <div className={styles.drawerBody}>
+              {modalError && (
+                <div className={styles.modalAlerta}>{modalError}</div>
+              )}
+              {modalSuccess && (
+                <div className={styles.modalAlertaOk}>{modalSuccess}</div>
+              )}
 
-                {/* ── Estado ── */}
-                <div className={styles.modalCampo}>
-                  <label className={styles.modalLabel}>Estado</label>
-                  <select
-                    className={styles.modalSelect}
-                    value={modalEstadoId}
-                    onChange={(e) => setModalEstadoId(e.target.value)}
-                  >
-                    {estadosDisponibles.map((est) => (
-                      <option key={est.id} value={est.id}>
-                        {normalizarEtiqueta(est.nombre)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* ── Revisado ── */}
-                <div className={styles.modalCampo}>
-                  <label className={styles.modalLabel}>
-                    Revisado por admin
-                  </label>
-                  <button
-                    className={`${styles.toggleRevisado} ${modalRevisado ? styles.toggleOn : styles.toggleOff}`}
-                    onClick={() => setModalRevisado((v) => !v)}
-                    type="button"
-                  >
-                    <span className={styles.toggleCircle} />
-                    <span>
-                      {modalRevisado
-                        ? '✅ Marcado como revisado'
-                        : '❌ Pendiente de revisión'}
-                    </span>
-                  </button>
-                </div>
-
-                {/* ── Observaciones ── */}
-                <div className={styles.modalCampo}>
-                  <label className={styles.modalLabel}>Observaciones</label>
-                  <textarea
-                    className={styles.modalTextarea}
-                    value={modalObservaciones}
-                    onChange={(e) => setModalObservaciones(e.target.value)}
-                    placeholder="Agrega notas o comentarios sobre esta tarea..."
-                    rows={3}
-                    maxLength={1000}
-                  />
-                  <span className={styles.modalContador}>
-                    {modalObservaciones.length}/1000
-                  </span>
-                </div>
-
-                {/* ── Evidencias ── */}
-                <div className={styles.modalCampo}>
-                  <label className={styles.modalLabel}>
-                    Evidencias (
-                    {modalCargandoEvidencias ? '...' : modalEvidencias.length})
-                  </label>
-                  {modalCargandoEvidencias ? (
-                    <p className={styles.modalTextoSec}>Cargando...</p>
-                  ) : modalEvidencias.length === 0 ? (
-                    <p className={styles.modalTextoSec}>
-                      Sin evidencias subidas aún.
-                    </p>
-                  ) : (
-                    <div className={styles.modalEvidencias}>
-                      {modalEvidencias.map((ev) => (
-                        <div key={ev.id} className={styles.modalEvidenciaItem}>
-                          <span className={styles.modalEvidenciaIcono}>
-                            {ev.tipo_mime?.startsWith('image/') ? (
-                              <FiImage size={16} />
-                            ) : (
-                              <FiFile size={16} />
-                            )}
-                          </span>
-                          <div className={styles.modalEvidenciaDatos}>
-                            <span className={styles.modalEvidenciaNombre}>
-                              {ev.descripcion ||
-                                ev.archivo_path?.split('_').pop()}
-                            </span>
-                            <span className={styles.modalEvidenciaMeta}>
-                              {ev.usuario?.nombre_completo} ·{' '}
-                              {new Date(ev.fecha_subida).toLocaleDateString(
-                                'es-ES',
-                                {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric',
-                                }
-                              )}
-                              {ev.tamanio_bytes
-                                ? ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`
-                                : ''}
-                            </span>
-                          </div>
-                          <a
-                            href={ev.archivo_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={styles.modalBtnVer}
-                            title="Ver archivo"
-                          >
-                            <FiExternalLink size={14} /> Ver
-                          </a>
-                        </div>
-                      ))}
+              <div className={styles.drawerGrid}>
+                <div className={styles.drawerColumna}>
+                  <section className={styles.drawerSeccion}>
+                    <h3>Resumen</h3>
+                    <div className={styles.drawerResumenGrid}>
+                      <div>
+                        <span>Asignado a</span>
+                        <strong>
+                          {tareaSeleccionada.usuarios?.nombre_completo ||
+                            'Sin asignar'}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Planta</span>
+                        <strong>
+                          {tareaSeleccionada.plantas?.nombre || 'N/A'}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Prioridad</span>
+                        <strong>
+                          {normalizarEtiqueta(
+                            tareaSeleccionada.prioridades?.nombre
+                          )}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Estado</span>
+                        <strong>
+                          {normalizarEtiqueta(
+                            tareaSeleccionada.estados?.nombre
+                          )}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Fecha inicio</span>
+                        <strong>
+                          {formatearFecha(tareaSeleccionada.fecha_inicio)}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Fecha limite</span>
+                        <strong>
+                          {formatearFecha(tareaSeleccionada.fecha_limite)}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Progreso</span>
+                        <strong>
+                          {tareaSeleccionada.porcentaje_avance || 0}%
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Riesgo</span>
+                        <strong>{obtenerRiesgoTarea(tareaSeleccionada)}</strong>
+                      </div>
                     </div>
-                  )}
+                  </section>
+
+                  <section className={styles.drawerSeccion}>
+                    <h3>Descripción</h3>
+                    <p className={styles.drawerDescripcion}>
+                      {tareaSeleccionada.descripcion ||
+                        'Sin descripción registrada.'}
+                    </p>
+                  </section>
+
+                  <section className={styles.drawerSeccion}>
+                    <h3>Update operativo</h3>
+                    <div className={styles.modalCampo}>
+                      <label className={styles.modalLabel}>Estado</label>
+                      <select
+                        className={styles.modalSelect}
+                        value={modalEstadoId}
+                        onChange={(e) => setModalEstadoId(e.target.value)}
+                      >
+                        {estadosDisponibles.map((est) => (
+                          <option key={est.id} value={est.id}>
+                            {normalizarEtiqueta(est.nombre)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className={styles.modalCampo}>
+                      <label className={styles.modalLabel}>Progreso</label>
+                      <div className={styles.drawerProgresoControl}>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={modalProgreso}
+                          onChange={(e) => setModalProgreso(e.target.value)}
+                        />
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={modalProgreso}
+                          onChange={(e) => setModalProgreso(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.modalCampo}>
+                      <label className={styles.modalLabel}>Observaciones</label>
+                      <textarea
+                        className={styles.modalTextarea}
+                        value={modalObservaciones}
+                        onChange={(e) => setModalObservaciones(e.target.value)}
+                        placeholder="Agrega notas o comentarios sobre esta tarea..."
+                        rows={4}
+                        maxLength={1000}
+                      />
+                      <span className={styles.modalContador}>
+                        {modalObservaciones.length}/1000
+                      </span>
+                    </div>
+
+                    <div className={styles.modalCampo}>
+                      <label className={styles.modalLabel}>
+                        Revisado por admin
+                      </label>
+                      <button
+                        className={`${styles.toggleRevisado} ${modalRevisado ? styles.toggleOn : styles.toggleOff}`}
+                        onClick={() => setModalRevisado((v) => !v)}
+                        type="button"
+                      >
+                        <span className={styles.toggleCircle} />
+                        <span>
+                          {modalRevisado
+                            ? 'Marcado como revisado'
+                            : 'Pendiente de revisión'}
+                        </span>
+                      </button>
+                    </div>
+                  </section>
+                </div>
+
+                <div className={styles.drawerColumna}>
+                  <section className={styles.drawerSeccion}>
+                    <div className={styles.drawerSeccionHeader}>
+                      <h3>Comentarios</h3>
+                      <span>
+                        {modalCargandoComentarios
+                          ? '...'
+                          : modalComentarios.length}
+                      </span>
+                    </div>
+
+                    {modalCargandoComentarios ? (
+                      <p className={styles.modalTextoSec}>
+                        Cargando comentarios...
+                      </p>
+                    ) : modalComentarios.length === 0 ? (
+                      <p className={styles.modalTextoSec}>
+                        Sin comentarios registrados.
+                      </p>
+                    ) : (
+                      <div className={styles.modalComentariosLista}>
+                        {modalComentarios.map((com) => (
+                          <div
+                            key={com.id}
+                            className={styles.modalComentarioItem}
+                          >
+                            <div className={styles.modalComentarioCabecera}>
+                              <strong>
+                                {com.usuario?.nombre_completo || 'Usuario'}
+                              </strong>
+                              <span>
+                                {formatearFechaHora(
+                                  com.fecha_creacion || com.created_at
+                                )}
+                              </span>
+                            </div>
+                            <p>{com.contenido || '-'}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className={styles.formComentarioModal}>
+                      <textarea
+                        placeholder="Agregar comentario..."
+                        value={modalNuevoComentario}
+                        onChange={(e) =>
+                          setModalNuevoComentario(e.target.value)
+                        }
+                        className={styles.textareaModal}
+                        maxLength={500}
+                        disabled={modalAgreganComentario}
+                      />
+                      <div className={styles.pieFormularioModal}>
+                        <span className={styles.contadorModal}>
+                          {modalNuevoComentario.length}/500
+                        </span>
+                        <button
+                          onClick={agregarComentarioModal}
+                          disabled={
+                            modalAgreganComentario ||
+                            !modalNuevoComentario.trim()
+                          }
+                          className={styles.btnEnviarModal}
+                        >
+                          {modalAgreganComentario ? 'Enviando...' : 'Enviar'}
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className={styles.drawerSeccion}>
+                    <div className={styles.drawerSeccionHeader}>
+                      <h3>Evidencias</h3>
+                      <span>
+                        {modalCargandoEvidencias
+                          ? '...'
+                          : modalEvidencias.length}
+                      </span>
+                    </div>
+
+                    {modalCargandoEvidencias ? (
+                      <p className={styles.modalTextoSec}>Cargando...</p>
+                    ) : modalEvidencias.length === 0 ? (
+                      <p className={styles.modalTextoSec}>
+                        Sin evidencias subidas aún.
+                      </p>
+                    ) : (
+                      <div className={styles.modalEvidencias}>
+                        {modalEvidencias.map((ev) => (
+                          <div
+                            key={ev.id}
+                            className={styles.modalEvidenciaItem}
+                          >
+                            <span className={styles.modalEvidenciaIcono}>
+                              {ev.tipo_mime?.startsWith('image/') ? (
+                                <FiImage size={16} />
+                              ) : (
+                                <FiFile size={16} />
+                              )}
+                            </span>
+                            <div className={styles.modalEvidenciaDatos}>
+                              <span className={styles.modalEvidenciaNombre}>
+                                {ev.descripcion ||
+                                  ev.archivo_path?.split('_').pop()}
+                              </span>
+                              <span className={styles.modalEvidenciaMeta}>
+                                {ev.usuario?.nombre_completo} ·{' '}
+                                {new Date(ev.fecha_subida).toLocaleDateString(
+                                  'es-ES',
+                                  {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  }
+                                )}
+                                {ev.tamanio_bytes
+                                  ? ` · ${(ev.tamanio_bytes / 1024).toFixed(0)} KB`
+                                  : ''}
+                              </span>
+                            </div>
+                            <a
+                              href={ev.archivo_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={styles.modalBtnVer}
+                              title="Ver archivo"
+                            >
+                              <FiExternalLink size={14} /> Ver
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
                 </div>
               </div>
-
-              <aside className={styles.modalAsideComentarios}>
-                <div className={styles.modalAsideHeader}>
-                  <h4>Comentarios de la tarea</h4>
-                  <span>
-                    {modalCargandoComentarios ? '...' : modalComentarios.length}
-                  </span>
-                </div>
-
-                {modalCargandoComentarios ? (
-                  <p className={styles.modalTextoSec}>
-                    Cargando comentarios...
-                  </p>
-                ) : modalComentarios.length === 0 ? (
-                  <p className={styles.modalTextoSec}>
-                    Sin comentarios registrados.
-                  </p>
-                ) : (
-                  <div className={styles.modalComentariosLista}>
-                    {modalComentarios.map((com) => (
-                      <div key={com.id} className={styles.modalComentarioItem}>
-                        <div className={styles.modalComentarioCabecera}>
-                          <strong>
-                            {com.usuario?.nombre_completo || 'Usuario'}
-                          </strong>
-                          <span>
-                            {formatearFechaHora(
-                              com.fecha_creacion || com.created_at
-                            )}
-                          </span>
-                        </div>
-                        <p>{com.contenido || '-'}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className={styles.formComentarioModal}>
-                  <textarea
-                    placeholder="Agregar comentario..."
-                    value={modalNuevoComentario}
-                    onChange={(e) => setModalNuevoComentario(e.target.value)}
-                    className={styles.textareaModal}
-                    maxLength={500}
-                    disabled={modalAgreganComentario}
-                  />
-                  <div className={styles.pieFormularioModal}>
-                    <span className={styles.contadorModal}>
-                      {modalNuevoComentario.length}/500
-                    </span>
-                    <button
-                      onClick={agregarComentarioModal}
-                      disabled={
-                        modalAgreganComentario || !modalNuevoComentario.trim()
-                      }
-                      className={styles.btnEnviarModal}
-                    >
-                      {modalAgreganComentario ? 'Enviando...' : 'Enviar'}
-                    </button>
-                  </div>
-                </div>
-              </aside>
             </div>
-          </div>
-        )}
-      </Modal>
+          </aside>
+        </div>
+      )}
     </Layout>
   );
 }

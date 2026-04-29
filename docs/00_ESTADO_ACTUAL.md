@@ -16,11 +16,11 @@ La app usa **Next.js con Pages Router**, **JavaScript**, **Supabase**, **CSS Mod
 
 ## Estado por rol
 
-| Rol | Estado | Alcance real |
-| --- | --- | --- |
-| Admin | Activo ✅ | Vista global, estadisticas, gestion de catalogos, usuarios, tareas, asignaciones y alertas |
+| Rol        | Estado    | Alcance real                                                                                             |
+| ---------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| Admin      | Activo ✅ | Vista global, estadisticas, gestion de catalogos, usuarios, tareas, asignaciones y alertas               |
 | Supervisor | Activo ✅ | Vista local, tareas propias, tareas de usuarios supervisados, gestion de usuarios y asignaciones locales |
-| User | Activo ✅ | Tareas asignadas, avance, comentarios, evidencias y confirmacion de alertas |
+| User       | Activo ✅ | Tareas asignadas, avance, comentarios, evidencias y confirmacion de alertas                              |
 
 ---
 
@@ -87,19 +87,19 @@ Funciones/RPC relevantes:
 
 ## Tecnologias
 
-| Paquete | Version |
-| --- | --- |
-| `next` | `^16.1.0` |
-| `react` | `^18.3.0` |
-| `react-dom` | `^18.3.0` |
-| `@supabase/supabase-js` | `^2.45.0` |
-| `react-icons` | `^5.0.0` |
-| `lucide-react` | `^0.395.0` |
-| `recharts` | `^2.12.0` |
-| `chart.js` | `^4.4.1` |
-| `react-chartjs-2` | `^5.2.0` |
-| `date-fns` | `^3.6.0` |
-| `vitest` | `^1.1.0` |
+| Paquete                 | Version    |
+| ----------------------- | ---------- |
+| `next`                  | `^16.1.0`  |
+| `react`                 | `^18.3.0`  |
+| `react-dom`             | `^18.3.0`  |
+| `@supabase/supabase-js` | `^2.45.0`  |
+| `react-icons`           | `^5.0.0`   |
+| `lucide-react`          | `^0.395.0` |
+| `recharts`              | `^2.12.0`  |
+| `chart.js`              | `^4.4.1`   |
+| `react-chartjs-2`       | `^5.2.0`   |
+| `date-fns`              | `^3.6.0`   |
+| `vitest`                | `^1.1.0`   |
 
 Nota: el proyecto tiene `typescript` como dependencia de desarrollo, pero la aplicacion esta implementada en JavaScript.
 
