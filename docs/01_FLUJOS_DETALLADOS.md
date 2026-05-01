@@ -336,16 +336,16 @@ Usuario accede /user/dashboard
 │
 └─ Acciones:
    ├─ Banner de alerta individual (si existe alerta activa)
-   ├─ Confirmación de lectura de alerta
-   └─ Click en tarea → /user/tarea/{id}
+   ├─ Confirmacion de lectura de alerta
+   └─ Click en tarea → drawer de detalle operativo
 ```
 
 #### Flujo: Actualizar tarea
 
 ```
-User en /user/dashboard → Click en tarea
+User en /user/dashboard o /user/tareas → Click en tarea
 │
-├─ Navegación: /user/tarea/{id}
+├─ Abre drawer de detalle operativo
 │
 ├─ Carga datos de tarea:
 │  ├─ GET /api/user/tareas/{id}
@@ -354,7 +354,7 @@ User en /user/dashboard → Click en tarea
 │  │  └─ Tarea asignada a este usuario
 │  └─ Retorna tarea completa
 │
-├─ Página muestra:
+├─ Drawer muestra:
 │  ├─ Información de tarea (título, descripción, planta)
 │  ├─ Fecha inicio/límite
 │  ├─ Prioridad
@@ -364,16 +364,12 @@ User en /user/dashboard → Click en tarea
 │  │  │  └─ Opciones: Pendiente, En Proceso, Completado, Pausado
 │  │  │
 │  │  ├─ Slider: Porcentaje de avance (0-100%)
-│  │  │  └─ Actualización en tiempo real
-│  │  │
-│  │  ├─ Textarea: Observaciones
-│  │  │  └─ Cambios = auto-save
+│  │  │  └─ Se guarda con "Guardar cambios"
 │  │  │
 │  │  └─ Sección: Cargar evidencia
 │  │     ├─ Botón: "Seleccionar archivo"
 │  │     ├─ Tipos permitidos: JPG, PNG, PDF
 │  │     ├─ Tamaño máx: 10 MB
-│  │     ├─ Preview si es imagen
 │  │     └─ Botón: "Subir evidencia"
 │  │
 │  └─ SECCIÓN DE COMUNICACIÓN:
@@ -381,8 +377,8 @@ User en /user/dashboard → Click en tarea
 │     ├─ Campo: Agregar comentario
 │     └─ Botón: Enviar comentario
 │
-├─ Submit de cambios → PUT /api/user/tareas/{id}
-│  └─ Body: { estado_id, porcentaje_avance, observaciones, evidencia }
+├─ Guardar cambios → PUT /api/user/tareas/{id}
+│  └─ Body: { estado_id, porcentaje_avance }
 │
 ├─ Backend valida:
 │  ├─ JWT válido + User
@@ -392,19 +388,17 @@ User en /user/dashboard → Click en tarea
 │  │  ├─ estado_id existe en BD
 │  │  └─ Evidencia cumple requisitos
 │  │
-│  └─ Insert en tabla comentarios (si aplica)
+│  └─ Comentarios y evidencias se gestionan por acciones independientes
 │
 ├─ Update tabla tareas:
 │  ├─ estado_id, porcentaje_avance
-│  ├─ observaciones
-│  ├─ evidencia (URL si se subió)
 │  ├─ updated_at: NOW()
 │  └─ Si estado es "Completado":
 │     └─ fecha_cierre: NOW()
 │
 └─ Retorna 200 + tarea actualizada
-   └─ Notification: "Cambios guardados"
-   └─ Redirección: /user/tareas (o permanece en detalle)
+   └─ Notification: "Tarea actualizada"
+   └─ Permanece en drawer
 ```
 
 #### Flujo: Cargar evidencia
@@ -460,7 +454,7 @@ User en detalle de tarea → Sección "Cargar evidencia"
 ├─────────────────────────────────────────────────────────────┤
 │ • Acción: User cambia a "En Proceso"                       │
 │ • Avance: 0-100% (slider)                                  │
-│ • Observaciones: User agrega notas                         │
+│ • Comentarios: User agrega notas de seguimiento            │
 │ • Timeline mostrado en dashboard admin                     │
 └──────────────────┬──────────────────────────────────────────┘
                    │ User completa + carga evidencia

@@ -80,7 +80,11 @@
 
 .resumenSeccion {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(280px, 1fr));
+  grid-template-columns:
+    minmax(0, 1.65fr)
+    minmax(300px, 0.9fr)
+    minmax(300px, 0.9fr);
+  align-items: stretch;
   gap: 14px;
   margin-bottom: 16px;
 }
@@ -91,6 +95,7 @@
   border-radius: 14px;
   padding: 14px;
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  min-width: 0;
 }
 
 .resumenCardResponsables {
@@ -252,6 +257,23 @@
   background: linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
 }
 
+.resumenDestacadoLista {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.resumenDestacadoItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.resumenDestacadoItem > div {
+  min-width: 0;
+}
+
 .avatarResumen {
   width: 42px;
   height: 42px;
@@ -271,6 +293,9 @@
   font-size: 18px;
   font-weight: 800;
   color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .resumenDestacadoMeta {
@@ -282,17 +307,48 @@
 }
 
 .resumenVacio {
-  min-height: 112px;
+  min-height: 84px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  border: 1px dashed #cbd5e1;
+  justify-content: flex-start;
+  gap: 12px;
+  border: 1px dashed #bfdbfe;
   border-radius: 12px;
   padding: 14px;
+  color: #334155;
+  background: #f8fbff;
+}
+
+.resumenVacioIcono {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #047857;
+  background: #d1fae5;
+}
+
+.resumenVacioIcono svg {
+  width: 18px;
+  height: 18px;
+}
+
+.resumenVacio strong {
+  display: block;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.resumenVacio span:not(.resumenVacioIcono) {
+  display: block;
+  margin-top: 3px;
   color: #64748b;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .filtrosSeccion {
@@ -582,6 +638,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+  min-width: 0;
 }
 
 .cardUsuario {
@@ -589,6 +646,7 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  max-width: 48%;
   min-width: 0;
 }
 
@@ -1640,7 +1698,10 @@
   }
 
   .resumenSeccion {
-    grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(280px, 1fr));
+    grid-template-columns:
+      minmax(0, 1.65fr)
+      minmax(300px, 0.9fr)
+      minmax(300px, 0.9fr);
   }
 
   .acordeonContenido {
@@ -1685,12 +1746,6 @@
 
   .acordeonContenido {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .cardTop {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
   }
 
   .cardCuerpo {
@@ -1809,6 +1864,10 @@
   .cardTop {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .cardUsuario {
+    max-width: 100%;
   }
 
   .cardCuerpo {

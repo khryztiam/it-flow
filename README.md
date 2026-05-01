@@ -8,17 +8,17 @@ ITFlow ayuda a que administradores, supervisores y usuarios sepan que tareas hay
 
 ## Vista Rapida
 
-| Dato | Estado actual |
-| --- | --- |
-| Version de la app | `1.4.1` |
-| Estado funcional | 3 roles activos: Admin, Supervisor y User ✅ |
-| Tipo de app | Aplicacion web privada para gestion operativa de tareas |
-| Framework | Next.js `^16.1.0` con Pages Router |
-| Lenguaje | JavaScript |
-| Base de datos y login | Supabase |
-| Estilos | CSS Modules |
-| Iconos | React Icons y Lucide React |
-| Ultima revision de este README | 27 de abril de 2026 |
+| Dato                           | Estado actual                                           |
+| ------------------------------ | ------------------------------------------------------- |
+| Version de la app              | `1.6.0`                                                 |
+| Estado funcional               | 3 roles activos: Admin, Supervisor y User ✅            |
+| Tipo de app                    | Aplicacion web privada para gestion operativa de tareas |
+| Framework                      | Next.js `^16.1.0` con Pages Router                      |
+| Lenguaje                       | JavaScript                                              |
+| Base de datos y login          | Supabase                                                |
+| Estilos                        | CSS Modules                                             |
+| Iconos                         | React Icons y Lucide React                              |
+| Ultima revision de este README | 1 de mayo de 2026                                       |
 
 ---
 
@@ -90,9 +90,9 @@ El usuario ve solamente sus tareas asignadas.
 Puede:
 
 - Ver su dashboard personal con tareas activas, en proceso, vencidas y avance promedio.
-- Abrir el detalle de cada tarea.
+- Abrir el detalle de cada tarea desde dashboard o Mis Tareas mediante drawer operativo.
 - Actualizar estado y porcentaje de avance.
-- Agregar observaciones y comentarios.
+- Agregar comentarios.
 - Subir evidencias.
 - Confirmar alertas recibidas con **OK / Enterado**.
 
@@ -111,7 +111,7 @@ Rutas principales:
 2. ITFlow identifica su rol.
 3. La app la envia a su dashboard.
 4. Desde ahi revisa tareas, filtros, vencimientos y avance.
-5. Si trabaja una tarea, abre el detalle y actualiza progreso.
+5. Si trabaja una tarea, abre el drawer de detalle y actualiza progreso.
 6. Si hace falta, agrega comentario o evidencia.
 7. Los paneles se actualizan para que otros roles vean el cambio.
 ```
@@ -120,22 +120,22 @@ Rutas principales:
 
 ## Funciones Destacadas por Pantalla
 
-| Pantalla | Que muestra |
-| --- | --- |
-| Login | Entrada con usuario y contrasena usando Supabase Auth |
-| Home `/` | Redireccion automatica segun rol |
-| Admin Dashboard | Carga por responsable, estado global, riesgo actual y alertas |
-| Admin Estadisticas | Lectura del portafolio, graficos y analisis por fechas |
-| Admin Gestion | Catalogos de paises, plantas y usuarios |
-| Admin Tareas | Lista global, filtros, creacion, edicion, evidencias y comentarios |
-| Admin Asignaciones | Asignacion centralizada y seguimiento operativo |
-| Supervisor Dashboard | Tareas propias, tareas de supervisados, riesgo local y filtros |
-| Supervisor Gestion | Asignacion y desasignacion de usuarios supervisados |
-| Supervisor Tareas | Tareas del supervisor con filtros y reasignacion |
-| Supervisor Asignaciones | Gestion local de tareas y creacion desde supervisor |
-| User Dashboard | Resumen personal, filtros y alerta activa si existe |
-| User Tareas | Lista de tareas asignadas |
-| Detalle de Tarea | Estado, avance, observaciones, comentarios y evidencias |
+| Pantalla                | Que muestra                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Login                   | Entrada con usuario y contrasena usando Supabase Auth                    |
+| Home `/`                | Redireccion automatica segun rol                                         |
+| Admin Dashboard         | Carga por responsable, estado global, riesgo actual y alertas            |
+| Admin Estadisticas      | Lectura del portafolio, graficos y analisis por fechas                   |
+| Admin Gestion           | Catalogos de paises, plantas y usuarios                                  |
+| Admin Tareas            | Lista global, filtros, creacion, edicion, evidencias y comentarios       |
+| Admin Asignaciones      | Asignacion centralizada y seguimiento operativo                          |
+| Supervisor Dashboard    | Tareas propias, tareas de supervisados, riesgo local y filtros           |
+| Supervisor Gestion      | Asignacion y desasignacion de usuarios supervisados                      |
+| Supervisor Tareas       | Tareas del supervisor con filtros y reasignacion                         |
+| Supervisor Asignaciones | Gestion local de tareas y creacion desde supervisor                      |
+| User Dashboard          | Resumen personal, filtros, alerta activa y drawer de detalle             |
+| User Tareas             | Lista de tareas asignadas con drawer de detalle                          |
+| Detalle de Tarea        | Vista completa de respaldo para estado, avance, comentarios y evidencias |
 
 ---
 
@@ -143,21 +143,21 @@ Rutas principales:
 
 ITFlow esta construido con:
 
-| Paquete | Version en `package.json` | Uso |
-| --- | --- | --- |
-| `next` | `^16.1.0` | Aplicacion web con Pages Router |
-| `react` | `^18.3.0` | Interfaz de usuario |
-| `react-dom` | `^18.3.0` | Renderizado React |
-| `@supabase/supabase-js` | `^2.45.0` | Login, base de datos, realtime y storage |
-| `react-icons` | `^5.0.0` | Iconos de la interfaz |
-| `lucide-react` | `^0.395.0` | Iconos adicionales |
-| `recharts` | `^2.12.0` | Graficos |
-| `chart.js` | `^4.4.1` | Graficos |
-| `react-chartjs-2` | `^5.2.0` | Integracion React para Chart.js |
-| `date-fns` | `^3.6.0` | Manejo de fechas |
-| `vitest` | `^1.1.0` | Pruebas |
-| `eslint` | `^9.0.0` | Revision de codigo |
-| `prettier` | `^3.1.1` | Formato de codigo |
+| Paquete                 | Version en `package.json` | Uso                                      |
+| ----------------------- | ------------------------- | ---------------------------------------- |
+| `next`                  | `^16.1.0`                 | Aplicacion web con Pages Router          |
+| `react`                 | `^18.3.0`                 | Interfaz de usuario                      |
+| `react-dom`             | `^18.3.0`                 | Renderizado React                        |
+| `@supabase/supabase-js` | `^2.45.0`                 | Login, base de datos, realtime y storage |
+| `react-icons`           | `^5.0.0`                  | Iconos de la interfaz                    |
+| `lucide-react`          | `^0.395.0`                | Iconos adicionales                       |
+| `recharts`              | `^2.12.0`                 | Graficos                                 |
+| `chart.js`              | `^4.4.1`                  | Graficos                                 |
+| `react-chartjs-2`       | `^5.2.0`                  | Integracion React para Chart.js          |
+| `date-fns`              | `^3.6.0`                  | Manejo de fechas                         |
+| `vitest`                | `^1.1.0`                  | Pruebas                                  |
+| `eslint`                | `^9.0.0`                  | Revision de codigo                       |
+| `prettier`              | `^3.1.1`                  | Formato de codigo                        |
 
 Nota: el repositorio tiene `typescript` como dependencia de desarrollo y un script `type-check`, pero el codigo de la app esta escrito en JavaScript. No se usa App Router ni Tailwind.
 
@@ -245,15 +245,15 @@ http://localhost:3000
 
 ## Scripts Disponibles
 
-| Comando | Para que sirve |
-| --- | --- |
-| `npm run dev` | Inicia la app en desarrollo |
-| `npm run build` | Compila la app para produccion |
-| `npm run start` | Ejecuta la version compilada |
-| `npm run lint` | Revisa y corrige estilo con ESLint |
-| `npm run format` | Formatea archivos de `src` |
-| `npm test` | Ejecuta pruebas con Vitest |
-| `npm run test:ui` | Abre la interfaz visual de Vitest |
+| Comando              | Para que sirve                                                          |
+| -------------------- | ----------------------------------------------------------------------- |
+| `npm run dev`        | Inicia la app en desarrollo                                             |
+| `npm run build`      | Compila la app para produccion                                          |
+| `npm run start`      | Ejecuta la version compilada                                            |
+| `npm run lint`       | Revisa y corrige estilo con ESLint                                      |
+| `npm run format`     | Formatea archivos de `src`                                              |
+| `npm test`           | Ejecuta pruebas con Vitest                                              |
+| `npm run test:ui`    | Abre la interfaz visual de Vitest                                       |
 | `npm run type-check` | Ejecuta `tsc --noEmit`; existe por tooling, aunque la app es JavaScript |
 
 ---
@@ -284,10 +284,10 @@ Resultado de `npm audit --json` ejecutado el **27 de abril de 2026**:
 Detalle completo: [docs/13_VULNERABILIDADES_ACTUALES.md](./docs/13_VULNERABILIDADES_ACTUALES.md)
 
 | Severidad | Cantidad |
-| --- | --- |
-| Moderada | 7 |
-| Alta | 0 |
-| Critica | 0 |
+| --------- | -------- |
+| Moderada  | 7        |
+| Alta      | 0        |
+| Critica   | 0        |
 
 Detalle importante:
 

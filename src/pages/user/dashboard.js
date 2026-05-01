@@ -1,37 +1,25 @@
 import Layout from '@components/Layout';
-import Modal from '@components/Modal';
+import UserTaskDetailDrawer from '@components/user/UserTaskDetailDrawer';
 import { useUser } from '@hooks/useProtegerRuta';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/router';
 import { supabase } from '@lib/supabase';
 import { useAuth } from '@context/AuthContext';
-import {
-  FiFilter,
-  FiCalendar,
-  FiTrendingUp,
-  FiAlertCircle,
-  FiCheckCircle,
-  FiClock,
-  FiFlag,
-  FiFileText,
-} from 'react-icons/fi';
+import { FiFilter, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import styles from '@styles/DashboardUser.module.css';
 
 export default function UserDashboard() {
   const { cargando: cargandoAuth } = useUser();
   const { usuarioDetalles } = useAuth();
-  const router = useRouter();
   const montadoRef = useRef(true);
   const cargarAlertaRef = useRef(null);
   const [todasLasTareas, setTodasLasTareas] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [filtroPrioridad, setFiltroPrioridad] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [filtroFecha, setFiltroFecha] = useState('todos');
   const [alertaUsuario, setAlertaUsuario] = useState(null);
   const [confirmandoAlerta, setConfirmandoAlerta] = useState(false);
+  const [tareaDetalle, setTareaDetalle] = useState(null);
 
   const cargarAlertaUsuario = async () => {
     if (!usuarioDetalles?.id) return;
@@ -161,15 +149,18 @@ export default function UserDashboard() {
       if (!response.ok) throw new Error('Error cargando tareas');
       const tareasData = await response.json();
 
-      const ahora = new Date();
-      const tareasProcesadas = (tareasData || []).map((tarea) => ({
-        ...tarea,
-        diasRestantes:
-          (new Date(tarea.fecha_limite) - ahora) / (1000 * 60 * 60 * 24),
-        estaVencida:
-          new Date(tarea.fecha_limite) < ahora &&
-          !esEstadoFinal(tarea.estado?.nombre),
-      }));
+      const tareasProcesadas = (tareasData || []).map((tarea) => {
+        const diasRestantes = obtenerDiasRestantes(tarea.fecha_limite);
+
+        return {
+          ...tarea,
+          diasRestantes,
+          estaVencida:
+            diasRestantes !== null &&
+            diasRestantes < 0 &&
+            !esEstadoFinal(tarea.estado?.nombre),
+        };
+      });
 
       if (montadoRef.current) {
         setTodasLasTareas(tareasProcesadas);
@@ -193,10 +184,46 @@ export default function UserDashboard() {
 
   const formatearFecha = (fecha) => {
     if (!fecha) return 'N/A';
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    const fechaCalendario = obtenerFechaCalendario(fecha);
+    if (!fechaCalendario) return 'N/A';
+    return fechaCalendario.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
     });
+  };
+
+  const obtenerFechaCalendario = (fecha) => {
+    if (!fecha) return null;
+
+    const fechaTexto = typeof fecha === 'string' ? fecha : '';
+    const partesFecha = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (partesFecha) {
+      const [, anio, mes, dia] = partesFecha;
+      return new Date(Number(anio), Number(mes) - 1, Number(dia));
+    }
+
+    const fechaDate = new Date(fecha);
+    if (Number.isNaN(fechaDate.getTime())) return null;
+    return new Date(
+      fechaDate.getFullYear(),
+      fechaDate.getMonth(),
+      fechaDate.getDate()
+    );
+  };
+
+  const obtenerDiasRestantes = (fechaLimite) => {
+    const limite = obtenerFechaCalendario(fechaLimite);
+    if (!limite) return null;
+
+    const ahora = new Date();
+    const hoy = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate()
+    );
+
+    return Math.round((limite - hoy) / (1000 * 60 * 60 * 24));
   };
 
   const obtenerColorEstado = (nombreEstado) => {
@@ -231,8 +258,39 @@ export default function UserDashboard() {
 
   const obtenerClaseTarjeta = (tarea) => {
     if (tarea.estaVencida) return styles.tarjetaRoja;
-    if (tarea.diasRestantes <= 1) return styles.tarjetaAmarilla;
+    if (tarea.diasRestantes !== null && tarea.diasRestantes <= 1)
+      return styles.tarjetaAmarilla;
     return '';
+  };
+
+  const obtenerTextoDiasRestantes = (tarea) => {
+    if (!tarea.fecha_limite) return 'Sin fecha limite';
+    if (tarea.estaVencida) {
+      return `Vencida hace ${Math.abs(tarea.diasRestantes)} dias`;
+    }
+
+    if (tarea.diasRestantes === 0) return 'Ultimo dia';
+    if (tarea.diasRestantes === 1) return 'Falta 1 dia';
+    return `Faltan ${tarea.diasRestantes} dias`;
+  };
+
+  const obtenerRiesgoTarea = (tarea) => {
+    if (esEstadoFinal(tarea.estado?.nombre)) return 'Completada';
+    if (tarea.estaVencida) return 'Vencida';
+    if (tarea.diasRestantes === 0) return 'Ultimo dia';
+    if (tarea.diasRestantes !== null && tarea.diasRestantes <= 3)
+      return 'Por vencer';
+    return 'En tiempo';
+  };
+
+  const obtenerClaseRiesgo = (tarea) => {
+    if (tarea.estaVencida)
+      return `${styles.cardRiesgo} ${styles.riesgoVencido}`;
+    if (tarea.diasRestantes === 0)
+      return `${styles.cardRiesgo} ${styles.riesgoUltimoDia}`;
+    if (tarea.diasRestantes !== null && tarea.diasRestantes <= 3)
+      return `${styles.cardRiesgo} ${styles.riesgoPorVencer}`;
+    return `${styles.cardRiesgo} ${styles.riesgoEnTiempo}`;
   };
 
   // Stats calculadas (excluyendo finalizadas + revisadas)
@@ -285,9 +343,12 @@ export default function UserDashboard() {
       if (filtroFecha === 'vencidas') {
         cumpleFecha = tarea.estaVencida;
       } else if (filtroFecha === 'esta_semana') {
-        cumpleFecha = tarea.diasRestantes >= 0 && tarea.diasRestantes <= 7;
+        cumpleFecha =
+          tarea.diasRestantes !== null &&
+          tarea.diasRestantes >= 0 &&
+          tarea.diasRestantes <= 7;
       } else if (filtroFecha === 'proximas') {
-        cumpleFecha = tarea.diasRestantes > 7;
+        cumpleFecha = tarea.diasRestantes !== null && tarea.diasRestantes > 7;
       }
 
       return cumplePrioridad && cumpleEstado && cumpleFecha;
@@ -295,21 +356,18 @@ export default function UserDashboard() {
     .sort((a, b) => {
       if (a.estaVencida && !b.estaVencida) return -1;
       if (!a.estaVencida && b.estaVencida) return 1;
-      return a.diasRestantes - b.diasRestantes;
+      return (
+        (a.diasRestantes ?? Number.MAX_SAFE_INTEGER) -
+        (b.diasRestantes ?? Number.MAX_SAFE_INTEGER)
+      );
     });
 
-  const abrirModal = (tarea) => {
-    setTareaSeleccionada(tarea);
-    setModalAbierto(true);
+  const abrirDetalle = (tarea) => {
+    setTareaDetalle(tarea);
   };
 
-  const cerrarModal = () => {
-    setModalAbierto(false);
-    setTareaSeleccionada(null);
-  };
-
-  const irADetalle = (tareaId) => {
-    router.push(`/user/tarea/${tareaId}`);
+  const cerrarDetalle = () => {
+    setTareaDetalle(null);
   };
 
   if (cargandoAuth || cargando) {
@@ -428,7 +486,13 @@ export default function UserDashboard() {
 
         {tareasFiltradas.length === 0 ? (
           <div className={styles.vacio}>
-            <p>No hay tareas para mostrar</p>
+            <span className={styles.vacioIcono}>
+              <FiCheckCircle />
+            </span>
+            <div>
+              <strong>Sin tareas para mostrar</strong>
+              <p>Ajusta los filtros o espera nuevas asignaciones.</p>
+            </div>
           </div>
         ) : (
           <div className={styles.listaCards}>
@@ -436,79 +500,54 @@ export default function UserDashboard() {
               <div
                 key={tarea.id}
                 className={`${styles.tarjetaTarea} ${obtenerClaseTarjeta(tarea)}`}
-                onClick={() => abrirModal(tarea)}
+                onClick={() => abrirDetalle(tarea)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') abrirDetalle(tarea);
+                }}
+                role="button"
+                tabIndex={0}
               >
-                {/* Fila 1: Título */}
-                <div className={styles.cardFila1}>
+                <div className={styles.cardTop}>
                   <h4 className={styles.tarjetaTitulo}>{tarea.titulo}</h4>
-                  {tarea.estaVencida && (
-                    <span className={styles.chipVencida}>
-                      <FiAlertCircle /> Vencida
+                  <div className={styles.cardBadges}>
+                    <span
+                      className={obtenerColorPrioridad(tarea.prioridad?.nombre)}
+                    >
+                      {normalizarEtiqueta(tarea.prioridad?.nombre)}
                     </span>
-                  )}
+                    <span className={obtenerColorEstado(tarea.estado?.nombre)}>
+                      {normalizarEtiqueta(tarea.estado?.nombre)}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Cuerpo 3 columnas */}
-                <div className={styles.cardCuerpo}>
-                  <div className={styles.cardColDesc}>
-                    <span className={styles.metaLabel}>
-                      <FiFileText /> Descripción
+                <p className={styles.tareaResumen}>
+                  {tarea.descripcion || 'Sin descripción'}
+                </p>
+
+                <p className={styles.cardMetaLinea}>
+                  {tarea.planta?.nombre || 'Sin planta'} · Vence{' '}
+                  {formatearFecha(tarea.fecha_limite)} ·{' '}
+                  {obtenerTextoDiasRestantes(tarea)}
+                </p>
+
+                <div className={styles.cardProgresoFila}>
+                  <div className={styles.cardProgresoBloque}>
+                    <div className={styles.cardProgresoHeader}>
+                      <span>Progreso {tarea.porcentaje_avance || 0}%</span>
+                    </div>
+                    <div className={styles.barraProgreso}>
+                      <div
+                        className={styles.barraProgresoFill}
+                        style={{ width: `${tarea.porcentaje_avance || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                  {!esEstadoFinal(tarea.estado?.nombre) && (
+                    <span className={obtenerClaseRiesgo(tarea)}>
+                      <FiAlertCircle /> {obtenerRiesgoTarea(tarea)}
                     </span>
-                    <p className={styles.tareaResumen}>
-                      {tarea.descripcion || 'Sin descripción'}
-                    </p>
-                  </div>
-
-                  <div className={styles.cardColStatus}>
-                    <div className={styles.metaItem}>
-                      <span className={styles.metaLabel}>
-                        <FiFlag /> Prioridad
-                      </span>
-                      <span
-                        className={obtenerColorPrioridad(
-                          tarea.prioridad?.nombre
-                        )}
-                      >
-                        {normalizarEtiqueta(tarea.prioridad?.nombre)}
-                      </span>
-                    </div>
-                    <div className={styles.metaItem}>
-                      <span className={styles.metaLabel}>
-                        <FiCheckCircle /> Estado
-                      </span>
-                      <span
-                        className={obtenerColorEstado(tarea.estado?.nombre)}
-                      >
-                        {normalizarEtiqueta(tarea.estado?.nombre)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className={styles.cardColFechas}>
-                    <div className={styles.metaItem}>
-                      <span className={styles.metaLabel}>
-                        <FiCalendar /> F. Inicio / F. Fin
-                      </span>
-                      <span className={styles.tarjetaValor}>
-                        {formatearFecha(tarea.fecha_inicio)} →{' '}
-                        {formatearFecha(tarea.fecha_limite)}
-                      </span>
-                    </div>
-                    <div className={styles.metaItem}>
-                      <span className={styles.metaLabel}>
-                        <FiTrendingUp /> Progreso
-                      </span>
-                      <div className={styles.barraProgreso}>
-                        <div
-                          className={styles.barraProgresoFill}
-                          style={{ width: `${tarea.porcentaje_avance || 0}%` }}
-                        />
-                      </div>
-                      <span className={styles.barraProgresoTexto}>
-                        {tarea.porcentaje_avance || 0}%
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -516,80 +555,13 @@ export default function UserDashboard() {
         )}
       </div>
 
-      {/* Modal de Detalles */}
-      <Modal
-        abierto={modalAbierto}
-        onCerrar={cerrarModal}
-        titulo="Detalles de la Tarea"
-        modo="ver"
-      >
-        {tareaSeleccionada && (
-          <div className={styles.modalDetalle}>
-            <div className={styles.modalItem}>
-              <label>Nombre de Tarea</label>
-              <p>{tareaSeleccionada.titulo}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Descripción</label>
-              <p>{tareaSeleccionada.descripcion || 'Sin descripción'}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Prioridad</label>
-              <p>{normalizarEtiqueta(tareaSeleccionada.prioridad?.nombre)}</p>
-            </div>
-
-            <div className={styles.modalGrid2}>
-              <div className={styles.modalItem}>
-                <label>Fecha de Inicio</label>
-                <p>{formatearFecha(tareaSeleccionada.fecha_inicio)}</p>
-              </div>
-              <div className={styles.modalItem}>
-                <label>Fecha de Entrega</label>
-                <p>{formatearFecha(tareaSeleccionada.fecha_limite)}</p>
-              </div>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Estado</label>
-              <p>{normalizarEtiqueta(tareaSeleccionada.estado?.nombre)}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Avance (%)</label>
-              <p>{tareaSeleccionada.porcentaje_avance || 0}%</p>
-              <div className={styles.barraProgreso}>
-                <div
-                  className={styles.barraProgresoFill}
-                  style={{
-                    width: `${tareaSeleccionada.porcentaje_avance || 0}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Planta</label>
-              <p>{tareaSeleccionada.planta?.nombre || 'N/A'}</p>
-            </div>
-
-            <div className={styles.modalItem}>
-              <label>Creado por</label>
-              <p>
-                {tareaSeleccionada.creado_por_user?.nombre_completo || 'N/A'}
-              </p>
-            </div>
-
-            <button
-              className={styles.btnDetalle}
-              onClick={() => irADetalle(tareaSeleccionada.id)}
-            >
-              Abrir Detalle Completo
-            </button>
-          </div>
-        )}
-      </Modal>
+      <UserTaskDetailDrawer
+        abierto={Boolean(tareaDetalle)}
+        tareaId={tareaDetalle?.id}
+        tareaInicial={tareaDetalle}
+        onClose={cerrarDetalle}
+        onTaskUpdated={cargarTareas}
+      />
     </Layout>
   );
 }

@@ -1,7 +1,7 @@
 import Layout from '@components/Layout';
+import UserTaskDetailDrawer from '@components/user/UserTaskDetailDrawer';
 import { useUser } from '@hooks/useProtegerRuta';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import TablaGenerica from '@components/TablaGenerica';
 import { supabase } from '@lib/supabase';
 import { useAuth } from '@context/AuthContext';
@@ -12,10 +12,10 @@ import styles from '../../styles/TareasUser.module.css';
 export default function TareasUser() {
   const { cargando: cargandoAuth } = useUser();
   const { usuarioDetalles } = useAuth();
-  const router = useRouter();
   const [tareas, setTareas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState('todas');
+  const [tareaDetalle, setTareaDetalle] = useState(null);
 
   useEffect(() => {
     if (!cargandoAuth && usuarioDetalles?.id) {
@@ -157,7 +157,7 @@ export default function TareasUser() {
     {
       label: 'Ver',
       color: 'info',
-      onClick: (tarea) => router.push(`/user/tarea/${tarea.id}`),
+      onClick: (tarea) => setTareaDetalle(tarea),
     },
   ];
 
@@ -211,6 +211,14 @@ export default function TareasUser() {
           vacio={tareasFiltradas.length === 0 ? 'No hay tareas' : ''}
         />
       </div>
+
+      <UserTaskDetailDrawer
+        abierto={Boolean(tareaDetalle)}
+        tareaId={tareaDetalle?.id}
+        tareaInicial={tareaDetalle}
+        onClose={() => setTareaDetalle(null)}
+        onTaskUpdated={cargarTareas}
+      />
     </Layout>
   );
 }

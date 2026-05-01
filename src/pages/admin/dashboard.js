@@ -255,21 +255,26 @@ export default function AdminDashboard() {
       }));
 
       // Filtrar y ordenar
-      const ahora = new Date();
-      const tareasProcesadas = tareasConRelaciones.map((tarea) => ({
-        ...tarea,
-        diasRestantes:
-          (new Date(tarea.fecha_limite) - ahora) / (1000 * 60 * 60 * 24),
-        estaVencida:
-          new Date(tarea.fecha_limite) < ahora &&
-          !esEstadoFinal(tarea.estados?.nombre),
-      }));
+      const tareasProcesadas = tareasConRelaciones.map((tarea) => {
+        const diasRestantes = obtenerDiasRestantes(tarea.fecha_limite);
+        const estadoFinal = esEstadoFinal(tarea.estados?.nombre);
+
+        return {
+          ...tarea,
+          diasRestantes,
+          estaVencida:
+            diasRestantes !== null && diasRestantes < 0 && !estadoFinal,
+        };
+      });
 
       const tareasOrdenadas = [...tareasProcesadas]
         .sort((a, b) => {
           if (a.estaVencida && !b.estaVencida) return -1;
           if (!a.estaVencida && b.estaVencida) return 1;
-          return a.diasRestantes - b.diasRestantes;
+          return (
+            (a.diasRestantes ?? Number.MAX_SAFE_INTEGER) -
+            (b.diasRestantes ?? Number.MAX_SAFE_INTEGER)
+          );
         })
         .slice(0, 10);
 
@@ -365,9 +370,45 @@ export default function AdminDashboard() {
     return estado.includes('complet');
   };
 
+  const obtenerFechaCalendario = (fecha) => {
+    if (!fecha) return null;
+
+    const fechaTexto = typeof fecha === 'string' ? fecha : '';
+    const partesFecha = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (partesFecha) {
+      const [, anio, mes, dia] = partesFecha;
+      return new Date(Number(anio), Number(mes) - 1, Number(dia));
+    }
+
+    const fechaDate = new Date(fecha);
+    if (Number.isNaN(fechaDate.getTime())) return null;
+    return new Date(
+      fechaDate.getFullYear(),
+      fechaDate.getMonth(),
+      fechaDate.getDate()
+    );
+  };
+
+  const obtenerDiasRestantes = (fechaLimite) => {
+    const limite = obtenerFechaCalendario(fechaLimite);
+    if (!limite) return null;
+
+    const ahora = new Date();
+    const hoy = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate()
+    );
+
+    return Math.round((limite - hoy) / (1000 * 60 * 60 * 24));
+  };
+
   const formatearFecha = (fecha) => {
     if (!fecha) return 'N/A';
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    const fechaCalendario = obtenerFechaCalendario(fecha);
+    if (!fechaCalendario) return 'N/A';
+    return fechaCalendario.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
     });
@@ -390,8 +431,8 @@ export default function AdminDashboard() {
       return `Vencida hace ${Math.abs(Math.floor(tarea.diasRestantes))} dias`;
     }
 
-    const dias = Math.ceil(tarea.diasRestantes);
-    if (dias <= 0) return 'Vence hoy';
+    const dias = tarea.diasRestantes;
+    if (dias === 0) return 'Ultimo dia';
     if (dias === 1) return 'Falta 1 dia';
     return `Faltan ${dias} dias`;
   };
@@ -399,30 +440,37 @@ export default function AdminDashboard() {
   const obtenerRiesgoTarea = (tarea) => {
     if (esEstadoFinal(tarea.estados?.nombre)) return 'Completada';
     if (tarea.estaVencida) return 'Vencida';
-    if (tarea.diasRestantes <= 3) return 'En riesgo';
+    if (tarea.diasRestantes === 0) return 'Ultimo dia';
+    if (tarea.diasRestantes !== null && tarea.diasRestantes <= 3)
+      return 'Por vencer';
     return 'En tiempo';
   };
 
   const obtenerClaseTarjeta = (tarea) => {
     const estadoNombre = tarea.estados?.nombre?.toLowerCase() || '';
     if (esEstadoFinal(estadoNombre)) {
-      const fechaLimite = new Date(tarea.fecha_limite);
+      const fechaLimite = obtenerFechaCalendario(tarea.fecha_limite);
       const fechaCierre = tarea.fecha_cierre
-        ? new Date(tarea.fecha_cierre)
+        ? obtenerFechaCalendario(tarea.fecha_cierre)
         : fechaLimite;
       return fechaCierre <= fechaLimite
         ? styles.tarjetaVerde
         : styles.tarjetaRoja;
     }
     if (tarea.estaVencida) return styles.tarjetaRoja;
-    if (tarea.diasRestantes <= 1) return styles.tarjetaAmarilla;
+    if (tarea.diasRestantes !== null && tarea.diasRestantes <= 1)
+      return styles.tarjetaAmarilla;
     return '';
   };
 
   const resumenCritico = {
     vencidas: todasLasTareas.filter((t) => t.estaVencida).length,
     porVencer: todasLasTareas.filter(
-      (t) => !t.estaVencida && t.diasRestantes <= 3
+      (t) =>
+        !t.estaVencida &&
+        !esEstadoFinal(t.estados?.nombre) &&
+        t.diasRestantes !== null &&
+        t.diasRestantes <= 3
     ).length,
   };
 
@@ -504,9 +552,17 @@ export default function AdminDashboard() {
   const porcentajePendiente = totalGeneralTareas
     ? Math.round((totalPendientes / totalGeneralTareas) * 100)
     : 0;
-  const responsableMasVencidas = resumenResponsables.find(
-    (responsable) => responsable.vencidas > 0
+  const maxVencidasResponsable = Math.max(
+    0,
+    ...resumenResponsables.map((responsable) => responsable.vencidas)
   );
+  const responsablesMasVencidas = resumenResponsables
+    .filter(
+      (responsable) =>
+        maxVencidasResponsable > 0 &&
+        responsable.vencidas === maxVencidasResponsable
+    )
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
   const opcionesUsuarios = [
     ...new Map(
@@ -562,7 +618,10 @@ export default function AdminDashboard() {
       if (prioridadA !== prioridadB) return prioridadA - prioridadB;
       if (a.estaVencida && !b.estaVencida) return -1;
       if (!a.estaVencida && b.estaVencida) return 1;
-      return a.diasRestantes - b.diasRestantes;
+      return (
+        (a.diasRestantes ?? Number.MAX_SAFE_INTEGER) -
+        (b.diasRestantes ?? Number.MAX_SAFE_INTEGER)
+      );
     });
   });
 
@@ -896,7 +955,10 @@ export default function AdminDashboard() {
                     </span>
                   )}
                   <div className={styles.responsableInfo}>
-                    <p className={styles.responsableNombre}>
+                    <p
+                      className={styles.responsableNombre}
+                      title={responsable.nombre}
+                    >
                       {responsable.nombre}
                     </p>
                     <span className={styles.responsableMeta}>
@@ -964,7 +1026,7 @@ export default function AdminDashboard() {
           <div className={styles.resumenCardHeader}>
             <div>
               <p className={styles.resumenEyebrow}>Estado global</p>
-              <h3>¿Qué porcentaje del total está completado vs pendiente?</h3>
+              <h3>Avance general</h3>
             </div>
           </div>
 
@@ -995,27 +1057,50 @@ export default function AdminDashboard() {
           <div className={styles.resumenCardHeader}>
             <div>
               <p className={styles.resumenEyebrow}>Riesgo actual</p>
-              <h3>¿Quién tiene más tareas vencidas actualmente?</h3>
+              <h3>Responsables con más vencidas</h3>
             </div>
           </div>
 
-          {responsableMasVencidas ? (
+          {responsablesMasVencidas.length > 0 ? (
             <div className={styles.resumenDestacado}>
-              <span className={styles.avatarResumen}>
-                {iniciales(responsableMasVencidas.nombre)}
-              </span>
-              <div>
-                <p className={styles.resumenDestacadoNombre}>
-                  {responsableMasVencidas.nombre}
-                </p>
-                <span className={styles.resumenDestacadoMeta}>
-                  {responsableMasVencidas.vencidas} tareas vencidas activas
-                </span>
+              <div className={styles.resumenDestacadoLista}>
+                {responsablesMasVencidas.length > 1 && (
+                  <span className={styles.resumenDestacadoMeta}>
+                    Empate en riesgo
+                  </span>
+                )}
+                {responsablesMasVencidas.map((responsable) => (
+                  <div
+                    key={responsable.id}
+                    className={styles.resumenDestacadoItem}
+                  >
+                    <span className={styles.avatarResumen}>
+                      {iniciales(responsable.nombre)}
+                    </span>
+                    <div>
+                      <p
+                        className={styles.resumenDestacadoNombre}
+                        title={responsable.nombre}
+                      >
+                        {responsable.nombre}
+                      </p>
+                      <span className={styles.resumenDestacadoMeta}>
+                        {responsable.vencidas} tareas vencidas activas
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
             <div className={styles.resumenVacio}>
-              No hay tareas vencidas asignadas en este momento
+              <span className={styles.resumenVacioIcono}>
+                <FiCheckCircle />
+              </span>
+              <div>
+                <strong>Sin tareas vencidas</strong>
+                <span>No hay responsables en riesgo actualmente</span>
+              </div>
             </div>
           )}
         </div>
@@ -1137,7 +1222,13 @@ export default function AdminDashboard() {
                               <span className={styles.avatarMini}>
                                 {iniciales(tarea.usuarios?.nombre_completo)}
                               </span>
-                              <p className={styles.cardUsuarioNombre}>
+                              <p
+                                className={styles.cardUsuarioNombre}
+                                title={
+                                  tarea.usuarios?.nombre_completo ||
+                                  'Sin asignar'
+                                }
+                              >
                                 {tarea.usuarios?.nombre_completo ||
                                   'Sin asignar'}
                               </p>

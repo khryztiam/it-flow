@@ -1,12 +1,13 @@
 # 👨‍🔧 ITFlow — Guía de uso para OPERARIO/TÉCNICO
 
-**Versión:** 2.2 | **Fecha:** Abril 2026 | **Público:** Operarios, técnicos, usuarios regulares
+**Versión:** 2.3 | **Fecha:** Mayo 2026 | **Público:** Operarios, técnicos, usuarios regulares
 
 ---
 
 ## 📌 Descripción del rol
 
 Como **USER**, tu responsabilidad es:
+
 - Ver las tareas asignadas a ti
 - Actualizar el estado y avance de tus tareas
 - Cargar evidencias (fotos, documentos)
@@ -14,6 +15,7 @@ Como **USER**, tu responsabilidad es:
 - Completar trabajo dentro de los plazos
 
 **Permisos:**
+
 - ✅ Ver solo mis tareas
 - ✅ Actualizar mi progreso
 - ✅ Cargar evidencias
@@ -242,103 +244,43 @@ Columnas explicadas:
 
 ### Paso 1: Abre la tarea
 
-**Opción A: Click en la fila en la tabla**
+**Opción A: Desde Mis Tareas**
 
 ```
 Tabla de "Mis tareas"
-Click en: "Instalar router"
+Click en: "Ver"
 ↓
-Se abre página de detalle
+Se abre drawer de detalle
 ```
 
-**Opción B: Desde el listado filtrado**
+**Opción B: Desde el dashboard**
 
 ```
-Click en una tarjeta (ej: "Activas")
+Click en una card de tarea
 ↓
-Ve listado de solo esas tareas
-↓
-Click en una tarea
-↓
-Se abre detalle
+Se abre drawer de detalle
 ```
 
 ### Paso 2: Detalle de tarea
 
-Verás toda la información:
+Verás la información principal sin salir de la pantalla:
 
 ```
 ┌────────────────────────────────────────────────────┐
-│ 🔴 TAREA: Instalar router Ubiquiti                │
+│ DETALLE DE TAREA                    [Guardar] [X]  │
 ├────────────────────────────────────────────────────┤
-│                                                    │
-│ INFORMACIÓN GENERAL                                │
-│ ──────────────────────────────────────────────────│
-│ Descripción:                                       │
-│   "Instalar y configurar router Ubiquiti en      │
-│    planta Santa Tecla. Config VLAN 10 y 20."     │
-│                                                    │
-│ Planta:           Santa Tecla - El Salvador      │
-│ Creada por:       Carlos López                    │
-│ Fecha inicio:     2026-04-15                      │
-│ Fecha límite:     2026-04-20 (HOY) ⚠️             │
-│ Prioridad:        🔴 URGENTE                      │
-│                                                    │
+│ Resumen: prioridad, estado, planta, fechas, riesgo │
+│ Descripción de la tarea                            │
 ├────────────────────────────────────────────────────┤
-│ TU PROGRESO                                        │
-│ ──────────────────────────────────────────────────│
-│                                                    │
-│ Estado actual:    [En Proceso ▼]                  │
-│                   Puedes cambiar a: Pendiente     │
-│                                    En Proceso ✓   │
-│                                    Completada     │
-│                                    Pausada        │
-│                                                    │
-│ Porcentaje:       [═══════════════  50%] ←────┐  │
-│                   (Barra deslizable 0-100%)   │  │
-│                   Haz click y arrastra         │  │
-│                                                    │
-│ Observaciones:                                    │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ El técnico llegó tarde, comenzamos a las 3pm│ │
-│ │ Falta configurar VLAN 20                     │ │
-│ └──────────────────────────────────────────────┘ │
-│                                                    │
-│ [Auto-guardado cada 10 seg]                       │
-│                                                    │
+│ Actualizar progreso:                               │
+│ Estado actual: [En Proceso ▼]                      │
+│ Avance:        [═══════════════  50%] [50]         │
 ├────────────────────────────────────────────────────┤
-│ CARGAR EVIDENCIA                                   │
-│ ──────────────────────────────────────────────────│
-│                                                    │
-│ Sube fotos/documentos/videos como prueba:         │
-│                                                    │
-│ [📎 Seleccionar archivo]  [Tipos: JPG,PNG,PDF]   │
-│                            [Máx: 10 MB]           │
-│                                                    │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ 📸 router-config-screenshot.png (2.5 MB)    │ │
-│ │ [✓ Subido]  [🗑️ Eliminar]                   │ │
-│ └──────────────────────────────────────────────┘ │
-│                                                    │
+│ Comentarios: historial + campo para enviar         │
+│ Evidencias: seleccionar archivo + subir/eliminar   │
 ├────────────────────────────────────────────────────┤
-│ COMENTARIOS                                        │
-│ ──────────────────────────────────────────────────│
-│                                                    │
-│ Carlos López (Admin)  - 2026-04-18 15:30         │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ "Recuerda dejar documentado el config antes  │ │
-│ │  de instalar el siguiente"                   │ │
-│ └──────────────────────────────────────────────┘ │
-│                                                    │
-│ TÚ (Juan Pérez)  - 2026-04-18 16:00             │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ "Entendido, documento antes de continuar"    │ │
-│ └──────────────────────────────────────────────┘ │
-│                                                    │
-│ [Agregar comentario...]                           │
-│ Escribe tu mensaje: ____________________          │
-│                     [Enviar comentario]           │
-│                                                    │
+│ Guardar cambios aplica solo a estado y avance.     │
+│ Comentarios y evidencias se envian de inmediato.   │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -355,7 +297,7 @@ Campo "Estado actual": [Pendiente ▼]
 Click en el dropdown
 Selecciona: [En Proceso]
 ↓
-Automáticamente guardado
+Click: [Guardar cambios]
 ↓
 Se actualiza en dashboard admin
 ```
@@ -365,13 +307,13 @@ Se actualiza en dashboard admin
 ```
 1. Pendiente
    └─ Aún no empezaste
-   
+
 2. En Proceso
    └─ Ya empezaste, estás trabajando
-   
+
 3. Completada
    └─ Terminaste 100%, listo para revisar
-   
+
 4. Pausada
    └─ Temporalmente detenida (bloqueante)
 ```
@@ -383,10 +325,10 @@ Se actualiza en dashboard admin
 ```
 Barra de % Avance: [═══════════════  50%]
                     ↑ Click aquí y arrastra hacia la derecha
-                    
+
 O escribe directamente: [50] %
 
-Barra se actualiza en TIEMPO REAL
+Click en [Guardar cambios] para registrar el nuevo avance
 ```
 
 **Guía de % por estado:**
@@ -429,25 +371,23 @@ Opciones:
 Sistema valida:
 ├─ ¿Tipo correcto? (JPG/PNG/PDF)
 ├─ ¿Tamaño < 10 MB?
-└─ Si todo OK: Preview si es imagen
+└─ Si todo OK: queda listo para subir
 
 Si hay error:
-"Archivo debe ser JPG, PNG o PDF (máx 10 MB)"
+"Archivo debe ser JPG, PNG, GIF, WEBP o PDF (máx 10 MB)"
 ```
 
 ### Paso 4: Sube
 
 ```
 Proceso:
-├─ Comienza upload
-├─ Barra de progreso: [████░░░░░░] 45%
-├─ Si es rápido: < 2 segundos
-├─ Si es lento: Espera, no cierres navegador
+├─ Click en "Subir evidencia"
+├─ Si es lento: espera, no cierres navegador
 └─ Cuando complete: ✓ Evidencia subida
 
 Verás:
 ✓ router-config-screenshot.png (2.5 MB)
-  [Ver archivo]  [Descargar]  [Eliminar]
+  [Ver archivo]  [Eliminar]
 ```
 
 ### Paso 5: Reemplazar evidencia
@@ -477,7 +417,7 @@ Sube la correcta
 ### Cómo hacerlo
 
 ```
-Sección "COMENTARIOS" al fondo
+Sección "Comentarios" dentro del drawer
 
 Texto: [_________________________________]
        [Enviar comentario]
@@ -487,9 +427,7 @@ Click: "Enviar comentario"
 ↓
 Aparece con tu nombre y hora
 ↓
-Admin/Supervisor recibe notificación
-↓
-Pueden responder en el mismo hilo
+Admin/Supervisor puede verlo en el seguimiento de la tarea
 ```
 
 ---
@@ -505,7 +443,7 @@ Antes de marcar 100%:
 □ ¿Probaste todo funciona?
 □ ¿Documentaste el proceso?
 □ ¿Cargaste evidencia?
-□ ¿Dejaste observaciones claras?
+□ ¿Dejaste un comentario final si era necesario?
 ```
 
 ### Paso 2: Actualiza estado y %
@@ -515,10 +453,10 @@ Antes de marcar 100%:
 Estado:   [Completada ▼]
 ```
 
-### Paso 3: Agrega observación final
+### Paso 3: Agrega comentario final si aplica
 
 ```
-Campo "Observaciones":
+Campo "Agregar comentario":
 ─────────────────────────────────────────────
 "Router instalado y configurado.
 VLAN 10 asignada a planta.
@@ -531,7 +469,7 @@ Documentación en /servidor/docs/router-config"
 ### Paso 4: Guarda
 
 ```
-Sistema auto-guarda cambios
+Click en [Guardar cambios]
 ↓
 Registra fecha_cierre = HOY
 ↓
@@ -563,7 +501,7 @@ Estado: [Completada ▼]
 Click dropdown
 Selecciona: [Pausada]
 ↓
-Observación: "Aguardando respuesta de networking 
+Observación: "Aguardando respuesta de networking
              para VLAN 20. Sin esto no puedo continuar"
 ↓
 Guarda
@@ -596,6 +534,7 @@ Muestra solo tareas que terminaste
 ```
 
 **Para cada tarea ves:**
+
 ```
 - Título
 - % Avance (siempre 100%)
@@ -621,6 +560,7 @@ Muestra tareas completadas en ese rango
 
 **Causa:** Probablemente ya está en "Completada"  
 **Solución:**
+
 ```
 Si está completada y admin aprobó:
 → No se puede cambiar, fue enviada al historial
@@ -634,20 +574,22 @@ Si está completada pero falta corregir:
 
 **Causa:** Probablemente cerraste sin guardar  
 **Solución:**
+
 ```
 Recarga página (F5)
 ↓
-¿Sigue igual? → Sistema auto-guarda cada 10 seg
-┗━ Si no está, puede haber desconexión
+¿Sigue igual? → Revisa si hiciste click en "Guardar cambios"
+┗━ Si no está, revisa si hiciste click en "Guardar cambios"
 
 Prevención:
-✓ Espera 10 segundos después de cambios
-✓ Verifica que dice "[Auto-guardado]" debajo
+✓ Haz click en "Guardar cambios" despues de cambiar estado o avance
+✓ Espera el mensaje de confirmacion antes de cerrar el drawer
 ```
 
 ### Problema 3: "El archivo no sube"
 
 **Causas posibles:**
+
 ```
 ❌ Archivo muy grande (> 10 MB)
    ✓ Comprime imagen o convierte a PDF
@@ -665,6 +607,7 @@ Prevención:
 ### Problema 4: "Olvidé mi contraseña"
 
 **Solución:**
+
 ```
 En página de login, click: "[¿Olvidaste contraseña?]"
 ↓
@@ -706,7 +649,8 @@ Cada 2 horas:
 
 ### 3. Documentar bien
 
-**Observaciones claras:**
+**Comentarios claros:**
+
 ```
 ✓ "Instalé parches KB4567890 y KB4567891.
    Sistema reiniciado. Verificé en Windows Update.
@@ -716,6 +660,7 @@ Cada 2 horas:
 ```
 
 **Evidencia de calidad:**
+
 ```
 ✓ Screenshot mostrando sistema online
 ✓ Foto de dispositivo físico instalado
@@ -787,17 +732,17 @@ Intenta:
 
 ## ✨ Resumen rápido
 
-| Acción | Ubicación | Atajo |
-|--------|-----------|-------|
-| Ver mis tareas | Dashboard | Ctrl+Home |
-| Abrir una tarea | Click en tabla | Enter |
-| Cambiar estado | Dropdown estado | - |
-| Actualizar % | Barra avance | - |
-| Cargar archivo | Botón "📎" | - |
-| Dejar comentario | Sección comentarios | Ctrl+Enter |
-| Completar tarea | Estado = 100% | - |
-| Cambiar contraseña | Menú usuario (arriba) | - |
-| Logout | Menú usuario | - |
+| Acción             | Ubicación             | Atajo      |
+| ------------------ | --------------------- | ---------- |
+| Ver mis tareas     | Dashboard             | Ctrl+Home  |
+| Abrir una tarea    | Click en tabla        | Enter      |
+| Cambiar estado     | Dropdown estado       | -          |
+| Actualizar %       | Barra avance          | -          |
+| Cargar archivo     | Botón "📎"            | -          |
+| Dejar comentario   | Sección comentarios   | Ctrl+Enter |
+| Completar tarea    | Estado = 100%         | -          |
+| Cambiar contraseña | Menú usuario (arriba) | -          |
+| Logout             | Menú usuario          | -          |
 
 ---
 

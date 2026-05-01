@@ -1,7 +1,7 @@
 # ITFlow - Resumen ejecutivo
 
-**Fecha de revision:** 28 de abril de 2026
-**Version app:** `1.5.0`
+**Fecha de revision:** 1 de mayo de 2026
+**Version app:** `1.6.0`
 **Publico:** responsables de producto, operacion y tecnologia
 
 ---
@@ -49,7 +49,7 @@ El sistema ya trabaja con tres roles:
 | ---------- | ------------------------------------------------------------------- |
 | Admin      | Dashboard global, estadisticas, gestion, tareas y asignaciones      |
 | Supervisor | Dashboard local, gestion de usuarios, tareas y asignaciones locales |
-| User       | Dashboard personal, mis tareas y detalle de tarea                   |
+| User       | Dashboard personal, mis tareas y drawer de detalle                  |
 
 ---
 

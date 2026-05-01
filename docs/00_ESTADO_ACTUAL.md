@@ -1,7 +1,7 @@
 # ITFlow - Estado actual del proyecto
 
-**Fecha de revision:** 28 de abril de 2026
-**Version de la app:** `1.5.0`
+**Fecha de revision:** 1 de mayo de 2026
+**Version de la app:** `1.6.0`
 **Fuente principal:** codigo actual en `src/`, `package.json` y auditoria `npm audit`
 
 ---
@@ -44,9 +44,9 @@ La app usa **Next.js con Pages Router**, **JavaScript**, **Supabase**, **CSS Mod
 
 ### User
 
-- `/user/dashboard`: resumen personal, filtros y alerta activa si existe.
-- `/user/tareas`: listado de tareas asignadas.
-- `/user/tarea/[id]`: detalle, avance, comentarios y evidencias.
+- `/user/dashboard`: resumen personal, filtros, alerta activa y drawer de detalle.
+- `/user/tareas`: listado de tareas asignadas con drawer de detalle.
+- `/user/tarea/[id]`: vista completa de respaldo para detalle, avance, comentarios y evidencias.
 
 ---
 

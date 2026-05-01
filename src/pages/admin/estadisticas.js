@@ -40,7 +40,7 @@ const CHART_COLORS = [
 
 const MONTH_FORMATTER = new Intl.DateTimeFormat('es-ES', {
   month: 'short',
-  day: '2-digit',
+  year: 'numeric',
 });
 
 const BUCKET_ORDER = [
@@ -586,40 +586,42 @@ export default function EstadisticasAdmin() {
 
           <div className={styles.summaryGrid}>
             <div className={styles.summaryItem}>
-              <span className={`${styles.summaryIcon} ${styles.summaryOk}`}>
-                <FiCheckCircle />
-              </span>
-              <div className={styles.summaryData}>
-                <span>Completadas</span>
+              <span className={styles.summaryLabel}>Completadas</span>
+              <div className={styles.summaryBody}>
+                <span className={`${styles.summaryIcon} ${styles.summaryOk}`}>
+                  <FiCheckCircle />
+                </span>
                 <strong>{totalCompletadas}</strong>
               </div>
             </div>
             <div className={styles.summaryItem}>
-              <span className={`${styles.summaryIcon} ${styles.summaryDanger}`}>
-                <FiAlertCircle />
-              </span>
-              <div className={styles.summaryData}>
-                <span>Vencidas</span>
+              <span className={styles.summaryLabel}>Vencidas</span>
+              <div className={styles.summaryBody}>
+                <span
+                  className={`${styles.summaryIcon} ${styles.summaryDanger}`}
+                >
+                  <FiAlertCircle />
+                </span>
                 <strong>{totalVencidas}</strong>
               </div>
             </div>
             <div className={styles.summaryItem}>
-              <span className={`${styles.summaryIcon} ${styles.summaryInfo}`}>
-                <FiFileText />
-              </span>
-              <div className={styles.summaryData}>
-                <span>Con evidencia</span>
-                <strong>{coberturaEvidencia}%</strong>
+              <span className={styles.summaryLabel}>Evidencia (%)</span>
+              <div className={styles.summaryBody}>
+                <span className={`${styles.summaryIcon} ${styles.summaryInfo}`}>
+                  <FiFileText />
+                </span>
+                <strong>{coberturaEvidencia}</strong>
               </div>
             </div>
             <div className={styles.summaryItem}>
-              <span
-                className={`${styles.summaryIcon} ${styles.summaryWarning}`}
-              >
-                <FiClock />
-              </span>
-              <div className={styles.summaryData}>
-                <span>No revisadas</span>
+              <span className={styles.summaryLabel}>No revisadas</span>
+              <div className={styles.summaryBody}>
+                <span
+                  className={`${styles.summaryIcon} ${styles.summaryWarning}`}
+                >
+                  <FiClock />
+                </span>
                 <strong>{totalNoRevisadas}</strong>
               </div>
             </div>

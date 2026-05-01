@@ -6,6 +6,34 @@ El formato sigue una estructura simple por version para dejar claro que cambio a
 
 ---
 
+## [1.6.0] - 2026-05-01
+
+### Agregado
+
+- Nuevo drawer compartido para detalle de tareas en vistas de usuario.
+- El drawer de usuario permite revisar resumen, descripcion, comentarios, evidencias y actualizar estado/avance sin salir del dashboard o de `Mis Tareas`.
+
+### Corregido
+
+- La logica de vencimiento ahora compara por dia calendario: una tarea con fecha limite de hoy se muestra como `Ultimo dia` y no como vencida.
+- El panel de riesgo actual muestra todos los responsables empatados con el mayor numero de tareas vencidas, no solo el primer resultado.
+- Ajuste de nombres largos de responsables en tarjetas para evitar saltos visuales no deseados.
+
+### Mejorado (UI/UX)
+
+- Compactacion de estados vacios en paneles de riesgo de admin y supervisor.
+- Mejoras visuales en tarjetas de resumen ejecutivo de estadisticas.
+- Optimizacion de layout en resoluciones 1366 y 1920 para dashboards admin, supervisor y estadisticas.
+- Cards de tareas de usuario mas compactas, con prioridad/estado en header, descripcion breve, vencimiento y progreso visible.
+- Vista `Mis Tareas` de usuario ahora usa el mismo drawer de detalle que el dashboard.
+
+### Cambiado
+
+- `package.json` sube de `1.5.0` a `1.6.0`.
+- `package-lock.json` queda sincronizado con la version `1.6.0`.
+
+---
+
 ## [1.5.0] - 2026-04-28
 
 ### Mejorado (UI/UX)

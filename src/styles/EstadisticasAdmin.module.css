@@ -299,15 +299,32 @@
 }
 
 .summaryItem {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-rows: auto 1fr;
   gap: 10px;
   background: linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
   border: 1px solid #dbe5f1;
   border-radius: 12px;
   padding: 12px;
+  min-height: 104px;
   min-width: 0;
+}
+
+.summaryLabel {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.summaryBody {
+  display: grid;
+  grid-template-columns: 44px max-content;
+  align-items: center;
+  align-self: end;
+  justify-content: center;
+  gap: 12px;
 }
 
 .summaryIcon {
@@ -345,23 +362,12 @@
   color: #92400e;
 }
 
-.summaryData {
-  min-width: 0;
-}
-
-.summaryData span {
+.summaryBody strong {
   display: block;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.summaryItem strong {
-  display: block;
-  margin-top: 5px;
   color: #0f172a;
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .callout {
@@ -593,9 +599,16 @@
 
 @media (max-width: 768px) {
   .kpiGrid,
-  .summaryGrid,
   .qualityList {
     grid-template-columns: 1fr;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summaryItem {
+    min-height: 104px;
   }
 
   .chartWrap,

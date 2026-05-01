@@ -346,7 +346,9 @@ export default function SupervisorDashboard() {
 
   const formatearFecha = (fecha) => {
     if (!fecha) return 'N/A';
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    const fechaCalendario = obtenerFechaCalendario(fecha);
+    if (!fechaCalendario) return 'N/A';
+    return fechaCalendario.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
     });
@@ -358,25 +360,59 @@ export default function SupervisorDashboard() {
     return estado.includes('complet');
   };
 
-  const obtenerClaseTarjeta = (tarea) => {
+  const obtenerFechaCalendario = (fecha) => {
+    if (!fecha) return null;
+
+    const fechaTexto = typeof fecha === 'string' ? fecha : '';
+    const partesFecha = fechaTexto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (partesFecha) {
+      const [, anio, mes, dia] = partesFecha;
+      return new Date(Number(anio), Number(mes) - 1, Number(dia));
+    }
+
+    const fechaDate = new Date(fecha);
+    if (Number.isNaN(fechaDate.getTime())) return null;
+    return new Date(
+      fechaDate.getFullYear(),
+      fechaDate.getMonth(),
+      fechaDate.getDate()
+    );
+  };
+
+  const obtenerDiasRestantes = (fechaLimite) => {
+    const limite = obtenerFechaCalendario(fechaLimite);
+    if (!limite) return null;
+
     const ahora = new Date();
+    const hoy = new Date(
+      ahora.getFullYear(),
+      ahora.getMonth(),
+      ahora.getDate()
+    );
+
+    return Math.round((limite - hoy) / (1000 * 60 * 60 * 24));
+  };
+
+  const obtenerClaseTarjeta = (tarea) => {
+    const diasRestantes = obtenerDiasRestantes(tarea.fecha_limite);
     const estaVencida =
-      new Date(tarea.fecha_limite) < ahora &&
+      diasRestantes !== null &&
+      diasRestantes < 0 &&
       !esEstadoFinal(tarea.estado?.nombre);
 
     if (esEstadoFinal(tarea.estado?.nombre)) {
-      const fechaLimite = new Date(tarea.fecha_limite);
+      const fechaLimite = obtenerFechaCalendario(tarea.fecha_limite);
       const fechaCierre = tarea.fecha_cierre
-        ? new Date(tarea.fecha_cierre)
+        ? obtenerFechaCalendario(tarea.fecha_cierre)
         : fechaLimite;
       return fechaCierre <= fechaLimite
         ? styles.tarjetaVerde
         : styles.tarjetaRoja;
     }
     if (estaVencida) return styles.tarjetaRoja;
-    const diasRestantes =
-      (new Date(tarea.fecha_limite) - ahora) / (1000 * 60 * 60 * 24);
-    if (diasRestantes <= 1) return styles.tarjetaAmarilla;
+    if (diasRestantes !== null && diasRestantes <= 1)
+      return styles.tarjetaAmarilla;
     return '';
   };
 
@@ -399,9 +435,12 @@ export default function SupervisorDashboard() {
       nombre: sub.usuario_nombre,
       total: sub.total || 0,
       vencidas: (sub.tareas || []).filter((t) => {
-        const ahora = new Date();
-        const fechaLimite = new Date(t.fecha_limite);
-        return fechaLimite < ahora && !esEstadoFinal(t.estado?.nombre);
+        const diasRestantes = obtenerDiasRestantes(t.fecha_limite);
+        return (
+          diasRestantes !== null &&
+          diasRestantes < 0 &&
+          !esEstadoFinal(t.estado?.nombre)
+        );
       }).length,
     }));
   }, [subordinados]);
@@ -430,12 +469,16 @@ export default function SupervisorDashboard() {
     ? Math.round((totalPendientesSubordinados / totalTareasSubordinados) * 100)
     : 0;
 
-  // Usuario con más vencidas
-  const subordinadoMasVencidas = useMemo(() => {
-    if (!resumenSubordinados.length) return null;
-    return resumenSubordinados.reduce((max, current) =>
-      current.vencidas > max.vencidas ? current : max
+  // Usuarios con más vencidas
+  const subordinadosMasVencidas = useMemo(() => {
+    const maxVencidas = Math.max(
+      0,
+      ...resumenSubordinados.map((sub) => sub.vencidas)
     );
+
+    return resumenSubordinados
+      .filter((sub) => maxVencidas > 0 && sub.vencidas === maxVencidas)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
   }, [resumenSubordinados]);
 
   // ---- OPCIONES DE FILTROS ----
@@ -529,7 +572,7 @@ export default function SupervisorDashboard() {
       {/* ---- RESUMEN SECTION (Cards) ---- */}
       <section className={styles.resumenSeccion}>
         {/* Usuarios Supervisados */}
-        <div className={styles.resumenCard}>
+        <div className={`${styles.resumenCard} ${styles.resumenCardUsuarios}`}>
           <div className={styles.resumenCardHeader}>
             <div>
               <p className={styles.resumenEyebrow}>Carga por usuario</p>
@@ -546,7 +589,9 @@ export default function SupervisorDashboard() {
                 onClick={() => toggleAcordeon(sub.id)}
               >
                 <div>
-                  <p className={styles.usuarioNombre}>{sub.nombre}</p>
+                  <p className={styles.usuarioNombre} title={sub.nombre}>
+                    {sub.nombre}
+                  </p>
                   <span className={styles.usuarioMeta}>
                     {sub.vencidas > 0
                       ? `${sub.vencidas} vencidas`
@@ -564,7 +609,7 @@ export default function SupervisorDashboard() {
           <div className={styles.resumenCardHeader}>
             <div>
               <p className={styles.resumenEyebrow}>Estado global</p>
-              <h3>¿Qué % está completado vs pendiente?</h3>
+              <h3>Avance general</h3>
             </div>
           </div>
 
@@ -596,27 +641,50 @@ export default function SupervisorDashboard() {
           <div className={styles.resumenCardHeader}>
             <div>
               <p className={styles.resumenEyebrow}>Riesgo actual</p>
-              <h3>¿Quién tiene más tareas vencidas actualmente?</h3>
+              <h3>Responsables con más vencidas</h3>
             </div>
           </div>
 
-          {subordinadoMasVencidas && subordinadoMasVencidas.vencidas > 0 ? (
+          {subordinadosMasVencidas.length > 0 ? (
             <div className={styles.resumenDestacado}>
-              <span className={styles.avatarResumen}>
-                {iniciales(subordinadoMasVencidas.nombre)}
-              </span>
-              <div>
-                <p className={styles.resumenDestacadoNombre}>
-                  {subordinadoMasVencidas.nombre}
-                </p>
-                <span className={styles.resumenDestacadoMeta}>
-                  {subordinadoMasVencidas.vencidas} tareas vencidas activas
-                </span>
+              <div className={styles.resumenDestacadoLista}>
+                {subordinadosMasVencidas.length > 1 && (
+                  <span className={styles.resumenDestacadoMeta}>
+                    Empate en riesgo
+                  </span>
+                )}
+                {subordinadosMasVencidas.map((subordinado) => (
+                  <div
+                    key={subordinado.id}
+                    className={styles.resumenDestacadoItem}
+                  >
+                    <span className={styles.avatarResumen}>
+                      {iniciales(subordinado.nombre)}
+                    </span>
+                    <div>
+                      <p
+                        className={styles.resumenDestacadoNombre}
+                        title={subordinado.nombre}
+                      >
+                        {subordinado.nombre}
+                      </p>
+                      <span className={styles.resumenDestacadoMeta}>
+                        {subordinado.vencidas} tareas vencidas activas
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
             <div className={styles.resumenVacio}>
-              No hay tareas vencidas en tus subordinados
+              <span className={styles.resumenVacioIcono}>
+                <FiCheckCircle />
+              </span>
+              <div>
+                <strong>Sin tareas vencidas</strong>
+                <span>No hay subordinados en riesgo actualmente</span>
+              </div>
             </div>
           )}
         </div>
@@ -798,7 +866,10 @@ export default function SupervisorDashboard() {
                       }`}
                       onClick={() => toggleAcordeon(usuarioId)}
                     >
-                      <span className={styles.usuarioTitulo}>
+                      <span
+                        className={styles.usuarioTitulo}
+                        title={grupo.nombre}
+                      >
                         <FiUser /> {grupo.nombre}
                         <strong>{grupo.tareas.length}</strong>
                       </span>
